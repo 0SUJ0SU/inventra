@@ -4,6 +4,7 @@ import { Suspense, lazy } from "react";
 import { useTheme } from "next-themes";
 import { Navbar } from "@/components/landing/navbar";
 import Hero from "@/components/landing/hero";
+import FeaturesBento from "@/components/landing/features-bento";
 
 const Dithering = lazy(() =>
   import("@paper-design/shaders-react").then((mod) => ({
@@ -40,22 +41,7 @@ export default function LandingPage() {
       </div>
 
       {/* Features Section */}
-      <section
-        id="features"
-        className="min-h-[50vh] flex items-center justify-center border-t border-border dark:border-border-dark"
-      >
-        <div className="text-center px-4">
-          <p className="text-sm font-medium uppercase tracking-widest text-accent-500 mb-4 font-space-grotesk">
-            Section
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-text dark:text-text-dark font-space-grotesk">
-            Features
-          </h2>
-          <p className="text-text-secondary dark:text-text-secondary-dark mt-4">
-            Feature cards and content coming soon.
-          </p>
-        </div>
-      </section>
+      <FeaturesBento />
 
       {/* Pricing Section */}
       <section
