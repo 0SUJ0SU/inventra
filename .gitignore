@@ -47,6 +47,9 @@ public/workbox-*.js
 *.pem
 Thumbs.db
 
+# Documentation (local only)
+docs/
+
 # ── Security - Never commit these ──────────────────────────────
 # Secrets and credentials
 .env*.local
@@ -105,3 +108,29 @@ local.json
 local.config.js
 *.local.js
 *.local.ts
+
+# Package manager auth
+.npmrc
+.yarnrc.yml
+
+# GPG/PGP keys
+*.gpg
+*.asc
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# General logs
+*.log
+
+# Windows
+Desktop.ini
+
+# Production env (without .local suffix)
+.env.production
+
+# Kubernetes
+kubeconfig
+*.kubeconfig

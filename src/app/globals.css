@@ -77,6 +77,38 @@
   }
 }
 
+/* Shimmer animation for loading skeletons */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    #E0DBD5 0%,
+    #D0C9C2 50%,
+    #E0DBD5 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.dark .animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    #3A3538 0%,
+    #4A4548 50%,
+    #3A3538 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
 /* Animation for reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *,
