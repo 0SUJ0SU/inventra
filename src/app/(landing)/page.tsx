@@ -1,31 +1,27 @@
 "use client";
 
-import { useState, Suspense, lazy } from "react";
+import { Suspense, lazy } from "react";
 import { useTheme } from "next-themes";
 import { Navbar } from "@/components/landing/navbar";
+import Hero from "@/components/landing/hero";
 
 const Dithering = lazy(() =>
-  import("@paper-design/shaders-react").then((mod) => ({ default: mod.Dithering }))
+  import("@paper-design/shaders-react").then((mod) => ({
+    default: mod.Dithering,
+  }))
 );
 
 export default function LandingPage() {
-  const [isHeroHovered, setIsHeroHovered] = useState(false);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
   return (
-    <>
+    <main>
       <Navbar />
 
-      {/* Hero Section */}
-      <section
-        id="hero"
-        className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16"
-        onMouseEnter={() => setIsHeroHovered(true)}
-        onMouseLeave={() => setIsHeroHovered(false)}
-      >
-
-        {/* Dithering Background */}
+      {/* Hero Section with Dithering Background */}
+      <div id="hero" className="relative overflow-hidden">
+        {/* Dithering Background - slow, subtle animation */}
         <Suspense fallback={<div className="absolute inset-0 bg-background" />}>
           <div className="absolute inset-0 z-0 pointer-events-none opacity-50 dark:opacity-40 mix-blend-multiply dark:mix-blend-screen">
             <Dithering
@@ -33,26 +29,15 @@ export default function LandingPage() {
               colorFront={isDark ? "#D4956A" : "#B87333"}
               shape="warp"
               type="4x4"
-              speed={isHeroHovered ? 0.5 : 0.15}
+              speed={0.05}
               className="size-full"
               minPixelRatio={1}
             />
           </div>
         </Suspense>
 
-        {/* Hero Content Placeholder */}
-        <div className="relative z-10 text-center px-4">
-          <p className="text-sm font-medium uppercase tracking-widest text-text-muted dark:text-text-muted-dark mb-4 font-space-grotesk">
-            Coming Soon
-          </p>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-text dark:text-text-dark mb-6">
-            <span className="font-fraunces italic">Hero Section</span>
-          </h1>
-          <p className="text-lg text-text-secondary dark:text-text-secondary-dark max-w-md mx-auto">
-            The full hero content with animations will be added in the next step.
-          </p>
-        </div>
-      </section>
+        <Hero />
+      </div>
 
       {/* Features Section */}
       <section
@@ -114,6 +99,6 @@ export default function LandingPage() {
           Inventra = Inventory + Extra — More than just stock tracking.
         </p>
       </footer>
-    </>
+    </main>
   );
 }

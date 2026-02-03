@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Menu } from "lucide-react";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -24,8 +23,6 @@ const navLinks = [
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
 
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
@@ -44,21 +41,16 @@ export function Navbar() {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className="fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl border-b border-border/20 dark:border-border-dark/20"
-      style={{
-        backgroundColor: isDark
-          ? "rgba(28, 25, 23, 0.75)"
-          : "rgba(252, 250, 245, 0.75)",
-      }}
+      className="fixed top-0 left-0 right-0 z-50 backdrop-blur-2xl border-b border-border/20 dark:border-border-dark/20 bg-[rgba(252,250,245,0.75)] dark:bg-[rgba(28,25,23,0.75)]"
     >
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid h-16 grid-cols-3 items-center">
+        <div className="grid grid-cols-2 lg:grid-cols-3 items-center h-16">
           {/* Left: Wordmark */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="flex items-center"
+            className="justify-self-start"
           >
             <Link
               href="/"
@@ -70,12 +62,12 @@ export function Navbar() {
             </Link>
           </motion.div>
 
-          {/* Center: Nav Links (Desktop) */}
+          {/* Center: Nav Links (Desktop) - page centered */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="hidden md:flex items-center justify-center gap-1"
+            className="hidden lg:flex items-center justify-self-center gap-1"
           >
             {navLinks.map((link, index) => (
               <motion.a
@@ -110,13 +102,13 @@ export function Navbar() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex items-center justify-end gap-2"
+            className="justify-self-end flex items-center gap-2"
           >
             {/* Theme Toggle */}
             <ThemeToggle />
 
             {/* Desktop CTA Buttons */}
-            <div className="hidden md:flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
@@ -136,7 +128,7 @@ export function Navbar() {
 
             {/* Mobile Menu Trigger */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild className="md:hidden">
+              <SheetTrigger asChild className="lg:hidden">
                 <Button
                   variant="ghost"
                   size="icon"

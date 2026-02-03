@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, Suspense, lazy } from "react"
+import { Suspense, lazy } from "react"
 import { useTheme } from "next-themes"
 
 const Dithering = lazy(() =>
@@ -8,17 +8,12 @@ const Dithering = lazy(() =>
 )
 
 export function HeroDithering() {
-  const [isHovered, setIsHovered] = useState(false)
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === "dark"
 
   return (
-    <section
-      className="relative w-full overflow-hidden"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Dithering Background */}
+    <section className="relative w-full overflow-hidden">
+      {/* Dithering Background - slow, subtle animation */}
       <Suspense fallback={<div className="absolute inset-0 bg-[var(--background)]" />}>
         <div className="absolute inset-0 z-0 pointer-events-none opacity-50 dark:opacity-40 mix-blend-multiply dark:mix-blend-screen">
           <Dithering
@@ -26,7 +21,7 @@ export function HeroDithering() {
             colorFront={isDark ? "#D4956A" : "#B87333"}
             shape="warp"
             type="4x4"
-            speed={isHovered ? 0.5 : 0.15}
+            speed={0.05}
             className="size-full"
             minPixelRatio={1}
           />
