@@ -1,36 +1,107 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
+# Dependencies
+node_modules
+.pnp
 .pnp.js
-.yarn/install-state.gz
 
-# testing
-/coverage
+# Build outputs
+.next
+out
+build
+dist
 
-# next.js
-/.next/
-/out/
+# Testing
+coverage
 
-# production
-/build
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*
 
-# local env files
-.env*.local
+# IDE / Editor
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
 
-# vercel
-.vercel
-
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Vercel
+.vercel
+
+# PWA
+public/sw.js
+public/workbox-*.js
+
+# Misc
+*.pem
+Thumbs.db
+
+# ── Security - Never commit these ──────────────────────────────
+# Secrets and credentials
+.env*.local
+*.secret
+*.secrets
+secrets.json
+credentials.json
+service-account*.json
+*-credentials.json
+
+# API keys and tokens
+.api-keys
+api-keys.json
+tokens.json
+auth.json
+
+# Private keys and certificates
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+id_rsa*
+id_ed25519*
+*.pub
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+dump.sql
+*.dump
+
+# AWS
+.aws/
+aws-exports.js
+
+# Google Cloud
+.gcloud/
+gcloud.json
+
+# Firebase
+firebase-debug.log
+.firebase/
+*-firebase-adminsdk-*.json
+
+# Stripe
+stripe-cli.json
+
+# Sentry
+.sentryclirc
+
+# Local config overrides
+local.json
+local.config.js
+*.local.js
+*.local.ts
