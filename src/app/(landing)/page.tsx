@@ -5,6 +5,8 @@ import { useTheme } from "next-themes";
 import { Navbar } from "@/components/landing/navbar";
 import Hero from "@/components/landing/hero";
 import FeaturesBento from "@/components/landing/features-bento";
+import HowItWorks from "@/components/landing/how-it-works";
+import DashboardPreview from "@/components/landing/dashboard-preview";
 
 const Dithering = lazy(() =>
   import("@paper-design/shaders-react").then((mod) => ({
@@ -42,6 +44,12 @@ export default function LandingPage() {
 
       {/* Features Section */}
       <FeaturesBento />
+
+      {/* How It Works Section */}
+      <HowItWorks />
+
+      {/* Dashboard Preview Section */}
+      <DashboardPreview />
 
       {/* Pricing Section */}
       <section

@@ -1,25 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import {
-  motion,
-  useInView,
-  AnimatePresence,
-  type Variants,
-} from "framer-motion";
-import {
-  QrCode,
-  ShieldCheck,
-  CreditCard,
-  Package,
-  BarChart3,
-  Truck,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-
-// Single source of truth for rotation timing
-const ROTATION_INTERVAL_MS = 5000;
-const ROTATION_INTERVAL_SEC = ROTATION_INTERVAL_MS / 1000;
+import { useRef } from "react";
+import { motion, useInView, type Variants } from "framer-motion";
 
 // Custom easing
 const ease: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -31,455 +13,315 @@ const containerVariants: Variants = {
     opacity: 1,
     transition: {
       staggerChildren: 0.08,
-      delayChildren: 0.2,
+      delayChildren: 0.1,
     },
   },
 };
 
-const itemVariants: Variants = {
-  hidden: { opacity: 0, x: -20 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.5, ease },
-  },
-};
-
-const contentVariants: Variants = {
+const cardVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: {
     opacity: 1,
     y: 0,
     transition: { duration: 0.5, ease },
   },
-  exit: {
-    opacity: 0,
-    y: -20,
-    transition: { duration: 0.3, ease },
-  },
 };
 
-// Feature data with enhanced descriptions
-interface Feature {
-  id: string;
-  number: string;
-  icon: LucideIcon;
-  title: string;
-  shortTitle: string;
-  description: string;
-  detail: string;
-}
+// ============================================
+// CARD COMPONENTS — Mix of content types
+// ============================================
 
-const features: Feature[] = [
-  {
-    id: "serial-tracking",
-    number: "01",
-    icon: QrCode,
-    title: "Serial Number Tracking",
-    shortTitle: "Serial Tracking",
-    description:
-      "Every unit gets a story. From the moment it arrives to the day it leaves your store.",
-    detail:
-      "Scan in, scan out. Know exactly which serial went to which customer, when it was sold, and its complete warranty timeline. No more guessing which unit is which — every item is uniquely identified and fully traceable.",
-  },
-  {
-    id: "warranty",
-    number: "02",
-    icon: ShieldCheck,
-    title: "Warranty Claims",
-    shortTitle: "Warranty Claims",
-    description:
-      "Customer returns and supplier claims, handled without the headache.",
-    detail:
-      "Full claim lifecycle tracking from customer receipt to supplier resolution. See pending claims, track RMA numbers, and never lose money on warranty issues again. Built-in timelines show exactly where each claim stands.",
-  },
-  {
-    id: "pos",
-    number: "03",
-    icon: CreditCard,
-    title: "Point of Sale",
-    shortTitle: "Point of Sale",
-    description:
-      "Checkout that actually knows your inventory.",
-    detail:
-      "Select specific serial numbers at checkout — not just SKUs. Receipts automatically include warranty dates and coverage details. Your customers leave informed, your records stay accurate.",
-  },
-  {
-    id: "stock",
-    number: "04",
-    icon: Package,
-    title: "Stock Management",
-    shortTitle: "Stock Control",
-    description:
-      "Purchase orders, receiving, transfers. Your inventory, under control.",
-    detail:
-      "Create POs, receive against them with serial capture, track stock across locations. Real-time levels mean you never oversell. Low stock alerts keep your best-sellers in stock.",
-  },
-  {
-    id: "reports",
-    number: "05",
-    icon: BarChart3,
-    title: "Business Reports",
-    shortTitle: "Reports",
-    description:
-      "Numbers that matter, formatted how you need them.",
-    detail:
-      "Sales by period, profit margins by product, inventory valuations, warranty claim rates. Export to Excel or PDF with one click. Schedule automated reports to hit your inbox every Monday.",
-  },
-  {
-    id: "suppliers",
-    number: "06",
-    icon: Truck,
-    title: "Supplier Portal",
-    shortTitle: "Suppliers",
-    description:
-      "Track every vendor relationship. See who delivers and who delays.",
-    detail:
-      "Purchase history by supplier, lead time tracking, claim success rates. Know which vendors are reliable and which cost you money in returns. Make smarter purchasing decisions backed by data.",
-  },
-];
-
-// Animated icon component
-function AnimatedIcon({
-  icon: Icon,
-  isActive,
-}: {
-  icon: LucideIcon;
-  isActive: boolean;
-}) {
+// 1. Serial Tracking — Typography + tiny serial list
+function SerialTrackingCard() {
   return (
     <motion.div
-      className="relative w-24 h-24 md:w-32 md:h-32 flex items-center justify-center"
-      animate={isActive ? { scale: [1, 1.05, 1] } : { scale: 1 }}
-      transition={{
-        duration: 2,
-        repeat: isActive ? Infinity : 0,
-        ease: "easeInOut",
-      }}
+      variants={cardVariants}
+      className="group relative rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 lg:col-span-2 transition-all duration-300 hover:border-[#B87333]/25"
     >
-      {/* Glow effect */}
-      <motion.div
-        className="absolute inset-0 rounded-2xl bg-[var(--accent-500)]/10"
-        animate={isActive ? { opacity: [0.1, 0.2, 0.1] } : { opacity: 0 }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-      />
-      {/* Icon container */}
-      <div className="relative z-10 w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center">
-        <Icon
-          className="text-[var(--accent-500)]"
-          size={48}
-          strokeWidth={1.5}
-        />
+      {/* Label */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#B87333]" />
+        <span className="text-[11px] font-heading font-semibold text-[#B87333] tracking-wide">
+          Serial Tracking
+        </span>
+      </div>
+
+      {/* Headline */}
+      <h3 className="font-heading font-bold text-xl md:text-2xl text-[var(--text)] mb-2 leading-tight">
+        Know every unit&apos;s story.
+      </h3>
+
+      {/* Description */}
+      <p className="text-sm text-[var(--text-muted)] mb-4 max-w-[340px] leading-relaxed">
+        From arrival to sale to warranty claim. Every serial number tracked, every transaction recorded.
+      </p>
+
+      {/* Tiny visual — simple serial list */}
+      <div className="space-y-1.5">
+        {["SN-2024-001847", "SN-2024-001832", "SN-2024-001829"].map((serial, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <span className="text-xs font-mono text-[#B87333]/70">{serial}</span>
+            <span className="h-px flex-1 bg-[var(--border)]" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500/40" />
+          </div>
+        ))}
       </div>
     </motion.div>
   );
 }
 
-// Feature selector item
-function FeatureSelector({
-  feature,
-  isActive,
-  onClick,
-}: {
-  feature: Feature;
-  isActive: boolean;
-  onClick: () => void;
-}) {
+// 2. Point of Sale — Typography-focused with price accent
+function POSCard() {
   return (
-    <motion.button
-      variants={itemVariants}
-      onClick={onClick}
-      className={`
-        group relative w-full text-left py-4 md:py-5 pl-6 pr-4
-        transition-colors duration-300
-        ${isActive ? "text-[var(--text)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"}
-      `}
+    <motion.div
+      variants={cardVariants}
+      className="group relative rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 transition-all duration-300 hover:border-[#B87333]/25"
     >
-      {/* Active indicator line */}
-      <motion.div
-        className="absolute left-0 top-0 bottom-0 w-[2px] bg-[var(--accent-500)]"
-        initial={{ scaleY: 0 }}
-        animate={{ scaleY: isActive ? 1 : 0 }}
-        transition={{ duration: 0.3, ease }}
-      />
-
-      {/* Hover background */}
-      <div
-        className={`
-          absolute inset-0 transition-opacity duration-300
-          ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-50"}
-        `}
-        style={{
-          background: "linear-gradient(90deg, var(--accent-500)/0.08 0%, transparent 100%)",
-        }}
-      />
-
-      <div className="relative z-10 flex items-center gap-4">
-        {/* Number */}
-        <span
-          className={`
-            font-heading text-xs tracking-[0.2em] transition-colors duration-300
-            ${isActive ? "text-[var(--accent-500)]" : "text-[var(--text-muted)]"}
-          `}
-        >
-          {feature.number}
-        </span>
-
-        {/* Title */}
-        <span className="font-heading font-semibold text-sm md:text-base">
-          {feature.shortTitle}
+      {/* Label */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#B87333]" />
+        <span className="text-[11px] font-heading font-semibold text-[#B87333] tracking-wide">
+          Point of Sale
         </span>
       </div>
-    </motion.button>
+
+      {/* Headline */}
+      <h3 className="font-heading font-bold text-lg md:text-xl text-[var(--text)] mb-2 leading-tight">
+        Serial-aware checkout.
+      </h3>
+
+      {/* Description */}
+      <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+        Select exact units at sale. Receipts include warranty info automatically.
+      </p>
+
+      {/* Price accent */}
+      <div className="mt-4 pt-3 border-t border-[var(--border)]">
+        <span className="text-2xl font-heading font-bold text-[var(--text)]">$1,198</span>
+        <span className="text-xs text-[var(--text-muted)] ml-2">ready</span>
+      </div>
+    </motion.div>
   );
 }
 
+// 3. Warranty Claims — Minimal timeline
+function WarrantyCard() {
+  return (
+    <motion.div
+      variants={cardVariants}
+      className="group relative rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 transition-all duration-300 hover:border-[#B87333]/25"
+    >
+      {/* Label */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#B87333]" />
+        <span className="text-[11px] font-heading font-semibold text-[#B87333] tracking-wide">
+          Warranty Claims
+        </span>
+      </div>
+
+      {/* Headline */}
+      <h3 className="font-heading font-bold text-lg md:text-xl text-[var(--text)] mb-2 leading-tight">
+        Receipt to resolution.
+      </h3>
+
+      {/* Description */}
+      <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+        Track every claim from customer receipt to supplier credit.
+      </p>
+
+      {/* Full-width timeline */}
+      <div className="mt-4 w-full flex items-center">
+        <span className="w-2.5 h-2.5 rounded-full bg-[#B87333] shrink-0" />
+        <span className="flex-1 h-0.5 bg-[#B87333]" />
+        <span className="w-2.5 h-2.5 rounded-full bg-[#B87333] shrink-0" />
+        <span className="flex-1 h-0.5 bg-[var(--border)]" />
+        <span className="w-2.5 h-2.5 rounded-full border-2 border-[var(--border)] bg-[var(--surface)] shrink-0" />
+      </div>
+      <div className="flex mt-1.5">
+        <span className="flex-1 text-[9px] text-[var(--text-muted)] text-left">Received</span>
+        <span className="flex-1 text-[9px] text-[var(--text)] text-center">Review</span>
+        <span className="flex-1 text-[9px] text-[var(--text-muted)] text-right">Done</span>
+      </div>
+    </motion.div>
+  );
+}
+
+// 4. Reports — Big stat number
+function ReportsCard() {
+  return (
+    <motion.div
+      variants={cardVariants}
+      className="group relative rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 transition-all duration-300 hover:border-[#B87333]/25"
+    >
+      {/* Big number */}
+      <span className="block font-heading font-bold text-4xl md:text-5xl text-[#B87333]/80 leading-none mb-2">
+        24+
+      </span>
+
+      {/* Label */}
+      <span className="text-xs font-heading font-semibold text-[var(--text)] tracking-wide uppercase">
+        Report Types
+      </span>
+
+      {/* Description */}
+      <p className="text-sm text-[var(--text-muted)] mt-1.5 leading-relaxed">
+        Sales, margins, inventory value, exports.
+      </p>
+    </motion.div>
+  );
+}
+
+// 5. Stock Control — Typography-focused
+function StockControlCard() {
+  return (
+    <motion.div
+      variants={cardVariants}
+      className="group relative rounded-2xl border border-[var(--border)] bg-[var(--background)] p-6 transition-all duration-300 hover:border-[#B87333]/25"
+    >
+      {/* Label */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#B87333]" />
+        <span className="text-[11px] font-heading font-semibold text-[#B87333] tracking-wide">
+          Stock Control
+        </span>
+      </div>
+
+      {/* Headline */}
+      <h3 className="font-heading font-bold text-lg md:text-xl text-[var(--text)] mb-2 leading-tight">
+        Never oversell.
+      </h3>
+
+      {/* Description */}
+      <p className="text-sm text-[var(--text-muted)] leading-relaxed">
+        Real-time levels, low stock alerts, purchase orders.
+      </p>
+
+      {/* Simple indicator */}
+      <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--surface)] border border-[var(--border)]">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+        <span className="text-xs font-medium text-[var(--text)]">142 units</span>
+      </div>
+    </motion.div>
+  );
+}
+
+// 6. Business Management — Typography + tiny bars
+function BusinessCard() {
+  const items = [
+    { label: "Rent", width: "60%" },
+    { label: "Payroll", width: "100%" },
+    { label: "Utilities", width: "25%" },
+  ];
+
+  return (
+    <motion.div
+      variants={cardVariants}
+      className="group relative rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 md:col-span-2 lg:col-span-3 transition-all duration-300 hover:border-[#B87333]/25"
+    >
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {/* Text content */}
+        <div className="flex-1">
+          {/* Label */}
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#B87333]" />
+            <span className="text-[11px] font-heading font-semibold text-[#B87333] tracking-wide">
+              Business Management
+            </span>
+          </div>
+
+          {/* Headline */}
+          <h3 className="font-heading font-bold text-lg md:text-xl text-[var(--text)] mb-2 leading-tight">
+            More than inventory.
+          </h3>
+
+          {/* Description */}
+          <p className="text-sm text-[var(--text-muted)] leading-relaxed max-w-[320px]">
+            Track expenses, manage cash flow, understand your business.
+          </p>
+        </div>
+
+        {/* Expense bars */}
+        <div className="w-full md:flex-1 md:max-w-md space-y-2">
+          {items.map((item, i) => (
+            <div key={i} className="space-y-0.5">
+              <span className="text-[10px] text-[var(--text-muted)]">{item.label}</span>
+              <div className="h-1.5 rounded-full bg-[var(--border)] overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-[#B87333]/60"
+                  style={{ width: item.width }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
+
 export default function FeaturesBento() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [rotationKey, setRotationKey] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
-  const isInView = useInView(sectionRef, {
-    once: true,
-    margin: "-100px 0px",
-  });
-
-  const activeFeature = features[activeIndex];
-
-  // Start or restart the auto-rotation interval
-  const startInterval = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-    intervalRef.current = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % features.length);
-      setRotationKey((prev) => prev + 1);
-    }, ROTATION_INTERVAL_MS);
-  }, []);
-
-  // Handle manual feature selection
-  const handleFeatureSelect = useCallback((index: number) => {
-    setActiveIndex(index);
-    setRotationKey((prev) => prev + 1);
-    startInterval(); // Reset the timer
-  }, [startInterval]);
-
-  // Auto-rotate features
-  useEffect(() => {
-    startInterval();
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [startInterval]);
+  const isInView = useInView(sectionRef, { once: true, margin: "-100px 0px" });
 
   return (
     <section
       ref={sectionRef}
       id="features"
-      className="relative py-20 md:py-28 lg:py-32 overflow-hidden bg-[var(--background)]"
+      className="relative py-20 md:py-28 overflow-hidden bg-[var(--background)]"
     >
-      {/* Noise texture overlay */}
+      {/* Grain texture */}
       <div
-        className="absolute inset-0 opacity-[0.22] dark:opacity-[0.04] pointer-events-none mix-blend-multiply dark:mix-blend-normal"
+        className="absolute inset-0 opacity-[0.12] dark:opacity-[0.03] pointer-events-none mix-blend-multiply dark:mix-blend-normal"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
         }}
       />
 
-      {/* Subtle gradient accent */}
-      <div
-        className="absolute top-0 left-1/4 w-[600px] h-[600px] opacity-[0.03] dark:opacity-[0.04] pointer-events-none"
-        style={{
-          background: "radial-gradient(circle, var(--accent-500) 0%, transparent 70%)",
-        }}
-      />
-
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-6">
         {/* Section header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, ease }}
-          className="mb-12 md:mb-16 lg:mb-20"
+          className="mb-12 md:mb-16"
         >
           {/* Label */}
-          <span className="inline-block text-xs md:text-sm font-heading font-bold text-[var(--accent-600)] dark:text-[var(--accent-400)] mb-4 tracking-[0.2em] uppercase">
+          <span className="inline-block font-heading font-bold text-xs tracking-[0.3em] uppercase text-[#B87333] mb-3">
             Features
           </span>
 
-          {/* Headline - all Fraunces italic */}
-          <h2 className="font-display italic text-[var(--text)] text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-[1.1]">
+          {/* Headline */}
+          <h2 className="font-display italic text-[var(--text)] text-4xl md:text-5xl lg:text-6xl leading-[1.1] mb-4">
             Every serial. Every sale. Every claim.
           </h2>
 
-          {/* Subheadline */}
-          <p className="mt-4 md:mt-6 text-[var(--text-muted)] text-base md:text-lg font-body md:whitespace-nowrap">
-            Six core modules, zero fluff. Every feature exists because a real electronics retailer needed it.
+          {/* Subtext */}
+          <p className="font-heading text-sm md:text-base text-[var(--text-muted)]">
+            Six modules built for tech retail. Zero fluff.
           </p>
         </motion.div>
 
-        {/* Main content area - LOCKED height at all breakpoints for zero layout shift */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr,340px] xl:grid-cols-[1fr,380px] gap-6 md:gap-8 h-[520px] min-h-[520px] max-h-[520px] md:h-[600px] md:min-h-[600px] md:max-h-[600px]">
-          {/* Left: Featured content */}
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            animate={isInView ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.2, ease }}
-            className="h-full min-h-0 max-h-full overflow-hidden"
-          >
-            <div className="relative h-full rounded-2xl bg-[var(--surface)] border border-[var(--border)] p-6 md:p-8 lg:p-10 flex flex-col overflow-hidden">
-              {/* Corner accent */}
-              <div className="absolute top-0 right-0 w-20 h-20 overflow-hidden">
-                <div className="absolute top-4 right-4 w-px h-8 bg-[var(--border)]" />
-                <div className="absolute top-4 right-4 w-8 h-px bg-[var(--border)]" />
-              </div>
-              <div className="absolute bottom-0 left-0 w-20 h-20 overflow-hidden">
-                <div className="absolute bottom-4 left-4 w-px h-8 bg-[var(--border)]" />
-                <div className="absolute bottom-4 left-4 w-8 h-px bg-[var(--border)]" />
-              </div>
-
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeFeature.id}
-                  variants={contentVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  className="h-full flex flex-col overflow-hidden"
-                >
-                  {/* Number badge */}
-                  <div className="flex items-center gap-3 mb-4 lg:mb-6 shrink-0">
-                    <span className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-[var(--accent-500)]/30 text-[var(--accent-500)] font-heading text-sm">
-                      {activeFeature.number}
-                    </span>
-                    <div className="h-px flex-1 bg-gradient-to-r from-[var(--border)] to-transparent" />
-                  </div>
-
-                  {/* Icon */}
-                  <div className="mb-4 lg:mb-6 shrink-0">
-                    <AnimatedIcon icon={activeFeature.icon} isActive={true} />
-                  </div>
-
-                  {/* Title */}
-                  <h3 className="font-heading font-bold text-[var(--text)] text-2xl md:text-3xl lg:text-4xl mb-3 lg:mb-4 shrink-0">
-                    {activeFeature.title}
-                  </h3>
-
-                  {/* Description */}
-                  <p className="text-[var(--text-secondary)] text-lg md:text-xl mb-3 lg:mb-4 font-body shrink-0">
-                    {activeFeature.description}
-                  </p>
-
-                  {/* Detail - can shrink if needed */}
-                  <p className="text-[var(--text-muted)] text-base leading-relaxed font-body shrink-0">
-                    {activeFeature.detail}
-                  </p>
-
-                  {/* Spacer - fills remaining space */}
-                  <div className="flex-1 min-h-4" />
-
-                  {/* Learn more link - pinned to bottom */}
-                  <motion.a
-                    href="#"
-                    className="inline-flex items-center gap-2 text-[var(--accent-600)] dark:text-[var(--accent-400)] font-body font-medium hover:text-[var(--accent-500)] transition-colors group shrink-0"
-                    whileHover={{ x: 4 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    Learn more
-                    <svg
-                      className="w-4 h-4 transition-transform group-hover:translate-x-1"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </motion.a>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </motion.div>
-
-          {/* Right: Feature selector (tablet/desktop) */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate={isInView ? "visible" : "hidden"}
-            className="hidden md:block h-full min-h-0 max-h-full overflow-hidden"
-          >
-            <div className="h-full rounded-2xl bg-[var(--surface)]/50 border border-[var(--border)] overflow-hidden flex flex-col">
-              {/* Header */}
-              <div className="px-6 py-4 border-b border-[var(--border)] shrink-0">
-                <span className="text-xs font-heading font-bold tracking-[0.15em] text-[var(--text-muted)] uppercase">
-                  Select Feature
-                </span>
-              </div>
-
-              {/* Feature list - fills available space */}
-              <div className="py-2 flex-1 overflow-hidden">
-                {features.map((feature, index) => (
-                  <FeatureSelector
-                    key={feature.id}
-                    feature={feature}
-                    isActive={index === activeIndex}
-                    onClick={() => handleFeatureSelect(index)}
-                  />
-                ))}
-              </div>
-
-              {/* Footer with progress - stays at bottom */}
-              <div className="px-6 py-4 border-t border-[var(--border)] shrink-0">
-                <div className="flex items-center justify-between text-xs text-[var(--text-muted)] mb-2">
-                  <span className="font-heading">{activeFeature.number} / 06</span>
-                  <span className="font-body">Auto-rotating</span>
-                </div>
-                {/* Progress bar */}
-                <div className="h-px bg-[var(--border)] rounded-full overflow-hidden">
-                  <motion.div
-                    key={rotationKey}
-                    className="h-full bg-[var(--accent-500)]"
-                    initial={{ width: "0%" }}
-                    animate={{ width: "100%" }}
-                    transition={{ duration: ROTATION_INTERVAL_SEC, ease: "linear" }}
-                  />
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Mobile progress bar - only visible below md */}
+        {/* Bento Grid */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={isInView ? { opacity: 1 } : {}}
-          transition={{ duration: 0.6, delay: 0.4, ease }}
-          className="md:hidden mt-6"
+          variants={containerVariants}
+          initial="hidden"
+          animate={isInView ? "visible" : "hidden"}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 [grid-auto-flow:dense]"
         >
-          <div className="flex items-center justify-between text-xs text-[var(--text-muted)] mb-2">
-            <span className="font-heading">{activeFeature.number} / 06</span>
-            <span className="font-body">Auto-rotating</span>
-          </div>
-          <div className="h-px bg-[var(--border)] rounded-full overflow-hidden">
-            <motion.div
-              key={rotationKey}
-              className="h-full bg-[var(--accent-500)]"
-              initial={{ width: "0%" }}
-              animate={{ width: "100%" }}
-              transition={{ duration: ROTATION_INTERVAL_SEC, ease: "linear" }}
-            />
-          </div>
+          {/* Row 1: Serial (2col) + POS (1col) */}
+          <SerialTrackingCard />
+          <POSCard />
+          {/* Row 2: Warranty + Reports + Stock (1col each) */}
+          <WarrantyCard />
+          <ReportsCard />
+          <StockControlCard />
+          {/* Row 3: Business (full width) */}
+          <BusinessCard />
         </motion.div>
-
-        {/* Bottom decorative line */}
-        <motion.div
-          initial={{ scaleX: 0 }}
-          animate={isInView ? { scaleX: 1 } : {}}
-          transition={{ duration: 1, delay: 0.5, ease }}
-          className="mt-16 md:mt-20 h-px bg-gradient-to-r from-transparent via-[var(--border)] to-transparent origin-center"
-        />
       </div>
     </section>
   );
