@@ -7,6 +7,8 @@ import Hero from "@/components/landing/hero";
 import FeaturesBento from "@/components/landing/features-bento";
 import HowItWorks from "@/components/landing/how-it-works";
 import DashboardPreview from "@/components/landing/dashboard-preview";
+import Stats from "@/components/landing/stats";
+import MarqueeTicker from "@/components/landing/marquee-ticker";
 
 const Dithering = lazy(() =>
   import("@paper-design/shaders-react").then((mod) => ({
@@ -50,6 +52,12 @@ export default function LandingPage() {
 
       {/* Dashboard Preview Section */}
       <DashboardPreview />
+
+      {/* Marquee Ticker */}
+      <MarqueeTicker />
+
+      {/* Stats Section */}
+      <Stats />
 
       {/* Pricing Section */}
       <section
