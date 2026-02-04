@@ -109,6 +109,21 @@
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
+/* Vertical scroll animation for testimonials */
+@keyframes scroll-up {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(var(--scroll-height, 0px) * -1));
+  }
+}
+
+.animate-scroll-up {
+  animation: scroll-up var(--scroll-duration, 25s) linear infinite;
+  will-change: transform;
+}
+
 /* Animation for reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -9,6 +9,7 @@ import HowItWorks from "@/components/landing/how-it-works";
 import DashboardPreview from "@/components/landing/dashboard-preview";
 import Stats from "@/components/landing/stats";
 import MarqueeTicker from "@/components/landing/marquee-ticker";
+import Testimonials from "@/components/landing/testimonials";
 
 const Dithering = lazy(() =>
   import("@paper-design/shaders-react").then((mod) => ({
@@ -58,6 +59,9 @@ export default function LandingPage() {
 
       {/* Stats Section */}
       <Stats />
+
+      {/* Testimonials Section */}
+      <Testimonials />
 
       {/* Pricing Section */}
       <section
