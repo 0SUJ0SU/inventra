@@ -134,7 +134,7 @@ export default function HowItWorks() {
         }}
       />
 
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-6">
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-6">
         {/* Two-part layout */}
         <div className="flex flex-col lg:flex-row lg:gap-16 xl:gap-24">
           {/* Left: Header (sticky on desktop) */}
