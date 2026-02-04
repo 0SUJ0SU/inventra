@@ -10,6 +10,7 @@ import DashboardPreview from "@/components/landing/dashboard-preview";
 import Stats from "@/components/landing/stats";
 import MarqueeTicker from "@/components/landing/marquee-ticker";
 import Testimonials from "@/components/landing/testimonials";
+import About from "@/components/landing/about";
 
 const Dithering = lazy(() =>
   import("@paper-design/shaders-react").then((mod) => ({
@@ -63,6 +64,9 @@ export default function LandingPage() {
       {/* Testimonials Section */}
       <Testimonials />
 
+      {/* About Section */}
+      <About />
+
       {/* Pricing Section */}
       <section
         id="pricing"
@@ -77,24 +81,6 @@ export default function LandingPage() {
           </h2>
           <p className="text-text-secondary dark:text-text-secondary-dark mt-4">
             Pricing tiers and details coming soon.
-          </p>
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section
-        id="about"
-        className="min-h-[50vh] flex items-center justify-center border-t border-border dark:border-border-dark"
-      >
-        <div className="text-center px-4">
-          <p className="text-sm font-medium uppercase tracking-widest text-accent-500 mb-4 font-space-grotesk">
-            Section
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-text dark:text-text-dark font-space-grotesk">
-            About
-          </h2>
-          <p className="text-text-secondary dark:text-text-secondary-dark mt-4">
-            About Inventra content coming soon.
           </p>
         </div>
       </section>
