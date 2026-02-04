@@ -216,7 +216,7 @@ function BusinessCard() {
   return (
     <motion.div
       variants={cardVariants}
-      className="group relative rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 md:col-span-2 lg:col-span-3 transition-all duration-300 hover:border-[#B87333]/25"
+      className="group relative rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 lg:col-span-3 transition-all duration-300 hover:border-[#B87333]/25"
     >
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         {/* Text content */}
