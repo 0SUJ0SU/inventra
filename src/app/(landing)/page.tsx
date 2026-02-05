@@ -12,6 +12,8 @@ import MarqueeTicker from "@/components/landing/marquee-ticker";
 import Testimonials from "@/components/landing/testimonials";
 import About from "@/components/landing/about";
 import { Pricing } from "@/components/landing/pricing";
+import { CTA } from "@/components/landing/cta";
+import { Footer } from "@/components/landing/footer";
 
 const Dithering = lazy(() =>
   import("@paper-design/shaders-react").then((mod) => ({
@@ -71,12 +73,11 @@ export default function LandingPage() {
       {/* Pricing Section */}
       <Pricing />
 
-      {/* Footer Placeholder */}
-      <footer className="py-8 border-t border-border dark:border-border-dark">
-        <p className="text-center text-sm text-text-muted dark:text-text-muted-dark">
-          Inventra = Inventory + Extra — More than just stock tracking.
-        </p>
-      </footer>
+      {/* Final CTA Section */}
+      <CTA />
+
+      {/* Footer */}
+      <Footer />
     </main>
   );
 }

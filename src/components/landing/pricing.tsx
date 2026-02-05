@@ -97,7 +97,7 @@ export function Pricing() {
         }}
       />
 
-      <div className="container relative mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-6">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
