@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/* ————————————————————————————————————————————
+   INVENTRA — Blueprint Aesthetic
+   Two-tone: Deep Royal Blue + Warm Cream
+   ———————————————————————————————————————————— */
+
+@theme {
+  /* — Primary Blue — */
+  --color-blue-primary: #1400FF;
+  --color-blue-dark: #0F00CC;
+  --color-blue-light: #3D2FFF;
+
+  /* — Warm Cream — */
+  --color-cream-primary: #E8E4DD;
+  --color-cream-light: #F0EDE7;
+  --color-cream-dark: #D9D4CC;
+
+  /* — Functional (app only, NOT landing) — */
+  --color-success: #22C55E;
+  --color-warning: #EAB308;
+  --color-error: #EF4444;
+  --color-info: #3B82F6;
+
+  /* — Fonts — */
+  --font-sans: var(--font-space-grotesk), "Space Grotesk", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
+
+  /* — Easing — */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ————————————————————————————————————————————
+   BASE STYLES
+   ———————————————————————————————————————————— */
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-cream-primary);
+  color: var(--color-blue-primary);
+  overflow-x: hidden;
+}
+
+/* — Selection — */
+::selection {
+  background-color: var(--color-blue-primary);
+  color: var(--color-cream-primary);
+}
+
+/* — Scrollbar (thin, blueprint-styled) — */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cream-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-blue-primary);
+}
+
+/* ————————————————————————————————————————————
+   UTILITY CLASSES
+   ———————————————————————————————————————————— */
+
+/* Monospace uppercase labels — the blueprint signature */
+.label-mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  line-height: 1.4;
+}
+
+/* Section markers: [INV.1] format */
+.section-marker {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+
+/* Massive headline styling */
+.headline-massive {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+}
+
+/* Blueprint grid line */
+.line-blueprint {
+  background-color: var(--color-blue-primary);
+  opacity: 0.15;
+}
+
+.line-blueprint-cream {
+  background-color: var(--color-cream-primary);
+  opacity: 0.15;
+}
