@@ -4,6 +4,7 @@ import { useState } from "react";
 import { LoadingScreen } from "@/components/landing/loading-screen";
 import { Navbar } from "@/components/landing/navbar";
 import { Hero } from "@/components/landing/hero";
+import { About } from "@/components/landing/about";
 
 export default function LandingPage() {
   const [loadingComplete, setLoadingComplete] = useState(false);
@@ -14,17 +15,7 @@ export default function LandingPage() {
       <Navbar />
       <Hero />
 
-      {/* ─── About section placeholder (next milestone) ─── */}
-      <section id="about" className="relative min-h-screen bg-blue-primary px-4 py-32">
-        <div className="flex items-baseline justify-between">
-          <span className="font-mono text-xs uppercase tracking-[0.2em] text-cream-primary/60">
-            ABOUT
-          </span>
-          <span className="font-mono text-xs tracking-[0.15em] text-cream-primary/60">
-            [INV.2]
-          </span>
-        </div>
-      </section>
+      <About />
 
       {/* ─── Services section placeholder ─── */}
       <section id="services" className="relative min-h-screen bg-cream-primary px-4 py-32">

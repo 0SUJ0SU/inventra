@@ -119,7 +119,7 @@ export function Hero() {
               Inventory + Extra
             </p>
             <p className="font-sans text-base leading-relaxed text-cream-primary md:text-lg">
-              Inventory, sales, warranties, serial tracking, and business analytics — unified in one system built for tech retail.
+              Inventory, sales, warranties, serial tracking, and business analytics. Unified in one system built for tech retail.
             </p>
           </div>
 
