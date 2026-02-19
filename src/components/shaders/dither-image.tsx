@@ -245,8 +245,8 @@ export function DitherImage({
 
     // ─── Textured quad (for main shader) ───
     const texQuadVerts = new Float32Array([
-      -1,-1, 0,0,  1,-1, 1,0,  -1,1, 0,1,
-      -1,1, 0,1,   1,-1, 1,0,   1,1, 1,1,
+      -1,-1, 0,1,  1,-1, 1,1,  -1,1, 0,0,
+      -1,1, 0,0,   1,-1, 1,1,   1,1, 1,0,
     ]);
     const texQuadBuf = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, texQuadBuf);

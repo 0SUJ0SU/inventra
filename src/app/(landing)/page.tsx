@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { LoadingScreen } from "@/components/landing/loading-screen";
 import { Navbar } from "@/components/landing/navbar";
+import { Hero } from "@/components/landing/hero";
 
 export default function LandingPage() {
   const [loadingComplete, setLoadingComplete] = useState(false);
@@ -10,53 +11,40 @@ export default function LandingPage() {
   return (
     <>
       <LoadingScreen onComplete={() => setLoadingComplete(true)} />
-
       <Navbar />
+      <Hero />
 
-      {/* Hero placeholder */}
-      <section className="relative min-h-screen flex flex-col justify-end px-4 pb-16 bg-blue-primary">
-        <h1
-          className="font-sans font-black leading-[0.85] tracking-tight text-cream-primary"
-          style={{ fontSize: "clamp(80px, 15vw, 200px)" }}
-        >
-          Inventra
-        </h1>
-        <p className="font-mono text-xs tracking-[0.3em] uppercase mt-6 max-w-md text-cream-primary opacity-60">
-          Answering all of your inventory management needs.
-        </p>
-      </section>
-
-      {/* Cream test section */}
-      <section className="min-h-screen px-4 py-24 bg-cream-primary">
-        <div className="flex justify-between">
-          <span className="font-mono text-xs tracking-[0.2em] uppercase text-blue-primary">
-            SERVICES
+      {/* ─── About section placeholder (next milestone) ─── */}
+      <section id="about" className="relative min-h-screen bg-blue-primary px-4 py-32">
+        <div className="flex items-baseline justify-between">
+          <span className="font-mono text-xs uppercase tracking-[0.2em] text-cream-primary/60">
+            ABOUT
           </span>
-          <span className="font-mono text-xs tracking-[0.2em] uppercase text-blue-primary">
-            [INV.1]
+          <span className="font-mono text-xs tracking-[0.15em] text-cream-primary/60">
+            [INV.2]
           </span>
         </div>
-        <div className="mt-24 flex items-end gap-8">
-          <h2
-            className="font-sans font-black leading-[0.85] tracking-tight text-blue-primary"
-            style={{ fontSize: "clamp(60px, 12vw, 160px)" }}
-          >
+      </section>
+
+      {/* ─── Services section placeholder ─── */}
+      <section id="services" className="relative min-h-screen bg-cream-primary px-4 py-32">
+        <div className="flex items-baseline justify-between">
+          <span className="font-mono text-xs uppercase tracking-[0.2em] text-blue-primary/60">
+            SERVICES
+          </span>
+          <span className="font-mono text-xs tracking-[0.15em] text-blue-primary/60">
+            [INV.3]
+          </span>
+        </div>
+        <div className="mt-24 flex items-end gap-4">
+          <h2 className="font-sans text-[clamp(60px,12vw,160px)] font-bold leading-[0.85] tracking-[-0.03em] text-blue-primary">
             Our
           </h2>
-          <div className="h-32 w-px hidden lg:block bg-blue-primary opacity-20" />
-          <h2
-            className="font-sans font-black leading-[0.85] tracking-tight text-blue-primary"
-            style={{ fontSize: "clamp(60px, 12vw, 160px)" }}
-          >
+          <div className="mx-4 h-[clamp(50px,10vw,130px)] w-px bg-blue-primary/30" />
+          <h2 className="font-sans text-[clamp(60px,12vw,160px)] font-bold leading-[0.85] tracking-[-0.03em] text-blue-primary">
             Services
           </h2>
         </div>
-      </section>
-
-      <section className="min-h-[50vh] px-4 py-24 bg-blue-primary">
-        <span className="font-mono text-xs tracking-[0.2em] uppercase text-cream-primary opacity-40">
-          MORE SECTIONS COMING IN M4+
-        </span>
       </section>
     </>
   );

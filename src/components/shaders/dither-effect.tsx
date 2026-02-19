@@ -49,10 +49,24 @@ export function DitherEffect({
   return (
     <div className={className} style={style}>
       <div className="relative w-full h-full overflow-hidden">
-        {/* Layer 1: Animated dithering wave (bottom) */}
+        {/* Layer 1: Duotone halftone image with trail reveal (bottom) */}
+        <DitherImage
+          src={src}
+          alt={alt}
+          darkColor={darkColor}
+          lightColor={lightColor}
+          dotSize={dotSize}
+          halftoneStrength={halftoneStrength}
+          brushSize={brushSize}
+          trailFade={trailFade}
+          hoverReveal={hoverReveal}
+          className="absolute inset-0"
+        />
+
+        {/* Layer 2: Animated dithering wave overlay (top, blended) */}
         <Suspense fallback={null}>
           <div
-            className="absolute inset-0 z-0 pointer-events-none"
+            className="absolute inset-0 z-[1] pointer-events-none mix-blend-multiply"
             style={{ opacity: waveOpacity }}
           >
             <Dithering
@@ -66,20 +80,6 @@ export function DitherEffect({
             />
           </div>
         </Suspense>
-
-        {/* Layer 2: Duotone halftone image with trail reveal (top) */}
-        <DitherImage
-          src={src}
-          alt={alt}
-          darkColor={darkColor}
-          lightColor={lightColor}
-          dotSize={dotSize}
-          halftoneStrength={halftoneStrength}
-          brushSize={brushSize}
-          trailFade={trailFade}
-          hoverReveal={hoverReveal}
-          className="absolute inset-0 z-1"
-        />
       </div>
     </div>
   );
