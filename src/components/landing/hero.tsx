@@ -124,16 +124,16 @@ export function Hero() {
           </div>
 
           {/* Right side — CTAs stacked */}
-          <div ref={ctaRef} className="flex flex-col gap-3 md:items-end">
+          <div ref={ctaRef} className="pointer-events-auto flex flex-col gap-3 md:items-end">
             <a
               href="/register"
-              className="pointer-events-auto font-mono text-sm uppercase tracking-[0.15em] text-cream-primary/60 transition-colors hover:text-cream-primary"
+              className="pointer-events-auto font-mono text-sm uppercase tracking-[0.15em] text-cream-primary transition-all duration-300 hover:tracking-[0.25em]"
             >
               [ Get Started &rarr; ]
             </a>
             <a
               href="/login"
-              className="pointer-events-auto font-mono text-sm uppercase tracking-[0.15em] text-cream-primary/60 transition-colors hover:text-cream-primary"
+              className="pointer-events-auto font-mono text-sm uppercase tracking-[0.15em] text-cream-primary transition-all duration-300 hover:tracking-[0.25em]"
             >
               [ Log In &rarr; ]
             </a>

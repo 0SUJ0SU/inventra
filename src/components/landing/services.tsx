@@ -250,13 +250,22 @@ export function Services() {
           {/* Left: Single persistent DitherEffect — fixed height, never resizes */}
           <div ref={imageRef} className="relative lg:pr-8 self-start">
             <div className="relative h-[498px] md:h-[663px] overflow-hidden">
-              {isVisible && (
-                <DitherEffect
-                  src={services[openIndex].image}
-                  alt={services[openIndex].title}
-                  className="w-full h-full object-cover"
-                />
-              )}
+              <DitherEffect
+                src={services[openIndex].image}
+                alt={services[openIndex].title}
+                className="w-full h-full object-cover"
+                darkColor="#1925AA"
+                lightColor="#B8B0E0"
+                dotSize={4}
+                halftoneStrength={0.9}
+                brushSize={280}
+                trailFade={0.97}
+                paused={!isVisible}
+                waveColor="#1925AA"
+                waveSpeed={0.25}
+                waveOpacity={0.3}
+                waveShape="warp"
+              />
             </div>
           </div>
 

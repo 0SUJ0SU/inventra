@@ -21,6 +21,7 @@ interface DitherEffectProps {
   waveSpeed?: number;
   waveOpacity?: number;
   waveShape?: "warp" | "wave" | "none";
+  paused?: boolean;
   style?: React.CSSProperties;
 }
 
@@ -39,17 +40,19 @@ export function DitherEffect({
   waveSpeed = 0.3,
   waveOpacity = 0.35,
   waveShape = "warp",
+  paused = false,
   style,
 }: DitherEffectProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isInView, setIsInView] = useState(true);
+  const isVisible = !paused && isInView;
 
   useEffect(() => {
     if (!containerRef.current) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsVisible(entry.isIntersecting);
+        setIsInView(entry.isIntersecting);
       },
       { rootMargin: "200px" }
     );
