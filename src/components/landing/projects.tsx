@@ -635,7 +635,8 @@ export function Projects() {
     <section
       id="projects"
       ref={sectionRef}
-      className="relative z-50 overflow-hidden bg-[#E8E4DD]"
+      className="relative z-[2] bg-[#E8E4DD]"
+      style={{ clipPath: "inset(0 0 0 0)" }}
     >
       {/* Blueprint grid */}
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
@@ -660,7 +661,7 @@ export function Projects() {
             className="label-left font-mono text-[11px] uppercase tracking-[0.2em]"
             style={{ color: "#1925AA" }}
           >
-            PROJECTS
+            PREVIEW
           </span>
           <span
             className="label-right font-mono text-[11px] uppercase tracking-[0.2em]"
@@ -801,7 +802,7 @@ export function Projects() {
           </button>
         </div>
 
-        <div className="pb-16 md:pb-24" />
+        <div className="h-16 md:h-24" />
       </div>
     </section>
   );
