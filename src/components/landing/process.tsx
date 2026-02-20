@@ -151,7 +151,7 @@ export function Process() {
   );
 
   return (
-    <section ref={sectionRef} className="relative bg-cream-primary">
+    <section ref={sectionRef} className="relative z-1 bg-cream-primary">
       <div ref={pinRef} className="relative h-screen overflow-hidden">
         {/* ── Blueprint grid lines ── */}
         <div className="absolute inset-0 pointer-events-none">

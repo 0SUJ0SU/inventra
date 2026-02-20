@@ -44,6 +44,13 @@ export function About() {
       {/* ── ABOUT CONTENT (BLUE BG) ── */}
       <div className="bg-blue-primary text-cream-primary">
         <div className="relative z-10 px-6">
+          {/* Section marker */}
+          <div className="flex justify-end pt-6">
+            <span className="font-mono text-xs tracking-[0.15em] text-cream-primary">
+              [INV.2]
+            </span>
+          </div>
+
           {/* Main paragraph — large, confident */}
           <div className="pt-16 pb-16 md:pt-20 md:pb-20">
             <div className="overflow-hidden">

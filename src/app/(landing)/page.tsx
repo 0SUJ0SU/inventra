@@ -7,6 +7,7 @@ import { Hero } from "@/components/landing/hero";
 import { About } from "@/components/landing/about";
 import { Services } from "@/components/landing/services";
 import { Process } from "@/components/landing/process";
+import { Projects } from "@/components/landing/projects";
 
 export default function LandingPage() {
   const [loadingComplete, setLoadingComplete] = useState(false);
@@ -22,6 +23,8 @@ export default function LandingPage() {
       <Services />
 
       <Process />
+
+      <Projects />
     </>
   );
 }

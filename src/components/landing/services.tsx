@@ -240,7 +240,7 @@ export function Services() {
 
         {/* ── Section headline ── */}
         <div ref={headlineLeftRef} className="mb-12 md:mb-16 lg:mb-20">
-          <h2 className="font-sans font-bold text-blue-primary text-[clamp(56px,10vw,140px)] leading-[0.85] tracking-tight">
+          <h2 className="font-sans font-bold text-blue-primary text-[clamp(56px,10vw,140px)] leading-[0.95] tracking-tight pb-3">
             Built for every step
           </h2>
         </div>
