@@ -1,6 +1,5 @@
 "use client";
-
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useRef, useState, useEffect } from "react";
 import { DitherImage } from "./dither-image";
 
 const Dithering = lazy(() =>
@@ -18,13 +17,9 @@ interface DitherEffectProps {
   brushSize?: number;
   trailFade?: number;
   hoverReveal?: boolean;
-  /** Dithering wave color. Default matches blue-primary */
   waveColor?: string;
-  /** Dithering wave speed. Default 0.3 */
   waveSpeed?: number;
-  /** Dithering wave opacity. Default 0.35 */
   waveOpacity?: number;
-  /** Dithering shape. Default "warp" */
   waveShape?: "warp" | "wave" | "none";
   style?: React.CSSProperties;
 }
@@ -46,8 +41,25 @@ export function DitherEffect({
   waveShape = "warp",
   style,
 }: DitherEffectProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(true);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className={className} style={style}>
+    <div ref={containerRef} className={className} style={style}>
       <div className="relative w-full h-full overflow-hidden">
         {/* Layer 1: Duotone halftone image with trail reveal (bottom) */}
         <DitherImage
@@ -61,8 +73,8 @@ export function DitherEffect({
           trailFade={trailFade}
           hoverReveal={hoverReveal}
           className="absolute inset-0"
+          paused={!isVisible}
         />
-
         {/* Layer 2: Animated dithering wave overlay (top, blended) */}
         <Suspense fallback={null}>
           <div
@@ -74,7 +86,7 @@ export function DitherEffect({
               colorFront={waveColor}
               shape={waveShape}
               type="8x8"
-              speed={waveSpeed}
+              speed={isVisible ? waveSpeed : 0}
               className="size-full"
               minPixelRatio={1}
             />

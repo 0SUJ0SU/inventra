@@ -125,6 +125,8 @@ interface DitherImageProps {
   trailFade?: number;
   /** Enable mouse trail reveal. Default true */
   hoverReveal?: boolean;
+  /** Pause the render loop when off-screen */
+  paused?: boolean;
   style?: React.CSSProperties;
 }
 
@@ -184,6 +186,7 @@ export function DitherImage({
   brushSize = 80,
   trailFade = 0.97,
   hoverReveal = true,
+  paused = false,
   style,
 }: DitherImageProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -270,29 +273,18 @@ export function DitherImage({
     gl.uniform1f(gl.getUniformLocation(trailProg, "u_fadeRate"), trailFade);
     gl.uniform1i(gl.getUniformLocation(trailProg, "u_prevTrail"), 0);
 
-    // ─── Load image texture ───
+    // ─── Create image texture placeholder ───
     const imageTex = gl.createTexture()!;
     imageTexRef.current = imageTex;
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, imageTex);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
       new Uint8Array([0, 0, 0, 255]));
-
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      if (!gl) return;
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, imageTex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-      textureLoadedRef.current = true;
-    };
-    img.src = src;
-  }, [src, darkColor, lightColor, dotSize, halftoneStrength, brushSize, trailFade]);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  }, [darkColor, lightColor, dotSize, halftoneStrength, brushSize, trailFade]);
 
   const setupTrailBuffers = useCallback(() => {
     const gl = glRef.current;
@@ -345,7 +337,15 @@ export function DitherImage({
     setupTrailBuffers();
   }, [setupTrailBuffers]);
 
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
+
   const render = useCallback(() => {
+    if (pausedRef.current) {
+      animRef.current = requestAnimationFrame(render);
+      return;
+    }
+
     const gl = glRef.current;
     const trailProg = trailProgramRef.current;
     const mainProg = mainProgramRef.current;
@@ -438,6 +438,24 @@ export function DitherImage({
       if (moveTimeoutRef.current) clearTimeout(moveTimeoutRef.current);
     };
   }, [initGL, resize, render]);
+
+  // Reload texture when src changes without reinitializing GL
+  useEffect(() => {
+    const gl = glRef.current;
+    const imageTex = imageTexRef.current;
+    if (!gl || !imageTex) return;
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      if (!glRef.current) return;
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, imageTex);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+      textureLoadedRef.current = true;
+    };
+    img.src = src;
+  }, [src]);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {

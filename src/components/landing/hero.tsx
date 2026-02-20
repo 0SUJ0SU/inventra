@@ -83,7 +83,7 @@ export function Hero() {
     >
       {/* ─── Dithering shader background ─── */}
       <DitherEffect
-        src="/pictures/hero-background.jpg"
+        src="/pictures/hero/hero-background.jpg"
         alt="Modern architecture"
         className="absolute inset-0"
         darkColor="#1925AA"

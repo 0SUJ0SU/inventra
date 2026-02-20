@@ -100,3 +100,12 @@ body {
   background-color: var(--color-cream-primary);
   opacity: 0.15;
 }
+
+/* ————————————————————————————————————————————
+   KEYFRAMES
+   ———————————————————————————————————————————— */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
