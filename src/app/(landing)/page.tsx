@@ -10,6 +10,7 @@ import { Process } from "@/components/landing/process";
 import { Projects } from "@/components/landing/projects";
 import { Testimonials } from "@/components/landing/testimonials";
 import { FAQ } from "@/components/landing/faq";
+import Footer from "@/components/landing/footer";
 
 export default function LandingPage() {
   const [loadingComplete, setLoadingComplete] = useState(false);
@@ -31,6 +32,8 @@ export default function LandingPage() {
       <Testimonials />
 
       <FAQ />
+
+      <Footer />
     </>
   );
 }

@@ -152,7 +152,7 @@ export function Process() {
 
   return (
     <section ref={sectionRef} className="relative z-1 bg-cream-primary">
-      <div ref={pinRef} className="relative h-screen overflow-hidden">
+      <div ref={pinRef} className="relative h-screen overflow-hidden will-change-transform">
         {/* ── Blueprint grid lines ── */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute left-[35%] top-0 bottom-0 w-px bg-blue-primary/10" />
@@ -177,7 +177,7 @@ export function Process() {
           <div className="relative w-[35%] overflow-hidden">
             <div
               ref={numberTrackRef}
-              className="absolute top-0 left-0 w-full"
+              className="absolute top-0 left-0 w-full will-change-transform"
               style={{ height: `${STEP_COUNT * 100}%` }}
             >
               {steps.map((step) => (
@@ -208,7 +208,7 @@ export function Process() {
           <div className="relative flex-1 overflow-hidden">
             <div
               ref={contentTrackRef}
-              className="absolute top-0 left-0 w-full"
+              className="absolute top-0 left-0 w-full will-change-transform"
               style={{ height: `${STEP_COUNT * 100}%` }}
             >
               {steps.map((step) => (

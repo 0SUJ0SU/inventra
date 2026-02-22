@@ -50,13 +50,6 @@ const faqItems: FaqItem[] = [
     category: "FEATURES",
   },
   {
-    id: 5,
-    question: "Can I manage warranty claims?",
-    answer:
-      "YES. INVENTRA HANDLES THE FULL WARRANTY WORKFLOW: CUSTOMER TO STORE, STORE TO SUPPLIER, AND SUPPLIER RETURNS. EACH CLAIM IS TRACKED WITH STATUS UPDATES, NOTES, TIMESTAMPS, AND LINKED SERIAL NUMBERS.",
-    category: "FEATURES",
-  },
-  {
     id: 6,
     question: "Does the system work offline?",
     answer:
@@ -163,7 +156,7 @@ function AccordionItem({
   return (
     <div
       className="faq-item"
-      style={{ borderBottom: "1px solid rgba(232, 228, 221, 0.1)" }}
+      style={{ borderBottom: "1px solid rgba(25, 37, 170, 0.12)" }}
     >
       {/* Question row */}
       <button
@@ -174,7 +167,7 @@ function AccordionItem({
         <span
           className="font-mono text-[13px] tracking-[0.1em] flex-shrink-0 w-8 transition-all duration-500"
           style={{
-            color: isOpen ? "#E8E4DD" : "rgba(232, 228, 221, 0.3)",
+            color: isOpen ? "#1925AA" : "rgba(25, 37, 170, 0.3)",
           }}
         >
           {String(displayIndex + 1).padStart(2, "0")}
@@ -184,7 +177,7 @@ function AccordionItem({
         <span
           className="font-sans font-medium leading-[1.25] tracking-tight flex-1 transition-colors duration-500"
           style={{
-            color: isOpen ? "#E8E4DD" : "rgba(232, 228, 221, 0.75)",
+            color: isOpen ? "#1925AA" : "rgba(25, 37, 170, 0.65)",
             fontSize: "clamp(17px, 1.8vw, 24px)",
           }}
         >
@@ -196,7 +189,7 @@ function AccordionItem({
           ref={iconRef}
           className="flex items-center justify-center w-8 h-8 flex-shrink-0 transition-colors duration-500"
           style={{
-            color: isOpen ? "#E8E4DD" : "rgba(232, 228, 221, 0.4)",
+            color: isOpen ? "#1925AA" : "rgba(25, 37, 170, 0.3)",
           }}
         >
           <svg
@@ -219,7 +212,7 @@ function AccordionItem({
         <div ref={measureRef} className="pb-6 md:pb-8 pl-12 md:pl-14 pr-8 md:pr-14">
           <p
             className="font-mono text-[11px] md:text-[12px] uppercase tracking-[0.12em] leading-[1.7]"
-            style={{ color: "rgba(232, 228, 221, 0.55)" }}
+            style={{ color: "rgba(25, 37, 170, 0.5)" }}
           >
             {item.answer}
           </p>
@@ -238,23 +231,24 @@ export function FAQ() {
   const rightRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<Category>("GENERAL");
-  const [openId, setOpenId] = useState<number | null>(null);
+  const [openId, setOpenId] = useState<number>(faqItems[0].id);
 
   const filteredItems = faqItems.filter(
     (item) => item.category === activeCategory
   );
 
   const handleToggle = useCallback((id: number) => {
-    setOpenId((prev) => (prev === id ? null : id));
+    setOpenId((prev) => (prev === id ? prev : id));
   }, []);
 
   /* Category switch animation */
   const handleCategorySwitch = useCallback(
     (cat: Category) => {
       if (cat === activeCategory) return;
+      const firstInCategory = faqItems.find((item) => item.category === cat);
       if (!listRef.current) {
         setActiveCategory(cat);
-        setOpenId(null);
+        setOpenId(firstInCategory ? firstInCategory.id : faqItems[0].id);
         return;
       }
 
@@ -269,7 +263,8 @@ export function FAQ() {
         stagger: 0.03,
         onComplete: () => {
           setActiveCategory(cat);
-          setOpenId(null);
+          const firstInCat = faqItems.find((item) => item.category === cat);
+          setOpenId(firstInCat ? firstInCat.id : faqItems[0].id);
 
           // Wait for React to render new items, then slide them in
           requestAnimationFrame(() => {
@@ -358,7 +353,7 @@ export function FAQ() {
     <section
       id="faq"
       ref={sectionRef}
-      className="relative bg-blue-primary overflow-hidden"
+      className="relative bg-cream-primary overflow-hidden"
     >
       {/* Blueprint grid line — cream on blue */}
       <div className="pointer-events-none absolute inset-0 z-0">
@@ -366,7 +361,7 @@ export function FAQ() {
           className="absolute top-0 h-full w-px"
           style={{
             left: "33.333%",
-            backgroundColor: "rgba(232, 228, 221, 0.06)",
+            backgroundColor: "rgba(25, 37, 170, 0.07)",
           }}
         />
       </div>
@@ -375,30 +370,30 @@ export function FAQ() {
         {/* Section labels — FAQ left, [INV.7] right */}
         <div
           className="flex items-baseline justify-between pt-6 pb-4"
-          style={{ borderTop: "1px solid rgba(232, 228, 221, 0.1)" }}
+          style={{ borderTop: "1px solid rgba(25, 37, 170, 0.12)" }}
         >
           <span
             className="font-mono text-[11px] uppercase tracking-[0.2em]"
-            style={{ color: "rgba(232, 228, 221, 0.5)" }}
+            style={{ color: "#1925AA" }}
           >
             FAQ
           </span>
           <span
             className="font-mono text-[11px] uppercase tracking-[0.2em]"
-            style={{ color: "rgba(232, 228, 221, 0.25)" }}
+            style={{ color: "rgba(25, 37, 170, 0.5)" }}
           >
             [INV.7]
           </span>
         </div>
 
         {/* ── Split layout: left panel + right panel ── */}
-        <div className="flex flex-col lg:flex-row min-h-[600px]">
+        <div className="flex flex-col lg:flex-row min-h-[650px]">
           {/* ── Left panel: headline + CTA ── */}
           <div
             ref={leftRef}
             className="lg:w-[33.333%] flex flex-col justify-between py-8 lg:py-16 lg:pr-12 lg:sticky lg:top-24 lg:self-start"
             style={{
-              borderRight: "1px solid rgba(232, 228, 221, 0.08)",
+              borderRight: "1px solid rgba(25, 37, 170, 0.1)",
             }}
           >
             {/* Headline */}
@@ -406,7 +401,7 @@ export function FAQ() {
               <h2
                 className="font-sans font-bold leading-[0.95] tracking-tight"
                 style={{
-                  color: "#E8E4DD",
+                  color: "#1925AA",
                   fontSize: "clamp(36px, 4.5vw, 64px)",
                 }}
               >
@@ -421,7 +416,7 @@ export function FAQ() {
               <a
                 href="#contact"
                 className="inline-block font-mono text-[11px] uppercase tracking-[0.2em] transition-transform duration-300 hover:scale-110 origin-left"
-                style={{ color: "#E8E4DD" }}
+                style={{ color: "#1925AA" }}
               >
                 [ CONTACT US &rarr; ]
               </a>
@@ -429,7 +424,7 @@ export function FAQ() {
           </div>
 
           {/* ── Right panel: filters + accordion ── */}
-          <div ref={rightRef} className="lg:flex-1 lg:pl-12 py-8 lg:py-16">
+          <div ref={rightRef} className="lg:flex-1 lg:pl-12 py-8 lg:py-16 lg:min-h-[550px]">
             {/* Category filters */}
             <div className="faq-filters flex items-center gap-6 md:gap-8 mb-10 md:mb-14 flex-wrap">
               {categories.map((cat) => (
@@ -440,11 +435,11 @@ export function FAQ() {
                   style={{
                     color:
                       activeCategory === cat
-                        ? "#E8E4DD"
-                        : "rgba(232, 228, 221, 0.25)",
+                        ? "#1925AA"
+                        : "rgba(25, 37, 170, 0.3)",
                     borderBottom:
                       activeCategory === cat
-                        ? "1px solid rgba(232, 228, 221, 0.4)"
+                        ? "1px solid rgba(25, 37, 170, 0.5)"
                         : "1px solid transparent",
                   }}
                 >
@@ -454,11 +449,11 @@ export function FAQ() {
             </div>
 
             {/* Accordion items */}
-            <div ref={listRef}>
+            <div ref={listRef} className="lg:h-[420px] overflow-hidden">
               {/* Top border */}
               <div
                 style={{
-                  borderTop: "1px solid rgba(232, 228, 221, 0.1)",
+                  borderTop: "1px solid rgba(25, 37, 170, 0.12)",
                 }}
               />
 
