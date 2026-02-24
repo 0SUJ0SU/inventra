@@ -414,7 +414,7 @@ export function FAQ() {
           </div>
 
           {/* ── Right panel: filters + accordion ── */}
-          <div ref={rightRef} className="lg:flex-1 lg:pl-12 py-8 lg:py-16 lg:min-h-[550px]">
+          <div ref={rightRef} className="lg:flex-1 lg:pl-12 py-8 lg:py-16">
             {/* Category filters */}
             <div className="faq-filters flex items-center gap-6 md:gap-8 mb-10 md:mb-14 flex-wrap">
               {categories.map((cat) => (
@@ -439,7 +439,7 @@ export function FAQ() {
             </div>
 
             {/* Accordion items */}
-            <div ref={listRef} className="lg:h-[420px] overflow-hidden">
+            <div ref={listRef} className="h-[480px] sm:h-[450px] lg:h-[420px] overflow-hidden">
               {/* Top border */}
               <div
                 style={{
