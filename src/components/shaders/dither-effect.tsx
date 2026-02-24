@@ -87,7 +87,7 @@ export function DitherEffect({
             <Dithering
               colorBack="#00000000"
               colorFront={waveColor}
-              shape={waveShape}
+              shape={waveShape === "none" ? undefined : waveShape}
               type="8x8"
               speed={isVisible ? waveSpeed : 0}
               className="size-full"
