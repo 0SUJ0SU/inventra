@@ -153,11 +153,6 @@ export function Process() {
   return (
     <section ref={sectionRef} className="relative z-1 bg-cream-primary">
       <div ref={pinRef} className="relative h-screen overflow-hidden will-change-transform">
-        {/* ── Blueprint grid lines ── */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute left-[35%] top-0 bottom-0 w-px bg-blue-primary/10" />
-          <div className="absolute left-[90%] top-0 bottom-0 w-px bg-blue-primary/10" />
-        </div>
 
         {/* ── Section labels ── */}
         <div className="absolute top-0 left-0 right-0 z-10 px-6">
@@ -174,7 +169,7 @@ export function Process() {
         {/* ── Main content area ── */}
         <div className="absolute top-16 bottom-24 left-0 right-0 flex px-6">
           {/* LEFT — Number counter */}
-          <div className="relative w-[35%] overflow-hidden">
+          <div className="relative w-[30%] md:w-[35%] overflow-hidden">
             <div
               ref={numberTrackRef}
               className="absolute top-0 left-0 w-full will-change-transform"
@@ -189,7 +184,7 @@ export function Process() {
                   <span
                     className="font-sans font-black text-blue-primary select-none"
                     style={{
-                      fontSize: "clamp(150px, 22vw, 340px)",
+                      fontSize: "clamp(90px, 22vw, 340px)",
                       lineHeight: 0.85,
                       letterSpacing: "-0.04em",
                     }}
@@ -202,7 +197,7 @@ export function Process() {
           </div>
 
           {/* CENTER — Vertical divider */}
-          <div className="mx-4 md:mx-8 w-px bg-blue-primary/20 shrink-0" />
+          <div className="mx-2 md:mx-8 w-px bg-blue-primary/20 shrink-0" />
 
           {/* RIGHT — Content slides */}
           <div className="relative flex-1 overflow-hidden">
@@ -217,7 +212,7 @@ export function Process() {
                   className="flex flex-col justify-center px-2 md:px-8"
                   style={{ height: `${100 / STEP_COUNT}%` }}
                 >
-                  <h3 className="font-sans font-bold text-blue-primary text-[clamp(28px,4vw,56px)] leading-[1.05] tracking-tight mb-6 md:mb-8">
+                  <h3 className="font-sans font-bold text-blue-primary text-[clamp(22px,4vw,56px)] leading-[1.05] tracking-tight mb-4 md:mb-8">
                     {step.title}
                   </h3>
                   <div className="w-16 h-px bg-blue-primary/30 mb-6 md:mb-8" />

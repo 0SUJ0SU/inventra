@@ -178,7 +178,7 @@ export function Testimonials() {
     <section
       id="testimonials"
       ref={sectionRef}
-      className="relative z-[3] bg-[#FFFFFF]"
+      className="relative z-[3] bg-[#FFFFFF] overflow-hidden"
       style={{ clipPath: "inset(0 0 0 0)" }}
     >
 

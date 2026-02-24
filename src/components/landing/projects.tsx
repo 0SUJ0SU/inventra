@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -25,7 +25,7 @@ function DashboardMockup() {
   return (
     <div className="h-full w-full p-5 md:p-8 flex flex-col gap-4">
       {/* KPI row */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
         {["REVENUE", "ORDERS", "UNITS", "ALERTS"].map((label, i) => (
           <div
             key={label}
@@ -39,7 +39,7 @@ function DashboardMockup() {
               {label}
             </div>
             <div
-              className="font-sans font-bold text-xl leading-none"
+              className="font-sans font-bold text-sm md:text-xl leading-none"
               style={{ color: "#1925AA" }}
             >
               {["24.8K", "1,847", "3,291", "12"][i]}
@@ -493,15 +493,22 @@ function getSlot(index: number, activeIndex: number, total: number): CarouselSlo
   return "back";
 }
 
-const slotStyles: Record<
-  CarouselSlot,
-  { x: string; z: number; scale: number; rotateY: number; opacity: number; zIndex: number }
-> = {
-  center: { x: "0%", z: 0, scale: 1, rotateY: 0, opacity: 1, zIndex: 30 },
-  right: { x: "58%", z: -180, scale: 0.72, rotateY: -18, opacity: 1, zIndex: 20 },
-  left: { x: "-58%", z: -180, scale: 0.72, rotateY: 18, opacity: 1, zIndex: 20 },
-  back: { x: "0%", z: -350, scale: 0.5, rotateY: 0, opacity: 0, zIndex: 10 },
-};
+function getSlotStyles(mobile: boolean) {
+  if (mobile) {
+    return {
+      center: { x: "0%", z: 0, scale: 1, rotateY: 0, opacity: 1, zIndex: 30 },
+      right: { x: "110%", z: 0, scale: 0.85, rotateY: 0, opacity: 0, zIndex: 20 },
+      left: { x: "-110%", z: 0, scale: 0.85, rotateY: 0, opacity: 0, zIndex: 20 },
+      back: { x: "0%", z: 0, scale: 0.5, rotateY: 0, opacity: 0, zIndex: 10 },
+    };
+  }
+  return {
+    center: { x: "0%", z: 0, scale: 1, rotateY: 0, opacity: 1, zIndex: 30 },
+    right: { x: "58%", z: -180, scale: 0.72, rotateY: -18, opacity: 1, zIndex: 20 },
+    left: { x: "-58%", z: -180, scale: 0.72, rotateY: 18, opacity: 1, zIndex: 20 },
+    back: { x: "0%", z: -350, scale: 0.5, rotateY: 0, opacity: 0, zIndex: 10 },
+  };
+}
 
 /* ────────────────────────────────────────────────────────
    Projects Section
@@ -515,7 +522,20 @@ export function Projects() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+  const isMobileRef = useRef(false);
   const isAnimating = useRef(false);
+
+  useEffect(() => {
+    const check = () => {
+      const mobile = window.innerWidth < 768 || window.innerHeight < 500;
+      setIsMobile(mobile);
+      isMobileRef.current = mobile;
+    };
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const navigateTo = useCallback(
     (direction: "prev" | "next") => {
@@ -528,10 +548,11 @@ export function Projects() {
           : (activeIndex - 1 + modules.length) % modules.length;
 
       // Animate all cards to their new positions
+      const styles = getSlotStyles(isMobile);
       cardRefs.current.forEach((card, i) => {
         if (!card) return;
         const slot = getSlot(i, newIndex, modules.length);
-        const style = slotStyles[slot];
+        const style = styles[slot];
 
         gsap.to(card, {
           xPercent: parseFloat(style.x),
@@ -550,7 +571,7 @@ export function Projects() {
 
       setActiveIndex(newIndex);
     },
-    [activeIndex]
+    [activeIndex, isMobile]
   );
 
   /* Entrance animations */
@@ -600,10 +621,11 @@ export function Projects() {
       }
 
       // Cards: set initial positions, then stagger in from below
+      const styles = getSlotStyles(isMobileRef.current);
       cardRefs.current.forEach((card, i) => {
         if (!card) return;
         const slot = getSlot(i, 0, modules.length);
-        const style = slotStyles[slot];
+        const style = styles[slot];
 
         gsap.set(card, {
           xPercent: parseFloat(style.x),
@@ -635,20 +657,9 @@ export function Projects() {
     <section
       id="projects"
       ref={sectionRef}
-      className="relative z-[2] bg-[#E8E4DD]"
+      className="relative z-[2] bg-[#E8E4DD] overflow-hidden"
       style={{ clipPath: "inset(0 0 0 0)" }}
     >
-      {/* Blueprint grid */}
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div
-          className="absolute top-0 bottom-0 left-1/3 w-px"
-          style={{ backgroundColor: "rgba(25, 37, 170, 0.06)" }}
-        />
-        <div
-          className="absolute top-0 bottom-0 left-2/3 w-px"
-          style={{ backgroundColor: "rgba(25, 37, 170, 0.06)" }}
-        />
-      </div>
 
       <div className="relative z-10 px-6">
         {/* Section labels */}
@@ -693,15 +704,15 @@ export function Projects() {
         {/* ── 3D Carousel ── */}
         <div
           ref={carouselRef}
-          className="relative mx-auto"
+          className="relative mx-auto overflow-hidden"
           style={{
-            height: "min(55vh, 440px)",
+            height: isMobile ? "max(55vh, min(65vw, 440px))" : "min(55vh, 440px)",
             maxWidth: "1000px",
             perspective: "1200px",
             perspectiveOrigin: "50% 50%",
           }}
         >
-          <div className="relative w-full h-full" style={{ transformStyle: "preserve-3d" }}>
+          <div className="relative w-full h-full" style={{ transformStyle: isMobile ? "flat" : "preserve-3d" }}>
             {modules.map((mod, i) => {
               const Mockup = mockupComponents[i];
               const isActive = i === activeIndex;
@@ -714,11 +725,11 @@ export function Projects() {
                   }}
                   className="absolute"
                   style={{
-                    width: "65%",
-                    height: "90%",
-                    left: "17.5%",
-                    top: "5%",
-                    transformStyle: "preserve-3d",
+                    width: isMobile ? "92%" : "65%",
+                    height: isMobile ? "95%" : "90%",
+                    left: isMobile ? "4%" : "17.5%",
+                    top: isMobile ? "2.5%" : "5%",
+                    transformStyle: isMobile ? "flat" : "preserve-3d",
                     willChange: "transform, opacity",
                   }}
                 >

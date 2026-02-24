@@ -248,8 +248,8 @@ export function Services() {
         {/* ── Content: Image + Accordion ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-0">
           {/* Left: Single persistent DitherEffect — fixed height, never resizes */}
-          <div ref={imageRef} className="relative lg:pr-8 self-start">
-            <div className="relative h-[498px] md:h-[663px] overflow-hidden">
+          <div ref={imageRef} className="relative lg:pr-8">
+            <div className="relative h-100 md:h-125 lg:h-full overflow-hidden">
               <DitherEffect
                 src={services[openIndex].image}
                 alt={services[openIndex].title}

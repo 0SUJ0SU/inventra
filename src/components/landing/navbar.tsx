@@ -28,7 +28,7 @@ export function Navbar() {
           <Link
             href="/"
             data-navbar-logo
-            className="relative flex items-center gap-3 px-4 py-2.5 shrink-0 bg-blue-primary"
+            className="relative flex items-center gap-3 px-4 h-11 shrink-0 bg-blue-primary"
           >
             <svg
               width="28"
@@ -52,7 +52,7 @@ export function Navbar() {
           {/* RIGHT — MENU button */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="shrink-0 font-mono text-xs tracking-[0.25em] uppercase px-5 py-2.5 bg-cream-primary text-blue-primary transition-colors hover:bg-cream-dark"
+            className="shrink-0 font-mono text-xs tracking-[0.25em] uppercase px-5 h-11 flex items-center bg-cream-primary text-blue-primary transition-colors hover:bg-cream-dark"
           >
             {menuOpen ? "CLOSE" : "MENU"}
           </button>

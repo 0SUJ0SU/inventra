@@ -355,16 +355,6 @@ export function FAQ() {
       ref={sectionRef}
       className="relative bg-cream-primary overflow-hidden"
     >
-      {/* Blueprint grid line — cream on blue */}
-      <div className="pointer-events-none absolute inset-0 z-0">
-        <div
-          className="absolute top-0 h-full w-px"
-          style={{
-            left: "33.333%",
-            backgroundColor: "rgba(25, 37, 170, 0.07)",
-          }}
-        />
-      </div>
 
       <div className="relative z-10 px-6">
         {/* Section labels — FAQ left, [INV.7] right */}

@@ -110,15 +110,13 @@ export default function Footer() {
       {/* ═══════════════════ Content ═══════════════════ */}
       <div className="relative z-10 px-6">
         {/* ── Navigation columns ── */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-0 py-12 md:py-16">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-0 py-12 md:py-16">
           {navColumns.map((col, i) => (
             <div
               key={col.title}
-              className="nav-col"
+              className={`nav-col ${i > 0 ? "sm:border-l sm:pl-8" : ""}`}
               style={{
-                borderLeft:
-                  i > 0 ? "1px solid rgba(232,228,221,0.06)" : "none",
-                paddingLeft: i > 0 ? "2rem" : "0",
+                borderColor: "rgba(232,228,221,0.06)",
               }}
             >
               <span
@@ -159,7 +157,7 @@ export default function Footer() {
         <div className="footer-bottom flex flex-col md:flex-row items-start md:items-baseline justify-between gap-3 py-6">
           <span
             className="font-mono text-[9px] md:text-[10px] uppercase tracking-[0.15em]"
-            style={{ color: "rgba(232, 228, 221, 0.15)" }}
+            style={{ color: "#E8E4DD" }}
           >
             &copy; {new Date().getFullYear()} INVENTRA. ALL RIGHTS RESERVED.
           </span>

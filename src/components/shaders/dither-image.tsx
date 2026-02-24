@@ -64,6 +64,7 @@ const MAIN_FS = `
   uniform sampler2D u_image;
   uniform sampler2D u_trail;
   uniform vec2 u_resolution;
+  uniform vec2 u_imageSize;
   uniform float u_dotSize;
   uniform vec3 u_darkColor;
   uniform vec3 u_lightColor;
@@ -85,7 +86,18 @@ const MAIN_FS = `
     vec2 pixelFlipped = vec2(pixel.x, u_resolution.y - pixel.y);
     vec2 uv = gl_FragCoord.xy / u_resolution;
 
-    vec4 texColor = texture2D(u_image, v_texCoord);
+    // object-cover: maintain aspect ratio, crop overflow
+    float canvasAspect = u_resolution.x / u_resolution.y;
+    float imageAspect = u_imageSize.x / u_imageSize.y;
+    vec2 coverUV = v_texCoord;
+    if (canvasAspect > imageAspect) {
+      float scale = imageAspect / canvasAspect;
+      coverUV.y = v_texCoord.y * scale + (1.0 - scale) * 0.5;
+    } else {
+      float scale = canvasAspect / imageAspect;
+      coverUV.x = v_texCoord.x * scale + (1.0 - scale) * 0.5;
+    }
+    vec4 texColor = texture2D(u_image, coverUV);
 
     float luma = dot(texColor.rgb, vec3(0.299, 0.587, 0.114));
     luma = smoothstep(0.05, 0.95, luma);
@@ -201,6 +213,7 @@ export function DitherImage({
   const moveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const textureLoadedRef = useRef(false);
   const imageTexRef = useRef<WebGLTexture | null>(null);
+  const imageSizeRef = useRef<[number, number]>([1, 1]);
 
   // Ping-pong trail buffers
   const trailFBRef = useRef<[WebGLFramebuffer, WebGLFramebuffer] | null>(null);
@@ -410,6 +423,7 @@ export function DitherImage({
     gl.bindTexture(gl.TEXTURE_2D, trailTex[writeIdx]);
 
     gl.uniform2f(gl.getUniformLocation(mainProg, "u_resolution"), w, h);
+    gl.uniform2f(gl.getUniformLocation(mainProg, "u_imageSize"), imageSizeRef.current[0], imageSizeRef.current[1]);
 
     // Draw textured quad
     gl.bindBuffer(gl.ARRAY_BUFFER, texQuadBufRef.current);
@@ -452,6 +466,7 @@ export function DitherImage({
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, imageTex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+      imageSizeRef.current = [img.naturalWidth, img.naturalHeight];
       textureLoadedRef.current = true;
     };
     img.src = src;
@@ -481,6 +496,32 @@ export function DitherImage({
     if (moveTimeoutRef.current) clearTimeout(moveTimeoutRef.current);
   }, []);
 
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      const canvas = canvasRef.current;
+      if (!canvas || !hoverReveal) return;
+      const touch = e.touches[0];
+      if (!touch) return;
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio, 2);
+      targetMouseRef.current.x = (touch.clientX - rect.left) * dpr;
+      targetMouseRef.current.y = (touch.clientY - rect.top) * dpr;
+
+      targetMovingRef.current = 1;
+
+      if (moveTimeoutRef.current) clearTimeout(moveTimeoutRef.current);
+      moveTimeoutRef.current = setTimeout(() => {
+        targetMovingRef.current = 0;
+      }, 150);
+    },
+    [hoverReveal]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    targetMovingRef.current = 0;
+    if (moveTimeoutRef.current) clearTimeout(moveTimeoutRef.current);
+  }, []);
+
   return (
     <canvas
       ref={canvasRef}
@@ -495,6 +536,8 @@ export function DitherImage({
       }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     />
   );
 }
