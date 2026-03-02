@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -17,6 +18,7 @@ import {
   Pencil,
   Barcode,
   X,
+  Plus,
 } from "lucide-react";
 import { PRODUCTS, CATEGORIES, type Product } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils/format";
@@ -67,6 +69,8 @@ export default function ProductsPage() {
 
   // — Local mutable products (demo: allows delete/toggle) —
   const [products, setProducts] = useState<Product[]>(() => [...PRODUCTS]);
+
+  const router = useRouter();
 
   // ——— DERIVED DATA ———
 
@@ -284,8 +288,8 @@ export default function ProductsPage() {
             {sorted.length} product{sorted.length !== 1 && "s"} in inventory
           </motion.p>
         </div>
-        <motion.span
-          className="font-mono text-[10px] tracking-[0.15em] text-blue-primary/20 hidden sm:block"
+        <motion.div
+          className="flex items-center gap-3"
           initial={{ x: 20 }}
           animate={{ x: 0 }}
           transition={{
@@ -294,8 +298,17 @@ export default function ProductsPage() {
             ease: [0.16, 1, 0.3, 1],
           }}
         >
-          [INV.PROD]
-        </motion.span>
+          <button
+            onClick={() => router.push("/products/new")}
+            className="h-9 px-4 bg-blue-primary text-cream-primary font-mono text-[10px] tracking-[0.12em] uppercase flex items-center gap-2 hover:bg-blue-dark transition-colors"
+          >
+            <Plus size={13} strokeWidth={1.5} />
+            Add Product
+          </button>
+          <span className="font-mono text-[10px] tracking-[0.15em] text-blue-primary/20 hidden sm:block">
+            [INV.PROD]
+          </span>
+        </motion.div>
       </div>
 
       {/* Blueprint divider */}
@@ -677,11 +690,23 @@ export default function ProductsPage() {
                               onClick={() => setActionMenuId(null)}
                             />
                             <div className="absolute right-3 top-full z-20 w-36 bg-cream-primary border border-blue-primary/10 shadow-sm py-1">
-                              <button className="w-full flex items-center gap-2 px-3 py-2 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/60 hover:bg-blue-primary/5 hover:text-blue-primary transition-colors">
+                              <button
+                                onClick={() => {
+                                  setActionMenuId(null);
+                                  router.push(`/products/${product.id}`);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/60 hover:bg-blue-primary/5 hover:text-blue-primary transition-colors"
+                              >
                                 <Eye size={12} strokeWidth={1.5} />
                                 View
                               </button>
-                              <button className="w-full flex items-center gap-2 px-3 py-2 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/60 hover:bg-blue-primary/5 hover:text-blue-primary transition-colors">
+                              <button
+                                onClick={() => {
+                                  setActionMenuId(null);
+                                  router.push(`/products/${product.id}/edit`);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/60 hover:bg-blue-primary/5 hover:text-blue-primary transition-colors"
+                              >
                                 <Pencil size={12} strokeWidth={1.5} />
                                 Edit
                               </button>
