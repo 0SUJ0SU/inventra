@@ -107,6 +107,23 @@ body {
   opacity: 0.15;
 }
 
+/* — Sidebar scrollbar (blue-on-blue) — */
+[data-sidebar-scroll]::-webkit-scrollbar {
+  width: 4px;
+}
+
+[data-sidebar-scroll]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-sidebar-scroll]::-webkit-scrollbar-thumb {
+  background: rgba(232, 228, 221, 0.15);
+}
+
+[data-sidebar-scroll]::-webkit-scrollbar-thumb:hover {
+  background: rgba(232, 228, 221, 0.3);
+}
+
 /* ————————————————————————————————————————————
    KEYFRAMES
    ———————————————————————————————————————————— */
