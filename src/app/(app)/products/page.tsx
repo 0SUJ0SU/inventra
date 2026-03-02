@@ -341,7 +341,7 @@ export default function ProductsPage() {
           </div>
 
           {/* Filter pills */}
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 lg:flex lg:flex-wrap gap-2">
             {/* Category */}
             <select
               value={categoryFilter}
@@ -416,37 +416,41 @@ export default function ProductsPage() {
         {/* Bulk actions bar */}
         {selectedIds.size > 0 && (
           <motion.div
-            className="flex items-center gap-3 h-10 px-4 bg-blue-primary text-cream-primary"
+            className="bg-blue-primary text-cream-primary"
             initial={{ y: -10 }}
             animate={{ y: 0 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span className="font-mono text-[10px] tracking-[0.12em] uppercase">
-              {selectedIds.size} selected
-            </span>
-            <div className="w-px h-4 bg-cream-primary/20" />
-            <button
-              onClick={handleBulkToggleStatus}
-              className="font-mono text-[10px] tracking-[0.1em] uppercase text-cream-primary/70 hover:text-cream-primary flex items-center gap-1.5 transition-colors"
-            >
-              <Power size={12} strokeWidth={1.5} />
-              Flip Active / Inactive
-            </button>
-            <button
-              onClick={handleBulkDelete}
-              className="font-mono text-[10px] tracking-[0.1em] uppercase text-cream-primary/70 hover:text-cream-primary flex items-center gap-1.5 transition-colors"
-            >
-              <Trash2 size={12} strokeWidth={1.5} />
-              Delete Selected
-            </button>
-            <div className="flex-1" />
-            <button
-              onClick={clearSelection}
-              className="font-mono text-[10px] tracking-[0.1em] uppercase text-cream-primary/50 hover:text-cream-primary flex items-center gap-1.5 transition-colors"
-            >
-              <X size={12} strokeWidth={1.5} />
-              Deselect All
-            </button>
+            {/* Top: count */}
+            <div className="px-4 h-9 flex items-center justify-center border-b border-cream-primary/10">
+              <span className="font-mono text-[10px] tracking-[0.12em] uppercase">
+                {selectedIds.size} item{selectedIds.size !== 1 && "s"} selected
+              </span>
+            </div>
+            {/* Bottom: three equal actions */}
+            <div className="grid grid-cols-3 divide-x divide-cream-primary/10">
+              <button
+                onClick={handleBulkToggleStatus}
+                className="font-mono text-[9px] tracking-[0.1em] uppercase text-cream-primary/70 hover:text-cream-primary hover:bg-cream-primary/5 flex items-center justify-center gap-1.5 h-9 transition-colors"
+              >
+                <Power size={12} strokeWidth={1.5} />
+                Flip Status
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                className="font-mono text-[9px] tracking-[0.1em] uppercase text-cream-primary/70 hover:text-cream-primary hover:bg-cream-primary/5 flex items-center justify-center gap-1.5 h-9 transition-colors"
+              >
+                <Trash2 size={12} strokeWidth={1.5} />
+                Delete
+              </button>
+              <button
+                onClick={clearSelection}
+                className="font-mono text-[9px] tracking-[0.1em] uppercase text-cream-primary/50 hover:text-cream-primary hover:bg-cream-primary/5 flex items-center justify-center gap-1.5 h-9 transition-colors"
+              >
+                <X size={12} strokeWidth={1.5} />
+                Deselect
+              </button>
+            </div>
           </motion.div>
         )}
       </motion.div>
