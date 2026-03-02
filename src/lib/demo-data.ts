@@ -379,3 +379,489 @@ export function getTopCustomers(period: DashboardPeriod) {
     spent: Math.round(c.spent * s),
   }));
 }
+
+// ————————————————————————————————————————————————
+// PRODUCT CATEGORIES
+// ————————————————————————————————————————————————
+
+export interface Category {
+  id: string;
+  name: string;
+  description: string;
+  productCount?: number;
+}
+
+export const CATEGORIES: Category[] = [
+  { id: "cat-smartphones", name: "Smartphones", description: "Mobile phones and accessories" },
+  { id: "cat-laptops", name: "Laptops", description: "Notebooks and ultrabooks" },
+  { id: "cat-accessories", name: "Accessories", description: "Peripherals, cables, and add-ons" },
+  { id: "cat-tablets", name: "Tablets", description: "Tablet devices and e-readers" },
+  { id: "cat-wearables", name: "Wearables", description: "Smartwatches and fitness trackers" },
+];
+
+// ————————————————————————————————————————————————
+// PRODUCTS
+// ————————————————————————————————————————————————
+
+export type ProductStatus = "active" | "inactive";
+
+export interface Product {
+  id: string;
+  sku: string;
+  name: string;
+  categoryId: string;
+  category: string;
+  description: string;
+  costPrice: number;
+  sellingPrice: number;
+  stock: number;
+  minStock: number;
+  isSerialTracked: boolean;
+  warrantyMonths: number;
+  isActive: boolean;
+  image: string | null;
+  createdAt: string;
+}
+
+export const PRODUCTS: Product[] = [
+  // — SMARTPHONES —
+  {
+    id: "prod-001",
+    sku: "IP15P-256-BK",
+    name: "iPhone 15 Pro 256GB Black",
+    categoryId: "cat-smartphones",
+    category: "Smartphones",
+    description: "Apple iPhone 15 Pro with A17 Pro chip, titanium design, 256GB storage.",
+    costPrice: 999,
+    sellingPrice: 1199,
+    stock: 3,
+    minStock: 10,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-09-20",
+  },
+  {
+    id: "prod-002",
+    sku: "IP15P-512-WH",
+    name: "iPhone 15 Pro 512GB White",
+    categoryId: "cat-smartphones",
+    category: "Smartphones",
+    description: "Apple iPhone 15 Pro with A17 Pro chip, titanium design, 512GB storage.",
+    costPrice: 1099,
+    sellingPrice: 1399,
+    stock: 14,
+    minStock: 8,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-09-20",
+  },
+  {
+    id: "prod-003",
+    sku: "GS24U-512-GR",
+    name: "Galaxy S24 Ultra 512GB",
+    categoryId: "cat-smartphones",
+    category: "Smartphones",
+    description: "Samsung Galaxy S24 Ultra with S Pen, 200MP camera, 512GB.",
+    costPrice: 1050,
+    sellingPrice: 1299,
+    stock: 2,
+    minStock: 8,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-10-05",
+  },
+  {
+    id: "prod-004",
+    sku: "GS24-256-BK",
+    name: "Galaxy S24 256GB Black",
+    categoryId: "cat-smartphones",
+    category: "Smartphones",
+    description: "Samsung Galaxy S24 with Galaxy AI, 256GB storage.",
+    costPrice: 650,
+    sellingPrice: 849,
+    stock: 22,
+    minStock: 10,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-10-05",
+  },
+  {
+    id: "prod-005",
+    sku: "PX8P-256-BK",
+    name: "Pixel 8 Pro 256GB",
+    categoryId: "cat-smartphones",
+    category: "Smartphones",
+    description: "Google Pixel 8 Pro with Tensor G3 chip, advanced AI camera.",
+    costPrice: 750,
+    sellingPrice: 999,
+    stock: 11,
+    minStock: 6,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-11-12",
+  },
+  {
+    id: "prod-006",
+    sku: "OP12-256-GR",
+    name: "OnePlus 12 256GB",
+    categoryId: "cat-smartphones",
+    category: "Smartphones",
+    description: "OnePlus 12 with Snapdragon 8 Gen 3, Hasselblad camera.",
+    costPrice: 580,
+    sellingPrice: 799,
+    stock: 18,
+    minStock: 8,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-12-01",
+  },
+
+  // — LAPTOPS —
+  {
+    id: "prod-007",
+    sku: "MBA-M3-256",
+    name: "MacBook Air M3 256GB",
+    categoryId: "cat-laptops",
+    category: "Laptops",
+    description: "Apple MacBook Air 13-inch with M3 chip, 8GB RAM, 256GB SSD.",
+    costPrice: 899,
+    sellingPrice: 1099,
+    stock: 4,
+    minStock: 10,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-08-15",
+  },
+  {
+    id: "prod-008",
+    sku: "MBA-M3-512",
+    name: "MacBook Air M3 512GB",
+    categoryId: "cat-laptops",
+    category: "Laptops",
+    description: "Apple MacBook Air 13-inch with M3 chip, 16GB RAM, 512GB SSD.",
+    costPrice: 1100,
+    sellingPrice: 1299,
+    stock: 9,
+    minStock: 6,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-08-15",
+  },
+  {
+    id: "prod-009",
+    sku: "MBP-M3P-512",
+    name: "MacBook Pro 14\" M3 Pro",
+    categoryId: "cat-laptops",
+    category: "Laptops",
+    description: "Apple MacBook Pro 14-inch with M3 Pro chip, 18GB RAM, 512GB SSD.",
+    costPrice: 1599,
+    sellingPrice: 1999,
+    stock: 6,
+    minStock: 4,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-07-20",
+  },
+  {
+    id: "prod-010",
+    sku: "TP-X1C-G11",
+    name: "ThinkPad X1 Carbon Gen 11",
+    categoryId: "cat-laptops",
+    category: "Laptops",
+    description: "Lenovo ThinkPad X1 Carbon, Intel i7, 16GB RAM, 512GB SSD.",
+    costPrice: 1200,
+    sellingPrice: 1549,
+    stock: 7,
+    minStock: 5,
+    isSerialTracked: true,
+    warrantyMonths: 24,
+    isActive: true,
+    image: null,
+    createdAt: "2024-09-01",
+  },
+  {
+    id: "prod-011",
+    sku: "DXP-15-I9",
+    name: "Dell XPS 15 i9 32GB",
+    categoryId: "cat-laptops",
+    category: "Laptops",
+    description: "Dell XPS 15 with Intel i9, 32GB RAM, 1TB SSD, OLED display.",
+    costPrice: 1750,
+    sellingPrice: 2199,
+    stock: 0,
+    minStock: 3,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-10-10",
+  },
+
+  // — ACCESSORIES —
+  {
+    id: "prod-012",
+    sku: "APP2-USB-C",
+    name: "AirPods Pro 2 USB-C",
+    categoryId: "cat-accessories",
+    category: "Accessories",
+    description: "Apple AirPods Pro 2nd gen with USB-C MagSafe charging case.",
+    costPrice: 180,
+    sellingPrice: 249,
+    stock: 5,
+    minStock: 15,
+    isSerialTracked: false,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-09-10",
+  },
+  {
+    id: "prod-013",
+    sku: "APP-MAX-SL",
+    name: "AirPods Max Silver",
+    categoryId: "cat-accessories",
+    category: "Accessories",
+    description: "Apple AirPods Max over-ear headphones, silver.",
+    costPrice: 420,
+    sellingPrice: 549,
+    stock: 8,
+    minStock: 5,
+    isSerialTracked: false,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-08-25",
+  },
+  {
+    id: "prod-014",
+    sku: "SGS-BDS-BK",
+    name: "Galaxy Buds3 Pro Black",
+    categoryId: "cat-accessories",
+    category: "Accessories",
+    description: "Samsung Galaxy Buds3 Pro with intelligent ANC.",
+    costPrice: 170,
+    sellingPrice: 229,
+    stock: 24,
+    minStock: 10,
+    isSerialTracked: false,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-11-01",
+  },
+  {
+    id: "prod-015",
+    sku: "ANK-65W-GN",
+    name: "Anker 65W GaN Charger",
+    categoryId: "cat-accessories",
+    category: "Accessories",
+    description: "Anker Nano II 65W USB-C GaN charger, compact design.",
+    costPrice: 28,
+    sellingPrice: 45,
+    stock: 62,
+    minStock: 20,
+    isSerialTracked: false,
+    warrantyMonths: 6,
+    isActive: true,
+    image: null,
+    createdAt: "2024-06-15",
+  },
+  {
+    id: "prod-016",
+    sku: "USB-C-2M-BK",
+    name: "USB-C Cable 2M Braided",
+    categoryId: "cat-accessories",
+    category: "Accessories",
+    description: "Premium braided USB-C to USB-C cable, 2 meters, 100W PD.",
+    costPrice: 8,
+    sellingPrice: 19,
+    stock: 145,
+    minStock: 30,
+    isSerialTracked: false,
+    warrantyMonths: 3,
+    isActive: true,
+    image: null,
+    createdAt: "2024-05-20",
+  },
+  {
+    id: "prod-017",
+    sku: "MG-MS-BK",
+    name: "MagSafe Charger",
+    categoryId: "cat-accessories",
+    category: "Accessories",
+    description: "Apple MagSafe wireless charger for iPhone.",
+    costPrice: 30,
+    sellingPrice: 39,
+    stock: 38,
+    minStock: 15,
+    isSerialTracked: false,
+    warrantyMonths: 6,
+    isActive: true,
+    image: null,
+    createdAt: "2024-07-10",
+  },
+  {
+    id: "prod-018",
+    sku: "SP-GLASS-15P",
+    name: "Screen Protector iPhone 15 Pro",
+    categoryId: "cat-accessories",
+    category: "Accessories",
+    description: "Tempered glass screen protector for iPhone 15 Pro, 9H hardness.",
+    costPrice: 3,
+    sellingPrice: 15,
+    stock: 200,
+    minStock: 50,
+    isSerialTracked: false,
+    warrantyMonths: 0,
+    isActive: true,
+    image: null,
+    createdAt: "2024-09-22",
+  },
+
+  // — TABLETS —
+  {
+    id: "prod-019",
+    sku: "IPD-AIR-64",
+    name: "iPad Air 64GB WiFi",
+    categoryId: "cat-tablets",
+    category: "Tablets",
+    description: "Apple iPad Air M1 chip, 10.9-inch display, 64GB WiFi.",
+    costPrice: 480,
+    sellingPrice: 599,
+    stock: 1,
+    minStock: 5,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-08-01",
+  },
+  {
+    id: "prod-020",
+    sku: "IPD-PRO-256",
+    name: "iPad Pro 11\" M4 256GB",
+    categoryId: "cat-tablets",
+    category: "Tablets",
+    description: "Apple iPad Pro 11-inch with M4 chip, 256GB, WiFi.",
+    costPrice: 850,
+    sellingPrice: 1099,
+    stock: 5,
+    minStock: 4,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-10-15",
+  },
+  {
+    id: "prod-021",
+    sku: "SGT-S9U-256",
+    name: "Galaxy Tab S9 Ultra 256GB",
+    categoryId: "cat-tablets",
+    category: "Tablets",
+    description: "Samsung Galaxy Tab S9 Ultra, 14.6-inch AMOLED, 256GB.",
+    costPrice: 900,
+    sellingPrice: 1199,
+    stock: 3,
+    minStock: 3,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-11-05",
+  },
+
+  // — WEARABLES —
+  {
+    id: "prod-022",
+    sku: "GW6-44-BK",
+    name: "Galaxy Watch 6 44mm Black",
+    categoryId: "cat-wearables",
+    category: "Wearables",
+    description: "Samsung Galaxy Watch 6, 44mm, BioActive sensor, Wear OS.",
+    costPrice: 220,
+    sellingPrice: 329,
+    stock: 3,
+    minStock: 8,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-09-15",
+  },
+  {
+    id: "prod-023",
+    sku: "AW-S9-45-MN",
+    name: "Apple Watch Series 9 45mm",
+    categoryId: "cat-wearables",
+    category: "Wearables",
+    description: "Apple Watch Series 9, 45mm, GPS, midnight aluminium case.",
+    costPrice: 350,
+    sellingPrice: 429,
+    stock: 12,
+    minStock: 6,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: true,
+    image: null,
+    createdAt: "2024-10-20",
+  },
+  {
+    id: "prod-024",
+    sku: "AW-ULT2-49",
+    name: "Apple Watch Ultra 2 49mm",
+    categoryId: "cat-wearables",
+    category: "Wearables",
+    description: "Apple Watch Ultra 2, 49mm titanium, GPS + Cellular.",
+    costPrice: 650,
+    sellingPrice: 799,
+    stock: 4,
+    minStock: 3,
+    isSerialTracked: true,
+    warrantyMonths: 12,
+    isActive: false,
+    image: null,
+    createdAt: "2024-07-01",
+  },
+];
+
+// Hydrate category product counts
+CATEGORIES.forEach((cat) => {
+  cat.productCount = PRODUCTS.filter((p) => p.categoryId === cat.id).length;
+});
+
+// — Helper functions —
+
+export function getProducts() {
+  return PRODUCTS;
+}
+
+export function getProductById(id: string) {
+  return PRODUCTS.find((p) => p.id === id) ?? null;
+}
+
+export function getCategories() {
+  return CATEGORIES;
+}
+
+export function getCategoryById(id: string) {
+  return CATEGORIES.find((c) => c.id === id) ?? null;
+}
