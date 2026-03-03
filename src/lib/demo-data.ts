@@ -1916,3 +1916,504 @@ export function getWarrantyDaysRemaining(item: SerializedItem): number | null {
   const diffMs = expiry.getTime() - now.getTime();
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 }
+
+// ————————————————————————————————————————————————
+// WARRANTY CLAIMS
+// ————————————————————————————————————————————————
+
+export type ClaimType = "customer_to_store" | "store_to_supplier" | "supplier_to_store";
+export type ClaimStatus = "pending" | "in_review" | "in_repair" | "repaired" | "replaced" | "rejected" | "closed";
+
+export interface ClaimStatusChange {
+  from: ClaimStatus | null;
+  to: ClaimStatus;
+  date: string;
+  note: string;
+}
+
+export interface WarrantyClaimNote {
+  id: string;
+  warrantyClaimId: string;
+  note: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface WarrantyClaim {
+  id: string;
+  claimNumber: string;
+  serializedItemId: string;
+  serialNumber: string;
+  productName: string;
+  claimType: ClaimType;
+  status: ClaimStatus;
+  claimDate: string;
+  issueDescription: string;
+  customerId: string | null;
+  customerName: string | null;
+  supplierId: string | null;
+  supplierName: string | null;
+  repairCost: number | null;
+  replacementSerialId: string | null;
+  replacementSerialNumber: string | null;
+  resolution: string | null;
+  attachments: string[];
+  statusHistory: ClaimStatusChange[];
+  notes: WarrantyClaimNote[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const WARRANTY_CLAIMS: WarrantyClaim[] = [
+  // ——— 1. WC-2024-0035 — iPhone 15 Pro (ser-005) — CLOSED (replaced) ———
+  {
+    id: "wc-001",
+    claimNumber: "WC-2024-0035",
+    serializedItemId: "ser-005",
+    serialNumber: "SN-IP15-00850",
+    productName: "iPhone 15 Pro 256GB Black",
+    claimType: "customer_to_store",
+    status: "closed",
+    claimDate: "2024-11-22",
+    issueDescription: "Customer reports device powers off randomly and will not boot. Suspected motherboard failure. Unit was purchased 3 weeks ago.",
+    customerId: "cust-003",
+    customerName: "Digital Edge",
+    supplierId: null,
+    supplierName: null,
+    repairCost: 0,
+    replacementSerialId: "ser-003",
+    replacementSerialNumber: "SN-IP15-00849",
+    resolution: "Apple confirmed motherboard defect under warranty. Original unit scrapped. Replacement unit SN-IP15-00849 issued to customer.",
+    attachments: [],
+    statusHistory: [
+      { from: null, to: "pending", date: "2024-11-22", note: "Claim opened by store admin" },
+      { from: "pending", to: "in_review", date: "2024-11-23", note: "Inspecting unit, confirmed no boot" },
+      { from: "in_review", to: "in_repair", date: "2024-11-25", note: "Sent to Apple service center" },
+      { from: "in_repair", to: "replaced", date: "2024-12-15", note: "Apple approved replacement under warranty" },
+      { from: "replaced", to: "closed", date: "2025-01-05", note: "Replacement unit delivered to customer" },
+    ],
+    notes: [
+      { id: "wcn-001", warrantyClaimId: "wc-001", note: "Customer brought device in, completely unresponsive. No physical damage visible.", createdBy: "Admin", createdAt: "2024-11-22" },
+      { id: "wcn-002", warrantyClaimId: "wc-001", note: "Apple diagnostic confirms logic board failure. Replacement approved.", createdBy: "Admin", createdAt: "2024-12-15" },
+      { id: "wcn-003", warrantyClaimId: "wc-001", note: "Replacement unit SN-IP15-00849 received and handed to customer. Original unit scrapped.", createdBy: "Admin", createdAt: "2025-01-05" },
+    ],
+    createdAt: "2024-11-22",
+    updatedAt: "2025-01-05",
+  },
+
+  // ——— 2. WC-2024-0036 — iPhone 15 Pro (ser-005) — CLOSED (supplier return) ———
+  {
+    id: "wc-002",
+    claimNumber: "WC-2024-0036",
+    serializedItemId: "ser-005",
+    serialNumber: "SN-IP15-00850",
+    productName: "iPhone 15 Pro 256GB Black",
+    claimType: "supplier_to_store",
+    status: "closed",
+    claimDate: "2024-12-20",
+    issueDescription: "Supplier returning replacement unit for defective SN-IP15-00850. Apple provided new unit under warranty program.",
+    customerId: null,
+    customerName: null,
+    supplierId: "sup-001",
+    supplierName: "Apple Authorized Dist.",
+    repairCost: 0,
+    replacementSerialId: "ser-003",
+    replacementSerialNumber: "SN-IP15-00849",
+    resolution: "Replacement unit SN-IP15-00849 received from Apple and added to inventory.",
+    attachments: [],
+    statusHistory: [
+      { from: null, to: "pending", date: "2024-12-20", note: "Supplier shipment notification received" },
+      { from: "pending", to: "in_review", date: "2024-12-28", note: "Verifying replacement unit" },
+      { from: "in_review", to: "replaced", date: "2025-01-05", note: "Replacement unit inspected and accepted" },
+      { from: "replaced", to: "closed", date: "2025-01-05", note: "Unit added to inventory, claim resolved" },
+    ],
+    notes: [
+      { id: "wcn-004", warrantyClaimId: "wc-002", note: "Apple shipping replacement unit via express. Tracking provided.", createdBy: "Admin", createdAt: "2024-12-20" },
+      { id: "wcn-005", warrantyClaimId: "wc-002", note: "Replacement received, QC passed. Added to stock.", createdBy: "Admin", createdAt: "2025-01-05" },
+    ],
+    createdAt: "2024-12-20",
+    updatedAt: "2025-01-05",
+  },
+
+  // ——— 3. WC-2024-0037 — Galaxy S24 Ultra (ser-010) — PENDING ———
+  {
+    id: "wc-003",
+    claimNumber: "WC-2024-0037",
+    serializedItemId: "ser-010",
+    serialNumber: "SN-GS24-01211",
+    productName: "Galaxy S24 Ultra 512GB",
+    claimType: "store_to_supplier",
+    status: "pending",
+    claimDate: "2025-01-20",
+    issueDescription: "Unit arrived with cracked back glass from shipment. Damage discovered during quality control inspection. Requesting replacement or credit from Samsung.",
+    customerId: null,
+    customerName: null,
+    supplierId: "sup-002",
+    supplierName: "Samsung Direct",
+    repairCost: null,
+    replacementSerialId: null,
+    replacementSerialNumber: null,
+    resolution: null,
+    attachments: [],
+    statusHistory: [
+      { from: null, to: "pending", date: "2025-01-20", note: "Claim submitted to Samsung with photos of damage" },
+    ],
+    notes: [
+      { id: "wcn-006", warrantyClaimId: "wc-003", note: "Photos of cracked back glass taken and sent to Samsung support. Case #SMG-2025-88412 opened.", createdBy: "Admin", createdAt: "2025-01-20" },
+      { id: "wcn-007", warrantyClaimId: "wc-003", note: "Samsung requested additional photos of packaging. Sent via email.", createdBy: "Admin", createdAt: "2025-01-25" },
+    ],
+    createdAt: "2025-01-20",
+    updatedAt: "2025-01-25",
+  },
+
+  // ——— 4. WC-2024-0038 — iPhone 15 Pro (ser-002) — IN REPAIR ———
+  {
+    id: "wc-004",
+    claimNumber: "WC-2024-0038",
+    serializedItemId: "ser-002",
+    serialNumber: "SN-IP15-00848",
+    productName: "iPhone 15 Pro 256GB Black",
+    claimType: "customer_to_store",
+    status: "in_repair",
+    claimDate: "2024-12-20",
+    issueDescription: "Customer reports display flickering intermittently, worsening over the past 2 weeks. Visible horizontal lines appear during use.",
+    customerId: "cust-002",
+    customerName: "Circuit Hub",
+    supplierId: null,
+    supplierName: null,
+    repairCost: null,
+    replacementSerialId: null,
+    replacementSerialNumber: null,
+    resolution: null,
+    attachments: [],
+    statusHistory: [
+      { from: null, to: "pending", date: "2024-12-20", note: "Claim opened, customer provided video evidence" },
+      { from: "pending", to: "in_review", date: "2024-12-21", note: "Confirmed flickering during inspection" },
+      { from: "in_review", to: "in_repair", date: "2024-12-23", note: "Sent to Apple service center for repair" },
+    ],
+    notes: [
+      { id: "wcn-008", warrantyClaimId: "wc-004", note: "Customer provided video showing horizontal lines on display. Issue reproducible in store.", createdBy: "Admin", createdAt: "2024-12-20" },
+      { id: "wcn-009", warrantyClaimId: "wc-004", note: "Unit shipped to Apple service center. Expected turnaround: 2 to 3 weeks.", createdBy: "Admin", createdAt: "2024-12-23" },
+      { id: "wcn-010", warrantyClaimId: "wc-004", note: "Apple confirms display connector issue. Repair in progress.", createdBy: "Admin", createdAt: "2025-01-10" },
+    ],
+    createdAt: "2024-12-20",
+    updatedAt: "2025-01-10",
+  },
+
+  // ——— 5. WC-2024-0039 — Galaxy Watch 6 (ser-031) — CLOSED (repaired) ———
+  {
+    id: "wc-005",
+    claimNumber: "WC-2024-0039",
+    serializedItemId: "ser-031",
+    serialNumber: "SN-GW6-00910",
+    productName: "Galaxy Watch 6 44mm Black",
+    claimType: "customer_to_store",
+    status: "closed",
+    claimDate: "2024-12-28",
+    issueDescription: "Customer reports excessive battery drain. Watch lasting only 4 to 5 hours on full charge instead of the expected 40 hours.",
+    customerId: "cust-001",
+    customerName: "Tech Haven",
+    supplierId: null,
+    supplierName: null,
+    repairCost: 45,
+    replacementSerialId: null,
+    replacementSerialNumber: null,
+    resolution: "Battery replaced under warranty. Unit tested for 48 hours, battery performance restored to normal. Returned to customer.",
+    attachments: [],
+    statusHistory: [
+      { from: null, to: "pending", date: "2024-12-28", note: "Claim opened" },
+      { from: "pending", to: "in_review", date: "2024-12-30", note: "Battery test confirms rapid drain" },
+      { from: "in_review", to: "in_repair", date: "2025-01-02", note: "Sent for battery replacement" },
+      { from: "in_repair", to: "repaired", date: "2025-01-15", note: "Battery replaced, unit tested" },
+      { from: "repaired", to: "closed", date: "2025-01-18", note: "Returned to customer" },
+    ],
+    notes: [
+      { id: "wcn-011", warrantyClaimId: "wc-005", note: "Battery diagnostic shows 43% capacity degradation. Abnormal for 3 month old unit.", createdBy: "Admin", createdAt: "2024-12-30" },
+      { id: "wcn-012", warrantyClaimId: "wc-005", note: "Battery replaced. 48 hour soak test passed. Customer notified for pickup.", createdBy: "Admin", createdAt: "2025-01-15" },
+    ],
+    createdAt: "2024-12-28",
+    updatedAt: "2025-01-18",
+  },
+
+  // ——— 6. WC-2024-0040 — Apple Watch S9 (ser-027) — REJECTED ———
+  {
+    id: "wc-006",
+    claimNumber: "WC-2024-0040",
+    serializedItemId: "ser-027",
+    serialNumber: "SN-AW9-00770",
+    productName: "Apple Watch Series 9 45mm",
+    claimType: "customer_to_store",
+    status: "rejected",
+    claimDate: "2025-01-05",
+    issueDescription: "Customer claims deep scratch on watch face appeared spontaneously. Requesting screen replacement under warranty.",
+    customerId: "cust-004",
+    customerName: "Gadget Zone",
+    supplierId: null,
+    supplierName: null,
+    repairCost: null,
+    replacementSerialId: null,
+    replacementSerialNumber: null,
+    resolution: "Claim rejected. Physical damage (deep scratch consistent with impact) is not covered under standard warranty. Customer informed of paid repair options.",
+    attachments: [],
+    statusHistory: [
+      { from: null, to: "pending", date: "2025-01-05", note: "Claim opened" },
+      { from: "pending", to: "in_review", date: "2025-01-06", note: "Inspecting watch face damage" },
+      { from: "in_review", to: "rejected", date: "2025-01-08", note: "Physical damage not covered under warranty" },
+    ],
+    notes: [
+      { id: "wcn-013", warrantyClaimId: "wc-006", note: "Inspection shows impact mark near 2 o'clock position. Scratch pattern consistent with hard surface contact, not manufacturing defect.", createdBy: "Admin", createdAt: "2025-01-06" },
+      { id: "wcn-014", warrantyClaimId: "wc-006", note: "Customer notified of rejection. Offered paid screen replacement at $180. Customer declined.", createdBy: "Admin", createdAt: "2025-01-08" },
+    ],
+    createdAt: "2025-01-05",
+    updatedAt: "2025-01-08",
+  },
+
+  // ——— 7. WC-2025-0041 — MacBook Pro 14" (ser-015) — IN REVIEW ———
+  {
+    id: "wc-007",
+    claimNumber: "WC-2025-0041",
+    serializedItemId: "ser-015",
+    serialNumber: "SN-MBP3-00150",
+    productName: "MacBook Pro 14\" M3 Pro",
+    claimType: "customer_to_store",
+    status: "in_review",
+    claimDate: "2025-02-15",
+    issueDescription: "Multiple keys on the built-in keyboard are registering double inputs. The E, R, and T keys are most affected. Issue occurs intermittently.",
+    customerId: "cust-001",
+    customerName: "Tech Haven",
+    supplierId: null,
+    supplierName: null,
+    repairCost: null,
+    replacementSerialId: null,
+    replacementSerialNumber: null,
+    resolution: null,
+    attachments: [],
+    statusHistory: [
+      { from: null, to: "pending", date: "2025-02-15", note: "Claim opened" },
+      { from: "pending", to: "in_review", date: "2025-02-17", note: "Running keyboard diagnostic tests" },
+    ],
+    notes: [
+      { id: "wcn-015", warrantyClaimId: "wc-007", note: "Customer demonstrated double-key issue in store. Reproduced on E and T keys. Running Apple Diagnostics.", createdBy: "Admin", createdAt: "2025-02-17" },
+    ],
+    createdAt: "2025-02-15",
+    updatedAt: "2025-02-17",
+  },
+
+  // ——— 8. WC-2025-0042 — iPad Pro (ser-022) — REPAIRED (awaiting close) ———
+  {
+    id: "wc-008",
+    claimNumber: "WC-2025-0042",
+    serializedItemId: "ser-022",
+    serialNumber: "SN-IPDP-00680",
+    productName: "iPad Pro 11\" M4 256GB",
+    claimType: "customer_to_store",
+    status: "repaired",
+    claimDate: "2025-01-10",
+    issueDescription: "USB-C charging port intermittently fails to charge. Customer tried multiple cables and adapters. Port appears physically intact.",
+    customerId: "cust-001",
+    customerName: "Tech Haven",
+    supplierId: null,
+    supplierName: null,
+    repairCost: 85,
+    replacementSerialId: null,
+    replacementSerialNumber: null,
+    resolution: "Charging port assembly replaced. All charging tests passed with multiple cable types.",
+    attachments: [],
+    statusHistory: [
+      { from: null, to: "pending", date: "2025-01-10", note: "Claim opened" },
+      { from: "pending", to: "in_review", date: "2025-01-12", note: "Testing with store cables confirmed issue" },
+      { from: "in_review", to: "in_repair", date: "2025-01-14", note: "Sent for port replacement" },
+      { from: "in_repair", to: "repaired", date: "2025-01-25", note: "Port assembly replaced, unit tested" },
+    ],
+    notes: [
+      { id: "wcn-016", warrantyClaimId: "wc-008", note: "Confirmed charging failure with 3 different cables. Internal inspection shows no debris or corrosion.", createdBy: "Admin", createdAt: "2025-01-12" },
+      { id: "wcn-017", warrantyClaimId: "wc-008", note: "Repair complete. Charging port assembly replaced. Tested with USB-C PD at 20W and 30W, all working. Customer notified for pickup.", createdBy: "Admin", createdAt: "2025-01-25" },
+    ],
+    createdAt: "2025-01-10",
+    updatedAt: "2025-01-25",
+  },
+
+  // ——— 9. WC-2025-0043 — ThinkPad X1 (ser-018) — PENDING ———
+  {
+    id: "wc-009",
+    claimNumber: "WC-2025-0043",
+    serializedItemId: "ser-018",
+    serialNumber: "SN-TPX1-00410",
+    productName: "ThinkPad X1 Carbon Gen 11",
+    claimType: "customer_to_store",
+    status: "pending",
+    claimDate: "2025-02-20",
+    issueDescription: "Trackpad becomes unresponsive after the laptop wakes from sleep. Requires a full restart to restore functionality. Happens consistently.",
+    customerId: "cust-003",
+    customerName: "Digital Edge",
+    supplierId: null,
+    supplierName: null,
+    repairCost: null,
+    replacementSerialId: null,
+    replacementSerialNumber: null,
+    resolution: null,
+    attachments: [],
+    statusHistory: [
+      { from: null, to: "pending", date: "2025-02-20", note: "Claim opened, awaiting inspection" },
+    ],
+    notes: [
+      { id: "wcn-018", warrantyClaimId: "wc-009", note: "Customer dropped off unit. Will test sleep/wake cycle tomorrow.", createdBy: "Admin", createdAt: "2025-02-20" },
+    ],
+    createdAt: "2025-02-20",
+    updatedAt: "2025-02-20",
+  },
+
+  // ——— 10. WC-2025-0044 — Galaxy S24 Ultra (ser-008) — IN REVIEW ———
+  {
+    id: "wc-010",
+    claimNumber: "WC-2025-0044",
+    serializedItemId: "ser-008",
+    serialNumber: "SN-GS24-01204",
+    productName: "Galaxy S24 Ultra 512GB",
+    claimType: "customer_to_store",
+    status: "in_review",
+    claimDate: "2025-02-18",
+    issueDescription: "Main camera fails to focus in all modes. Autofocus hunts continuously and never locks. Front camera works normally.",
+    customerId: "cust-005",
+    customerName: "Nex Mobile",
+    supplierId: null,
+    supplierName: null,
+    repairCost: null,
+    replacementSerialId: null,
+    replacementSerialNumber: null,
+    resolution: null,
+    attachments: [],
+    statusHistory: [
+      { from: null, to: "pending", date: "2025-02-18", note: "Claim opened" },
+      { from: "pending", to: "in_review", date: "2025-02-19", note: "Camera module inspection in progress" },
+    ],
+    notes: [
+      { id: "wcn-019", warrantyClaimId: "wc-010", note: "Reproduced autofocus hunting in store. Tested in photo, video, and pro modes. Issue persists across all rear cameras.", createdBy: "Admin", createdAt: "2025-02-19" },
+    ],
+    createdAt: "2025-02-18",
+    updatedAt: "2025-02-19",
+  },
+
+  // ——— 11. WC-2025-0045 — OnePlus 12 (ser-033) — REPLACED (awaiting close) ———
+  {
+    id: "wc-011",
+    claimNumber: "WC-2025-0045",
+    serializedItemId: "ser-033",
+    serialNumber: "SN-OP12-00440",
+    productName: "OnePlus 12 256GB",
+    claimType: "customer_to_store",
+    status: "replaced",
+    claimDate: "2025-02-10",
+    issueDescription: "Display showing green tint at low brightness levels. Issue visible on all screens and apps. Software reset did not resolve.",
+    customerId: "cust-002",
+    customerName: "Circuit Hub",
+    supplierId: null,
+    supplierName: null,
+    repairCost: 0,
+    replacementSerialId: "ser-034",
+    replacementSerialNumber: "SN-OP12-00445",
+    resolution: "OnePlus confirmed AMOLED panel defect. Replacement unit SN-OP12-00445 assigned from current stock.",
+    attachments: [],
+    statusHistory: [
+      { from: null, to: "pending", date: "2025-02-10", note: "Claim opened" },
+      { from: "pending", to: "in_review", date: "2025-02-11", note: "Green tint confirmed at brightness below 30%" },
+      { from: "in_review", to: "replaced", date: "2025-02-22", note: "OnePlus approved replacement. Unit swapped from stock." },
+    ],
+    notes: [
+      { id: "wcn-020", warrantyClaimId: "wc-011", note: "Green tint clearly visible below 30% brightness. Photographed in dark room for documentation.", createdBy: "Admin", createdAt: "2025-02-11" },
+      { id: "wcn-021", warrantyClaimId: "wc-011", note: "OnePlus approved unit swap. Replacement SN-OP12-00445 pulled from inventory. Awaiting customer pickup.", createdBy: "Admin", createdAt: "2025-02-22" },
+    ],
+    createdAt: "2025-02-10",
+    updatedAt: "2025-02-22",
+  },
+
+  // ——— 12. WC-2025-0046 — iPhone 15 Pro (ser-002) — STORE TO SUPPLIER, IN REPAIR ———
+  {
+    id: "wc-012",
+    claimNumber: "WC-2025-0046",
+    serializedItemId: "ser-002",
+    serialNumber: "SN-IP15-00848",
+    productName: "iPhone 15 Pro 256GB Black",
+    claimType: "store_to_supplier",
+    status: "in_repair",
+    claimDate: "2024-12-22",
+    issueDescription: "Forwarding customer claim WC-2024-0038 to Apple. Display connector issue confirmed by in-store inspection. Unit shipped to Apple service center for warranty repair.",
+    customerId: null,
+    customerName: null,
+    supplierId: "sup-001",
+    supplierName: "Apple Authorized Dist.",
+    repairCost: null,
+    replacementSerialId: null,
+    replacementSerialNumber: null,
+    resolution: null,
+    attachments: [],
+    statusHistory: [
+      { from: null, to: "pending", date: "2024-12-22", note: "Supplier claim created, linked to customer claim WC-2024-0038" },
+      { from: "pending", to: "in_review", date: "2024-12-23", note: "Apple RMA approved, case #APL-2024-77291" },
+      { from: "in_review", to: "in_repair", date: "2024-12-28", note: "Unit received by Apple service center" },
+    ],
+    notes: [
+      { id: "wcn-022", warrantyClaimId: "wc-012", note: "Apple RMA number: APL-2024-77291. Shipped via express on Dec 23.", createdBy: "Admin", createdAt: "2024-12-23" },
+      { id: "wcn-023", warrantyClaimId: "wc-012", note: "Apple confirms display flex cable fault. Repair estimated at 5 to 7 business days.", createdBy: "Admin", createdAt: "2025-01-10" },
+    ],
+    createdAt: "2024-12-22",
+    updatedAt: "2025-01-10",
+  },
+];
+
+// — Warranty Claim Helper Functions —
+
+export function getWarrantyClaims() {
+  return WARRANTY_CLAIMS;
+}
+
+export function getWarrantyClaimById(id: string) {
+  return WARRANTY_CLAIMS.find((c) => c.id === id) ?? null;
+}
+
+export function getWarrantyClaimByNumber(claimNumber: string) {
+  return WARRANTY_CLAIMS.find((c) => c.claimNumber === claimNumber) ?? null;
+}
+
+export function getWarrantyClaimsBySerial(serializedItemId: string) {
+  return WARRANTY_CLAIMS.filter((c) => c.serializedItemId === serializedItemId);
+}
+
+export function getWarrantyClaimsByCustomer(customerName: string) {
+  return WARRANTY_CLAIMS.filter((c) => c.customerName === customerName);
+}
+
+export function getWarrantyClaimsBySupplier(supplierName: string) {
+  return WARRANTY_CLAIMS.filter((c) => c.supplierName === supplierName);
+}
+
+// Valid status transitions per the workflow diagram
+export const CLAIM_STATUS_TRANSITIONS: Record<ClaimStatus, ClaimStatus[]> = {
+  pending: ["in_review", "rejected"],
+  in_review: ["in_repair", "replaced", "rejected"],
+  in_repair: ["repaired", "replaced", "rejected"],
+  repaired: ["closed"],
+  replaced: ["closed"],
+  rejected: ["closed"],
+  closed: [],
+};
+
+export function getNextStatuses(currentStatus: ClaimStatus): ClaimStatus[] {
+  return CLAIM_STATUS_TRANSITIONS[currentStatus];
+}
+
+export const CLAIM_TYPE_CONFIG: Record<ClaimType, { label: string; description: string }> = {
+  customer_to_store: { label: "Customer to Store", description: "Customer bringing item to you" },
+  store_to_supplier: { label: "Store to Supplier", description: "You claiming from supplier" },
+  supplier_to_store: { label: "Supplier to Store", description: "Supplier returning repaired/replaced item" },
+};
+
+export const CLAIM_STATUS_CONFIG: Record<ClaimStatus, { label: string; color: string; bg: string }> = {
+  pending: { label: "Pending", color: "text-amber-600", bg: "bg-amber-600/10" },
+  in_review: { label: "In Review", color: "text-blue-primary", bg: "bg-blue-primary/8" },
+  in_repair: { label: "In Repair", color: "text-orange-600", bg: "bg-orange-600/10" },
+  repaired: { label: "Repaired", color: "text-emerald-700", bg: "bg-emerald-700/10" },
+  replaced: { label: "Replaced", color: "text-violet-600", bg: "bg-violet-600/10" },
+  rejected: { label: "Rejected", color: "text-error", bg: "bg-error/10" },
+  closed: { label: "Closed", color: "text-blue-primary/40", bg: "bg-blue-primary/5" },
+};
