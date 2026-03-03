@@ -8,7 +8,7 @@ const SIDEBAR_EVENT = "inventra:sidebar-toggled";
 
 // Call this from sidebar when toggling
 export function notifySidebarToggle() {
-  window.dispatchEvent(new Event(SIDEBAR_EVENT));
+  setTimeout(() => window.dispatchEvent(new Event(SIDEBAR_EVENT)), 0);
 }
 
 export function AppContentClient({ children }: { children: React.ReactNode }) {
