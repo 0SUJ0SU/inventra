@@ -52,6 +52,7 @@ import {
   SERIALIZED_ITEMS,
 } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils/format";
+import Link from "next/link";
 
 // ————————————————————————————————————————————————
 // TYPES
@@ -390,6 +391,13 @@ export default function WarrantyClaimsPage() {
           <span className="font-mono text-[10px] tracking-[0.15em] text-blue-primary/20 hidden sm:block">
             [INV.WTY]
           </span>
+          <Link
+            href="/warranty/claims/new"
+            className="h-9 px-4 bg-blue-primary text-cream-primary font-mono text-[10px] tracking-[0.12em] uppercase flex items-center gap-2 hover:bg-blue-dark transition-colors"
+          >
+            <Plus size={13} strokeWidth={1.5} />
+            New Claim
+          </Link>
         </motion.div>
       </div>
 
@@ -398,7 +406,7 @@ export default function WarrantyClaimsPage() {
 
       {/* ━━━ STATUS SUMMARY CARDS ━━━ */}
       <motion.div
-        className="grid grid-cols-4 lg:grid-cols-7 gap-px bg-blue-primary/10 border border-blue-primary/10"
+        className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.08, ease }}
@@ -826,7 +834,7 @@ export default function WarrantyClaimsPage() {
                   <div className="p-5 space-y-5 overflow-y-auto flex-1">
 
                     {/* Status + Type + Date row */}
-                    <div className="grid grid-cols-3 gap-px bg-blue-primary/10 border border-blue-primary/10">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-blue-primary/10 border border-blue-primary/10">
                       <div className="bg-cream-light px-4 py-3 text-center">
                         <span className="font-mono text-[8px] tracking-[0.15em] uppercase text-blue-primary/40 block mb-1.5">Claim Type</span>
                         <span className="inline-block font-mono text-[9px] tracking-[0.08em] uppercase text-blue-primary/70 px-2 py-1 bg-blue-primary/5">
