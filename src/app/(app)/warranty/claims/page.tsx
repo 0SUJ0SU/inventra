@@ -1,9 +1,10 @@
 // src/app/(app)/warranty/claims/page.tsx
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import * as XLSX from "xlsx";
 import {
   Search,
   ChevronUp,
@@ -15,28 +16,21 @@ import {
   MoreHorizontal,
   Eye,
   ShieldCheck,
-  ShieldAlert,
-  ShieldX,
-  ShieldOff,
   Clock,
   Package,
   CircleDot,
   CalendarDays,
   User,
   Truck,
-  DollarSign,
-  Tag,
   Barcode,
-  FileText,
   ArrowRight,
   Send,
-  MessageSquare,
   CheckCircle2,
   XCircle,
   Wrench,
   RefreshCw,
-  AlertTriangle,
   Plus,
+  Download,
 } from "lucide-react";
 import {
   WARRANTY_CLAIMS,
@@ -47,9 +41,6 @@ import {
   type WarrantyClaimNote,
   type ClaimType,
   type ClaimStatus,
-  getWarrantyStatus,
-  getWarrantyDaysRemaining,
-  SERIALIZED_ITEMS,
 } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils/format";
 import Link from "next/link";
@@ -116,14 +107,12 @@ function getCustomerSupplierLabel(claim: WarrantyClaim): string {
   return "\u2014";
 }
 
-// Unique customers from claims
 function getUniqueCustomers(claims: WarrantyClaim[]): string[] {
   const set = new Set<string>();
   claims.forEach((c) => { if (c.customerName) set.add(c.customerName); });
   return Array.from(set).sort();
 }
 
-// Unique suppliers from claims
 function getUniqueSuppliers(claims: WarrantyClaim[]): string[] {
   const set = new Set<string>();
   claims.forEach((c) => { if (c.supplierName) set.add(c.supplierName); });
@@ -141,6 +130,8 @@ export default function WarrantyClaimsPage() {
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [customerFilter, setCustomerFilter] = useState("all");
   const [supplierFilter, setSupplierFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   // — Sort state —
   const [sortKey, setSortKey] = useState<SortKey>("claimDate");
@@ -149,6 +140,9 @@ export default function WarrantyClaimsPage() {
   // — Pagination —
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(10);
+
+  // — Selection —
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // — Action menu —
   const [actionMenuId, setActionMenuId] = useState<string | null>(null);
@@ -161,6 +155,14 @@ export default function WarrantyClaimsPage() {
 
   // — Local mutable state (demo) —
   const [claims, setClaims] = useState<WarrantyClaim[]>(() => [...WARRANTY_CLAIMS]);
+
+  // — Loading state (cosmetic skeleton on mount) —
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setIsLoading(false), 700);
+    return () => clearTimeout(t);
+  }, []);
 
   const uniqueCustomers = useMemo(() => getUniqueCustomers(claims), [claims]);
   const uniqueSuppliers = useMemo(() => getUniqueSuppliers(claims), [claims]);
@@ -203,8 +205,16 @@ export default function WarrantyClaimsPage() {
       data = data.filter((c) => c.supplierName === supplierFilter);
     }
 
+    // Date range — ISO date strings compare lexicographically
+    if (dateFrom) {
+      data = data.filter((c) => c.claimDate >= dateFrom);
+    }
+    if (dateTo) {
+      data = data.filter((c) => c.claimDate <= dateTo);
+    }
+
     return data;
-  }, [search, statusFilter, typeFilter, customerFilter, supplierFilter, claims]);
+  }, [search, statusFilter, typeFilter, customerFilter, supplierFilter, dateFrom, dateTo, claims]);
 
   const sorted = useMemo(() => {
     const data = [...filtered];
@@ -259,12 +269,13 @@ export default function WarrantyClaimsPage() {
     }
   };
 
-  // Active filter count
+  // Active filter count — date range counts as 1 if either field is set
   const activeFilterCount = [
     statusFilter !== "all",
     typeFilter !== "all",
     customerFilter !== "all",
     supplierFilter !== "all",
+    !!(dateFrom || dateTo),
   ].filter(Boolean).length;
 
   const clearFilters = () => {
@@ -273,6 +284,8 @@ export default function WarrantyClaimsPage() {
     setTypeFilter("all");
     setCustomerFilter("all");
     setSupplierFilter("all");
+    setDateFrom("");
+    setDateTo("");
     resetPage();
   };
 
@@ -293,7 +306,6 @@ export default function WarrantyClaimsPage() {
         };
       })
     );
-    // Update the detail modal too
     setDetailClaim((prev) => {
       if (!prev || prev.id !== claimId) return prev;
       const now = new Date().toISOString().split("T")[0];
@@ -333,6 +345,83 @@ export default function WarrantyClaimsPage() {
     setNewNote("");
   };
 
+  // — Selection handlers —
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (paginated.length > 0 && paginated.every((c) => selectedIds.has(c.id))) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(paginated.map((c) => c.id)));
+    }
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
+
+  const allOnPageSelected =
+    paginated.length > 0 && paginated.every((c) => selectedIds.has(c.id));
+
+  // — Bulk close (only non-closed claims affected) —
+  const handleBulkClose = () => {
+    const now = new Date().toISOString().split("T")[0];
+    setClaims((prev) =>
+      prev.map((c) => {
+        if (!selectedIds.has(c.id) || c.status === "closed") return c;
+        return {
+          ...c,
+          status: "closed" as ClaimStatus,
+          updatedAt: now,
+          statusHistory: [
+            ...c.statusHistory,
+            { from: c.status, to: "closed" as ClaimStatus, date: now, note: "Bulk closed by admin" },
+          ],
+        };
+      })
+    );
+    clearSelection();
+  };
+
+  // — Export helpers —
+  const buildExportRows = (rows: WarrantyClaim[]) =>
+    rows.map((claim) => ({
+      "Claim #": claim.claimNumber,
+      "Serial #": claim.serialNumber,
+      Product: claim.productName,
+      Type: CLAIM_TYPE_CONFIG[claim.claimType].label,
+      Status: CLAIM_STATUS_CONFIG[claim.status].label,
+      "Claim Date": claim.claimDate,
+      "Customer / Supplier": getCustomerSupplierLabel(claim),
+      "Issue Description": claim.issueDescription,
+      "Repair Cost": claim.repairCost ?? "",
+      "Replacement Serial": claim.replacementSerialNumber ?? "",
+      Resolution: claim.resolution ?? "",
+    }));
+
+  // Export all filtered+sorted claims
+  const handleExport = () => {
+    const ws = XLSX.utils.json_to_sheet(buildExportRows(sorted));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Warranty Claims");
+    XLSX.writeFile(wb, `warranty-claims-${new Date().toISOString().split("T")[0]}.xlsx`);
+  };
+
+  // Export only selected claims
+  const handleExportSelected = () => {
+    const rows = sorted.filter((c) => selectedIds.has(c.id));
+    const ws = XLSX.utils.json_to_sheet(buildExportRows(rows));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Warranty Claims");
+    XLSX.writeFile(wb, `warranty-claims-selected-${new Date().toISOString().split("T")[0]}.xlsx`);
+    clearSelection();
+  };
+
   // ——— SORT ICON ———
 
   const SortIcon = ({ col }: { col: SortKey }) => {
@@ -355,7 +444,6 @@ export default function WarrantyClaimsPage() {
     return counts;
   }, [claims]);
 
-  // Open claims = everything not closed
   const openClaimsCount = claims.filter((c) => c.status !== "closed").length;
 
   // ——— RENDER ———
@@ -391,6 +479,14 @@ export default function WarrantyClaimsPage() {
           <span className="font-mono text-[10px] tracking-[0.15em] text-blue-primary/20 hidden sm:block">
             [INV.WTY]
           </span>
+          {/* Export all filtered */}
+          <button
+            onClick={handleExport}
+            className="h-9 px-4 border border-blue-primary/15 text-blue-primary/50 font-mono text-[10px] tracking-[0.12em] uppercase flex items-center gap-2 hover:border-blue-primary/30 hover:text-blue-primary transition-colors"
+          >
+            <Download size={13} strokeWidth={1.5} />
+            Export
+          </button>
           <Link
             href="/warranty/claims/new"
             className="h-9 px-4 bg-blue-primary text-cream-primary font-mono text-[10px] tracking-[0.12em] uppercase flex items-center gap-2 hover:bg-blue-dark transition-colors"
@@ -434,11 +530,12 @@ export default function WarrantyClaimsPage() {
 
       {/* ━━━ FILTERS ━━━ */}
       <motion.div
-        className="space-y-3"
+        className="space-y-2"
         initial={{ y: 20 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.12, ease }}
       >
+        {/* Row 1: Search + dropdowns */}
         <div className="flex flex-col lg:flex-row gap-3">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
@@ -464,7 +561,7 @@ export default function WarrantyClaimsPage() {
             )}
           </div>
 
-          {/* Filter pills */}
+          {/* Dropdown filters */}
           <div className="grid grid-cols-2 lg:flex lg:flex-wrap gap-2">
             {/* Status */}
             <select
@@ -525,6 +622,78 @@ export default function WarrantyClaimsPage() {
             )}
           </div>
         </div>
+
+        {/* Row 2: Date range filter */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/30 shrink-0">
+            Date range
+          </span>
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => { setDateFrom(e.target.value); resetPage(); }}
+            className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.05em] text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer w-36"
+          />
+          <span className="font-mono text-[9px] text-blue-primary/20">to</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => { setDateTo(e.target.value); resetPage(); }}
+            className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.05em] text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer w-36"
+          />
+          {(dateFrom || dateTo) && (
+            <button
+              onClick={() => { setDateFrom(""); setDateTo(""); resetPage(); }}
+              className="h-9 w-9 flex items-center justify-center border border-blue-primary/10 text-blue-primary/30 hover:text-blue-primary hover:border-blue-primary/30 transition-colors"
+            >
+              <X size={12} strokeWidth={2} />
+            </button>
+          )}
+          {(dateFrom || dateTo) && (
+            <span className="font-mono text-[9px] tracking-[0.08em] text-blue-primary/30">
+              {sorted.length} result{sorted.length !== 1 && "s"}
+            </span>
+          )}
+        </div>
+
+        {/* Row 3: Bulk actions bar — shown when items are selected */}
+        {selectedIds.size > 0 && (
+          <motion.div
+            className="bg-blue-primary text-cream-primary"
+            initial={{ y: -10 }}
+            animate={{ y: 0 }}
+            transition={{ duration: 0.3, ease }}
+          >
+            <div className="px-4 h-9 flex items-center justify-center border-b border-cream-primary/10">
+              <span className="font-mono text-[10px] tracking-[0.12em] uppercase">
+                {selectedIds.size} claim{selectedIds.size !== 1 && "s"} selected
+              </span>
+            </div>
+            <div className="grid grid-cols-3 divide-x divide-cream-primary/10">
+              <button
+                onClick={handleBulkClose}
+                className="font-mono text-[9px] tracking-[0.1em] uppercase text-cream-primary/70 hover:text-cream-primary hover:bg-cream-primary/5 flex items-center justify-center gap-1.5 h-9 transition-colors"
+              >
+                <CheckCircle2 size={12} strokeWidth={1.5} />
+                Close Claims
+              </button>
+              <button
+                onClick={handleExportSelected}
+                className="font-mono text-[9px] tracking-[0.1em] uppercase text-cream-primary/70 hover:text-cream-primary hover:bg-cream-primary/5 flex items-center justify-center gap-1.5 h-9 transition-colors"
+              >
+                <Download size={12} strokeWidth={1.5} />
+                Export Selected
+              </button>
+              <button
+                onClick={clearSelection}
+                className="font-mono text-[9px] tracking-[0.1em] uppercase text-cream-primary/50 hover:text-cream-primary hover:bg-cream-primary/5 flex items-center justify-center gap-1.5 h-9 transition-colors"
+              >
+                <X size={12} strokeWidth={1.5} />
+                Deselect
+              </button>
+            </div>
+          </motion.div>
+        )}
       </motion.div>
 
       {/* ━━━ TABLE ━━━ */}
@@ -544,10 +713,20 @@ export default function WarrantyClaimsPage() {
 
         {/* Scrollable table */}
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1050px]">
+          <table className="w-full min-w-[1100px]">
             <thead>
               <tr className="border-b border-blue-primary/10 h-11">
-                <th className="text-left px-4 align-middle">
+                {/* Checkbox column */}
+                <th className="w-12 px-4 align-middle">
+                  <input
+                    type="checkbox"
+                    checked={allOnPageSelected}
+                    onChange={toggleSelectAll}
+                    disabled={isLoading || paginated.length === 0}
+                    className="w-3.5 h-3.5 accent-blue-primary cursor-pointer block disabled:opacity-30"
+                  />
+                </th>
+                <th className="text-left px-3 align-middle">
                   <button onClick={() => handleSort("claimNumber")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors">
                     Claim # <SortIcon col="claimNumber" />
                   </button>
@@ -586,32 +765,87 @@ export default function WarrantyClaimsPage() {
               </tr>
             </thead>
             <tbody>
-              {paginated.length === 0 ? (
+              {/* ── LOADING SKELETON ── */}
+              {isLoading ? (
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="border-b border-blue-primary/6 h-14">
+                    <td className="w-12 px-4 align-middle">
+                      <div className="w-3.5 h-3.5 bg-blue-primary/8 animate-pulse" />
+                    </td>
+                    <td className="px-3 align-middle">
+                      <div className="h-2.5 w-28 bg-blue-primary/8 animate-pulse" />
+                    </td>
+                    <td className="px-3 align-middle">
+                      <div className="h-2.5 w-24 bg-blue-primary/8 animate-pulse" />
+                    </td>
+                    <td className="px-3 align-middle">
+                      <div className="h-2.5 w-36 bg-blue-primary/8 animate-pulse" />
+                    </td>
+                    <td className="px-3 align-middle">
+                      <div className="h-5 w-24 bg-blue-primary/8 animate-pulse mx-auto" />
+                    </td>
+                    <td className="px-3 align-middle">
+                      <div className="h-5 w-16 bg-blue-primary/8 animate-pulse mx-auto" />
+                    </td>
+                    <td className="px-3 align-middle">
+                      <div className="h-2.5 w-20 bg-blue-primary/8 animate-pulse mx-auto" />
+                    </td>
+                    <td className="pl-3 pr-8 align-middle">
+                      <div className="h-2.5 w-20 bg-blue-primary/8 animate-pulse ml-auto" />
+                    </td>
+                    <td className="w-12 px-3 align-middle" />
+                  </tr>
+                ))
+              ) : paginated.length === 0 ? (
+                /* ── EMPTY STATE ── */
                 <tr>
-                  <td colSpan={8} className="text-center py-16">
+                  <td colSpan={9} className="text-center py-16">
                     <ShieldCheck size={28} strokeWidth={1} className="text-blue-primary/15 mx-auto mb-3" />
                     <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-blue-primary/30">
                       {search || activeFilterCount > 0 ? "No claims found" : "No warranty claims yet"}
                     </p>
                     <p className="font-mono text-[9px] tracking-[0.08em] uppercase text-blue-primary/20 mt-1">
                       {search || activeFilterCount > 0
-                        ? "Try adjusting your filters"
+                        ? "Try adjusting your filters or date range"
                         : "Claims will appear when warranty issues are reported"}
                     </p>
+                    {activeFilterCount > 0 && (
+                      <button
+                        onClick={clearFilters}
+                        className="mt-4 h-8 px-4 border border-blue-primary/10 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 transition-colors"
+                      >
+                        Clear All Filters
+                      </button>
+                    )}
                   </td>
                 </tr>
               ) : (
+                /* ── DATA ROWS ── */
                 paginated.map((claim) => {
+                  const isSelected = selectedIds.has(claim.id);
                   const sCfg = CLAIM_STATUS_CONFIG[claim.status];
                   const tCfg = CLAIM_TYPE_SHORT[claim.claimType];
 
                   return (
                     <tr
                       key={claim.id}
-                      className="border-b border-blue-primary/6 transition-colors duration-150 h-14 hover:bg-blue-primary/[0.02]"
+                      className={`border-b border-blue-primary/6 transition-colors duration-150 h-14 ${
+                        isSelected
+                          ? "bg-blue-primary/[0.03]"
+                          : "hover:bg-blue-primary/[0.02]"
+                      }`}
                     >
+                      {/* Checkbox */}
+                      <td className="w-12 px-4 align-middle">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelect(claim.id)}
+                          className="w-3.5 h-3.5 accent-blue-primary cursor-pointer block"
+                        />
+                      </td>
                       {/* Claim # */}
-                      <td className="px-4 align-middle">
+                      <td className="px-3 align-middle">
                         <button
                           onClick={() => setDetailClaim(claim)}
                           className="font-mono text-[10px] tracking-[0.06em] uppercase text-blue-primary hover:underline underline-offset-2 decoration-blue-primary/30 transition-colors text-left"
@@ -659,7 +893,7 @@ export default function WarrantyClaimsPage() {
                           {getCustomerSupplierLabel(claim)}
                         </span>
                       </td>
-                      {/* Actions */}
+                      {/* Actions menu */}
                       <td className="w-12 px-3 align-middle text-center relative">
                         <button
                           onClick={() => setActionMenuId(actionMenuId === claim.id ? null : claim.id)}
@@ -690,7 +924,7 @@ export default function WarrantyClaimsPage() {
                                       <button
                                         key={nextStatus}
                                         onClick={() => handleStatusUpdate(claim.id, nextStatus)}
-                                        className={`w-full flex items-center gap-2 px-3 py-1.5 font-mono text-[9px] tracking-[0.1em] uppercase transition-colors text-blue-primary/50 hover:bg-blue-primary/5 hover:text-blue-primary`}
+                                        className="w-full flex items-center gap-2 px-3 py-1.5 font-mono text-[9px] tracking-[0.1em] uppercase transition-colors text-blue-primary/50 hover:bg-blue-primary/5 hover:text-blue-primary"
                                       >
                                         <Icon size={11} strokeWidth={1.5} />
                                         {nCfg.label}
@@ -979,8 +1213,6 @@ export default function WarrantyClaimsPage() {
                       <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 pb-1 border-b border-blue-primary/8 mb-3">
                         Notes ({detailClaim.notes.length})
                       </p>
-
-                      {/* Existing notes */}
                       {detailClaim.notes.length > 0 ? (
                         <div className="space-y-2 mb-3">
                           {detailClaim.notes.map((note) => (
@@ -1004,8 +1236,6 @@ export default function WarrantyClaimsPage() {
                           No notes yet
                         </p>
                       )}
-
-                      {/* Add note input */}
                       {detailClaim.status !== "closed" && (
                         <div className="flex gap-2">
                           <input
