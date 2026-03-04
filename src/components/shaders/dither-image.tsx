@@ -176,8 +176,9 @@ function createProgram(gl: WebGLRenderingContext, vs: WebGLShader, fs: WebGLShad
   return program;
 }
 
-function createTrailTexture(gl: WebGLRenderingContext, width: number, height: number) {
-  const tex = gl.createTexture()!;
+function createTrailTexture(gl: WebGLRenderingContext, width: number, height: number): WebGLTexture | null {
+  const tex = gl.createTexture();
+  if (!tex) return null;
   gl.bindTexture(gl.TEXTURE_2D, tex);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -254,7 +255,8 @@ export function DitherImage({
 
     // ─── Simple quad (for trail shader) ───
     const quadVerts = new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]);
-    const quadBuf = gl.createBuffer()!;
+    const quadBuf = gl.createBuffer();
+    if (!quadBuf) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, quadBuf);
     gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
     quadBufRef.current = quadBuf;
@@ -264,7 +266,8 @@ export function DitherImage({
       -1,-1, 0,1,  1,-1, 1,1,  -1,1, 0,0,
       -1,1, 0,0,   1,-1, 1,1,   1,1, 1,0,
     ]);
-    const texQuadBuf = gl.createBuffer()!;
+    const texQuadBuf = gl.createBuffer();
+    if (!texQuadBuf) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, texQuadBuf);
     gl.bufferData(gl.ARRAY_BUFFER, texQuadVerts, gl.STATIC_DRAW);
     texQuadBufRef.current = texQuadBuf;
@@ -287,7 +290,8 @@ export function DitherImage({
     gl.uniform1i(gl.getUniformLocation(trailProg, "u_prevTrail"), 0);
 
     // ─── Create image texture placeholder ───
-    const imageTex = gl.createTexture()!;
+    const imageTex = gl.createTexture();
+    if (!imageTex) return;
     imageTexRef.current = imageTex;
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, imageTex);
@@ -319,12 +323,15 @@ export function DitherImage({
     // Create ping-pong textures + framebuffers
     const texA = createTrailTexture(gl, w, h);
     const texB = createTrailTexture(gl, w, h);
+    if (!texA || !texB) return;
 
-    const fbA = gl.createFramebuffer()!;
+    const fbA = gl.createFramebuffer();
+    if (!fbA) return;
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbA);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texA, 0);
 
-    const fbB = gl.createFramebuffer()!;
+    const fbB = gl.createFramebuffer();
+    if (!fbB) return;
     gl.bindFramebuffer(gl.FRAMEBUFFER, fbB);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texB, 0);
 

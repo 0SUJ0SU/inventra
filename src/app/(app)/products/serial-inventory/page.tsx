@@ -1,7 +1,7 @@
 // src/app/(app)/products/serial-inventory/page.tsx
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -17,7 +17,6 @@ import {
   AlertTriangle,
   Wrench,
   Trash2,
-  Power,
   Barcode,
   ShieldCheck,
   ShieldAlert,
@@ -26,14 +25,11 @@ import {
   Clock,
   Package,
   CircleDot,
-  FileText,
   CalendarDays,
   User,
   Truck,
   DollarSign,
   Tag,
-  StickyNote,
-  ChevronRight as ChevronRightIcon,
 } from "lucide-react";
 import {
   SERIALIZED_ITEMS,
@@ -131,10 +127,27 @@ function getSerialTrackedProducts() {
 }
 
 // ————————————————————————————————————————————————
+// SORT ICON
+// ————————————————————————————————————————————————
+
+function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
+  if (sortKey !== col)
+    return <ChevronsUpDown size={12} strokeWidth={1.5} className="text-blue-primary/20" />;
+  return sortDir === "asc" ? (
+    <ChevronUp size={12} strokeWidth={2} className="text-blue-primary" />
+  ) : (
+    <ChevronDown size={12} strokeWidth={2} className="text-blue-primary" />
+  );
+}
+
+// ————————————————————————————————————————————————
 // PAGE
 // ————————————————————————————————————————————————
 
 export default function SerialInventoryPage() {
+  // — Mounted (portal hydration fix) —
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
+
   // — Filter state —
   const [search, setSearch] = useState("");
   const [productFilter, setProductFilter] = useState("all");
@@ -267,7 +280,7 @@ export default function SerialInventoryPage() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === paginated.length) {
+    if (paginated.every((s) => selectedIds.has(s.id))) {
       setSelectedIds(new Set());
     } else {
       setSelectedIds(new Set(paginated.map((s) => s.id)));
@@ -303,7 +316,8 @@ export default function SerialInventoryPage() {
     setActionMenuId(null);
   };
 
-  const allOnPageSelected = paginated.length > 0 && selectedIds.size === paginated.length;
+  const allOnPageSelected =
+    paginated.length > 0 && paginated.every((s) => selectedIds.has(s.id));
 
   // Active filter count
   const activeFilterCount = [
@@ -320,18 +334,6 @@ export default function SerialInventoryPage() {
     setConditionFilter("all");
     setWarrantyFilter("all");
     resetPage();
-  };
-
-  // ——— SORT ICON ———
-
-  const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col)
-      return <ChevronsUpDown size={12} strokeWidth={1.5} className="text-blue-primary/20" />;
-    return sortDir === "asc" ? (
-      <ChevronUp size={12} strokeWidth={2} className="text-blue-primary" />
-    ) : (
-      <ChevronDown size={12} strokeWidth={2} className="text-blue-primary" />
-    );
   };
 
   // ——— STATUS SUMMARY ———
@@ -573,37 +575,37 @@ export default function SerialInventoryPage() {
                 </th>
                 <th className="text-left px-3 align-middle">
                   <button onClick={() => handleSort("serialNumber")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors">
-                    Serial # <SortIcon col="serialNumber" />
+                    Serial # <SortIcon col="serialNumber" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-left px-3 align-middle">
                   <button onClick={() => handleSort("productName")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors">
-                    Product <SortIcon col="productName" />
+                    Product <SortIcon col="productName" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-center px-3 align-middle">
                   <button onClick={() => handleSort("status")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors mx-auto">
-                    Status <SortIcon col="status" />
+                    Status <SortIcon col="status" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-center px-3 align-middle">
                   <button onClick={() => handleSort("condition")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors mx-auto">
-                    Condition <SortIcon col="condition" />
+                    Condition <SortIcon col="condition" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-left px-3 align-middle">
                   <button onClick={() => handleSort("purchaseDate")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors">
-                    Purchased <SortIcon col="purchaseDate" />
+                    Purchased <SortIcon col="purchaseDate" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-left px-3 align-middle">
                   <button onClick={() => handleSort("customer")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors">
-                    Customer <SortIcon col="customer" />
+                    Customer <SortIcon col="customer" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-center px-3 align-middle">
                   <button onClick={() => handleSort("warrantyStatus")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors mx-auto">
-                    Warranty <SortIcon col="warrantyStatus" />
+                    Warranty <SortIcon col="warrantyStatus" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="w-12 px-3 align-middle" />
@@ -774,7 +776,7 @@ export default function SerialInventoryPage() {
         <div className="flex items-center justify-between px-5 py-3 border-t border-blue-primary/8">
           <div className="flex items-center gap-3">
             <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/30">
-              {(safePage - 1) * pageSize + 1}&ndash;{Math.min(safePage * pageSize, sorted.length)} of {sorted.length}
+              {sorted.length === 0 ? "0" : `${(safePage - 1) * pageSize + 1}`}&ndash;{Math.min(safePage * pageSize, sorted.length)} of {sorted.length}
             </span>
             <div className="w-px h-3 bg-blue-primary/10" />
             <select
@@ -843,7 +845,7 @@ export default function SerialInventoryPage() {
       </div>
 
       {/* ━━━ DETAIL MODAL ━━━ */}
-      {typeof window !== "undefined" && createPortal(
+      {mounted && createPortal(
         <AnimatePresence>
           {detailItem && (
             <>
@@ -932,7 +934,7 @@ export default function SerialInventoryPage() {
                         </p>
                         <DetailRow icon={Package} label="Product" value={detailItem.productName} />
                         <DetailRow icon={Tag} label="Cost" value={formatCurrency(detailItem.purchaseCost)} />
-                        {detailItem.soldPrice && (
+                        {detailItem.soldPrice !== null && detailItem.soldPrice !== undefined && (
                           <DetailRow icon={DollarSign} label="Sold For" value={formatCurrency(detailItem.soldPrice)} />
                         )}
                       </div>

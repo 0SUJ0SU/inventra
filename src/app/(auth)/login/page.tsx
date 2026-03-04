@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 
 // ── Validation ──
 interface FormErrors {
@@ -33,7 +33,7 @@ const DEMO_EMAIL = "admin@inventra.com";
 const DEMO_PASSWORD = "inventra123";
 
 // ── Animation ──
-const slideIn = {
+const slideIn: Variants = {
   hidden: { x: 80, opacity: 0 },
   visible: (i: number) => ({
     x: 0,
@@ -78,9 +78,14 @@ export default function LoginPage() {
     setIsLoading(true);
     await new Promise((r) => setTimeout(r, 1500));
 
-    const registeredUsers = JSON.parse(
-      localStorage.getItem("inventra_users") || "[]"
-    );
+    let registeredUsers: { email: string; password: string; name?: string }[] = [];
+    try {
+      registeredUsers = JSON.parse(
+        localStorage.getItem("inventra_users") || "[]"
+      );
+    } catch {
+      registeredUsers = [];
+    }
     const isDemo = email === DEMO_EMAIL && password === DEMO_PASSWORD;
     const isRegistered = registeredUsers.find(
       (u: { email: string; password: string }) =>
@@ -109,7 +114,7 @@ export default function LoginPage() {
     }
 
     setIsLoading(false);
-    router.push("/");
+    router.push("/dashboard");
   }
 
   if (!mounted) return null;
@@ -119,7 +124,7 @@ export default function LoginPage() {
       {/* ── Header ── */}
       <motion.div
         className="flex items-center justify-between mb-6"
-        variants={slideIn as never}
+        variants={slideIn}
         initial="hidden"
         animate="visible"
         custom={0}
@@ -135,7 +140,7 @@ export default function LoginPage() {
       {/* ── Demo credentials — positioned prominently near top ── */}
       <motion.div
         className="mb-10 py-3 px-4 border border-blue-primary/15 bg-blue-primary/[0.03]"
-        variants={slideIn as never}
+        variants={slideIn}
         initial="hidden"
         animate="visible"
         custom={1}
@@ -155,7 +160,7 @@ export default function LoginPage() {
       <motion.h1
         className="font-sans font-bold text-blue-primary leading-[0.9] tracking-tight mb-3"
         style={{ fontSize: "clamp(48px, 7vw, 80px)" }}
-        variants={slideIn as never}
+        variants={slideIn}
         initial="hidden"
         animate="visible"
         custom={2}
@@ -165,7 +170,7 @@ export default function LoginPage() {
 
       <motion.p
         className="font-mono text-[12px] tracking-[0.15em] uppercase text-blue-primary opacity-50 mb-10"
-        variants={slideIn as never}
+        variants={slideIn}
         initial="hidden"
         animate="visible"
         custom={3}
@@ -192,7 +197,7 @@ export default function LoginPage() {
         {/* 01 EMAIL */}
         <motion.div
           className="mb-8"
-          variants={slideIn as never}
+          variants={slideIn}
           initial="hidden"
           animate="visible"
           custom={4}
@@ -230,7 +235,7 @@ export default function LoginPage() {
         {/* 02 PASSWORD */}
         <motion.div
           className="mb-8"
-          variants={slideIn as never}
+          variants={slideIn}
           initial="hidden"
           animate="visible"
           custom={5}
@@ -278,7 +283,7 @@ export default function LoginPage() {
         {/* Options row */}
         <motion.div
           className="flex items-center justify-between mb-10"
-          variants={slideIn as never}
+          variants={slideIn}
           initial="hidden"
           animate="visible"
           custom={6}
@@ -290,7 +295,6 @@ export default function LoginPage() {
                   ? "bg-blue-primary border-blue-primary"
                   : "border-blue-primary/30 group-hover:border-blue-primary/60"
               }`}
-              onClick={() => setRememberMe(!rememberMe)}
             >
               {rememberMe && (
                 <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
@@ -316,6 +320,7 @@ export default function LoginPage() {
 
           <button
             type="button"
+            onClick={() => alert("Password reset is not available in demo mode.")}
             className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary opacity-40 hover:opacity-100 transition-opacity duration-200"
           >
             [ Forgot Password &rarr; ]
@@ -327,7 +332,7 @@ export default function LoginPage() {
           type="submit"
           disabled={isLoading}
           className="relative w-full h-14 bg-blue-primary text-cream-primary font-mono text-[12px] tracking-[0.25em] uppercase overflow-hidden transition-colors duration-300 hover:bg-blue-dark disabled:opacity-70 group"
-          variants={slideIn as never}
+          variants={slideIn}
           initial="hidden"
           animate="visible"
           custom={7}
@@ -349,7 +354,7 @@ export default function LoginPage() {
       {/* Register link */}
       <motion.div
         className="mt-6 flex items-center gap-2"
-        variants={slideIn as never}
+        variants={slideIn}
         initial="hidden"
         animate="visible"
         custom={8}

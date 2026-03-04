@@ -10,7 +10,10 @@ export function formatCurrency(value: number): string {
 }
 
 export function formatCompact(value: number): string {
-  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+  if (value >= 1000000) {
+    const m = value / 1000000;
+    return m % 1 === 0 ? `${m}M` : `${m.toFixed(1)}M`;
+  }
   if (value >= 1000) {
     const k = value / 1000;
     return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`;

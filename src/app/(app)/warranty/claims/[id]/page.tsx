@@ -9,12 +9,6 @@ import {
   ArrowLeft,
   ArrowRight,
   ShieldCheck,
-  Clock,
-  Eye,
-  Wrench,
-  CheckCircle2,
-  XCircle,
-  RefreshCw,
   CircleDot,
   Send,
 } from "lucide-react";
@@ -29,28 +23,17 @@ import {
   type ClaimStatus,
 } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils/format";
+import {
+  WARRANTY_EASE as ease,
+  CLAIM_TYPE_SHORT,
+  STATUS_WORKFLOW_ICONS,
+  formatClaimDate as formatDate,
+  formatClaimDateShort as formatDateShort,
+} from "@/lib/warranty-utils";
 
 // ————————————————————————————————————————————————
 // CONSTANTS
 // ————————————————————————————————————————————————
-
-const ease = [0.16, 1, 0.3, 1] as const;
-
-const CLAIM_TYPE_SHORT: Record<string, string> = {
-  customer_to_store: "Customer \u2192 Store",
-  store_to_supplier: "Store \u2192 Supplier",
-  supplier_to_store: "Supplier \u2192 Store",
-};
-
-const STATUS_WORKFLOW_ICONS: Record<ClaimStatus, React.ElementType> = {
-  pending:   Clock,
-  in_review: Eye,
-  in_repair: Wrench,
-  repaired:  CheckCircle2,
-  replaced:  RefreshCw,
-  rejected:  XCircle,
-  closed:    ShieldCheck,
-};
 
 const WARRANTY_STATUS_CONFIG = {
   active:        { label: "Active",        color: "text-emerald-700",     bg: "bg-emerald-700/10" },
@@ -62,19 +45,6 @@ const WARRANTY_STATUS_CONFIG = {
 // ————————————————————————————————————————————————
 // HELPERS
 // ————————————————————————————————————————————————
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "\u2014";
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short", day: "numeric", year: "numeric",
-  });
-}
-
-function formatDateShort(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short", day: "numeric", year: "2-digit",
-  });
-}
 
 function getDaysOpen(claimDate: string, updatedAt: string, status: ClaimStatus): number {
   const start = new Date(claimDate);

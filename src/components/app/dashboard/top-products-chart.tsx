@@ -2,6 +2,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { DashboardPeriod, PERIOD_CONFIG, getTopProducts } from "@/lib/demo-data";
 import { formatNumber } from "@/lib/utils/format";
 
@@ -11,7 +12,7 @@ interface TopProductsChartProps {
 
 export function TopProductsChart({ period }: TopProductsChartProps) {
   const data = getTopProducts(period);
-  const maxUnits = Math.max(...data.map((p) => p.units));
+  const maxUnits = data.length === 0 ? 0 : Math.max(...data.map((p) => p.units));
 
   return (
     <motion.div
@@ -70,12 +71,12 @@ export function TopProductsChart({ period }: TopProductsChartProps) {
 
       {/* Footer */}
       <div className="mt-auto pt-3 shrink-0">
-        <a
+        <Link
           href="/products"
           className="font-mono text-[9px] tracking-[0.12em] uppercase text-blue-primary/40 hover:text-blue-primary transition-colors duration-200"
         >
           [ View All Products → ]
-        </a>
+        </Link>
       </div>
     </motion.div>
   );

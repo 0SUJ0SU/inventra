@@ -80,18 +80,18 @@ function AccordionItem({
       gsap.to(contentRef.current, {
         height,
         duration: 0.5,
-        ease: "cubic-bezier(0.16, 1, 0.3, 1)",
+        ease: "power3.out",
       });
       gsap.fromTo(
         innerRef.current,
         { y: -10 },
-        { y: 0, duration: 0.4, delay: 0.1, ease: "cubic-bezier(0.16, 1, 0.3, 1)" }
+        { y: 0, duration: 0.4, delay: 0.1, ease: "power3.out" }
       );
     } else {
       gsap.to(contentRef.current, {
         height: 0,
         duration: 0.4,
-        ease: "cubic-bezier(0.16, 1, 0.3, 1)",
+        ease: "power3.out",
       });
     }
   }, [isOpen]);
@@ -184,7 +184,7 @@ export function Services() {
         tl.fromTo(
           headlineLeftRef.current,
           { x: -120, clipPath: "inset(0 100% 0 0)" },
-          { x: 0, clipPath: "inset(0 0% 0 0)", duration: 0.8, ease: "cubic-bezier(0.16, 1, 0.3, 1)" },
+          { x: 0, clipPath: "inset(0 0% 0 0)", duration: 0.8, ease: "power3.out" },
           0
         );
       }
@@ -193,7 +193,7 @@ export function Services() {
         tl.fromTo(
           imageRef.current,
           { y: 80 },
-          { y: 0, duration: 0.8, ease: "cubic-bezier(0.16, 1, 0.3, 1)" },
+          { y: 0, duration: 0.8, ease: "power3.out" },
           0.2
         );
       }
@@ -207,7 +207,7 @@ export function Services() {
             y: 0,
             duration: 0.6,
             stagger: 0.08,
-            ease: "cubic-bezier(0.16, 1, 0.3, 1)",
+            ease: "power3.out",
           },
           0.3
         );
@@ -217,7 +217,7 @@ export function Services() {
         tl.fromTo(
           ctaRef.current,
           { y: 40 },
-          { y: 0, duration: 0.6, ease: "cubic-bezier(0.16, 1, 0.3, 1)" },
+          { y: 0, duration: 0.6, ease: "power3.out" },
           0.5
         );
       }

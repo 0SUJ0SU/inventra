@@ -22,13 +22,15 @@ export function RevenueCategoryChart({ period }: RevenueCategoryChartProps) {
   const total = data.reduce((sum, c) => sum + c.value, 0);
 
   let cumulative = 0;
-  const gradientStops = data
-    .map((cat, i) => {
-      const start = cumulative;
-      cumulative += (cat.value / total) * 360;
-      return `${CATEGORY_COLORS[i]} ${start}deg ${cumulative}deg`;
-    })
-    .join(", ");
+  const gradientStops = total === 0
+    ? "transparent 0deg 360deg"
+    : data
+        .map((cat, i) => {
+          const start = cumulative;
+          cumulative += (cat.value / total) * 360;
+          return `${CATEGORY_COLORS[i % CATEGORY_COLORS.length]} ${start}deg ${cumulative}deg`;
+        })
+        .join(", ");
 
   const formatTotal = (v: number) => {
     if (v >= 1000000) return `$${(v / 1000000).toFixed(1)}M`;
@@ -83,7 +85,7 @@ export function RevenueCategoryChart({ period }: RevenueCategoryChartProps) {
             <div className="flex items-center gap-2">
               <div
                 className="w-2.5 h-2.5 shrink-0 border border-blue-primary/10"
-                style={{ backgroundColor: CATEGORY_COLORS[i] }}
+                style={{ backgroundColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length] }}
               />
               <span className="font-mono text-[10px] tracking-[0.05em] uppercase text-blue-primary/60">
                 {cat.name}

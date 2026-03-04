@@ -2,6 +2,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { DashboardPeriod, PERIOD_CONFIG, getPaymentMethods } from "@/lib/demo-data";
 import { formatNumber } from "@/lib/utils/format";
 
@@ -21,13 +22,15 @@ export function PaymentMethodChart({ period }: PaymentMethodChartProps) {
   const totalTransactions = data.reduce((s, m) => s + m.transactions, 0);
 
   let cumulative = 0;
-  const gradientStops = data
-    .map((m, i) => {
-      const start = cumulative;
-      cumulative += (m.value / total) * 360;
-      return `${METHOD_COLORS[i]} ${start}deg ${cumulative}deg`;
-    })
-    .join(", ");
+  const gradientStops = total === 0
+    ? "transparent 0deg 360deg"
+    : data
+        .map((m, i) => {
+          const start = cumulative;
+          cumulative += (m.value / total) * 360;
+          return `${METHOD_COLORS[i % METHOD_COLORS.length]} ${start}deg ${cumulative}deg`;
+        })
+        .join(", ");
 
   return (
     <motion.div
@@ -77,7 +80,7 @@ export function PaymentMethodChart({ period }: PaymentMethodChartProps) {
               <div className="flex items-center gap-2">
                 <div
                   className="w-2.5 h-2.5 shrink-0 border border-blue-primary/10"
-                  style={{ backgroundColor: METHOD_COLORS[i] }}
+                  style={{ backgroundColor: METHOD_COLORS[i % METHOD_COLORS.length] }}
                 />
                 <span className="font-mono text-[10px] tracking-[0.05em] uppercase text-blue-primary/60">
                   {m.method}
@@ -96,7 +99,7 @@ export function PaymentMethodChart({ period }: PaymentMethodChartProps) {
               <div
                 className="h-full"
                 style={{
-                  backgroundColor: METHOD_COLORS[i],
+                  backgroundColor: METHOD_COLORS[i % METHOD_COLORS.length],
                   width: `${m.percentage}%`,
                 }}
               />
@@ -107,12 +110,12 @@ export function PaymentMethodChart({ period }: PaymentMethodChartProps) {
 
       {/* Footer */}
       <div className="mt-auto pt-3 shrink-0">
-        <a
+        <Link
           href="/sales"
           className="font-mono text-[9px] tracking-[0.12em] uppercase text-blue-primary/40 hover:text-blue-primary transition-colors duration-200"
         >
           [ View Sales History → ]
-        </a>
+        </Link>
       </div>
     </motion.div>
   );

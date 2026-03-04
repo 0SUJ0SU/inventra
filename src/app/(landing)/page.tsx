@@ -1,6 +1,3 @@
-"use client";
-
-import { useState } from "react";
 import { LoadingScreen } from "@/components/landing/loading-screen";
 import { Navbar } from "@/components/landing/navbar";
 import { Hero } from "@/components/landing/hero";
@@ -13,11 +10,9 @@ import { FAQ } from "@/components/landing/faq";
 import Footer from "@/components/landing/footer";
 
 export default function LandingPage() {
-  const [loadingComplete, setLoadingComplete] = useState(false);
-
   return (
     <>
-      <LoadingScreen onComplete={() => setLoadingComplete(true)} />
+      <LoadingScreen />
       <Navbar />
       <Hero />
 

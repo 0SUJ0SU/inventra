@@ -23,6 +23,8 @@ export function useAnimatedCounter({
   useEffect(() => {
     if (!startOnMount) return;
 
+    startTimeRef.current = null;
+
     const timeout = setTimeout(() => {
       const animate = (timestamp: number) => {
         if (!startTimeRef.current) startTimeRef.current = timestamp;

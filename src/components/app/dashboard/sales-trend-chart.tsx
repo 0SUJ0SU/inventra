@@ -1,6 +1,7 @@
 // src/components/app/dashboard/sales-trend-chart.tsx
 "use client";
 
+import { useId } from "react";
 import { motion } from "framer-motion";
 import {
   AreaChart,
@@ -45,6 +46,7 @@ interface SalesTrendChartProps {
 }
 
 export function SalesTrendChart({ period }: SalesTrendChartProps) {
+  const gradientId = `areaGradient-${useId()}`;
   const data = getSalesTrendData(period);
   const interval = getSalesTrendInterval(period);
 
@@ -78,7 +80,7 @@ export function SalesTrendChart({ period }: SalesTrendChartProps) {
             margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
           >
             <defs>
-              <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#1925AA" stopOpacity={0.15} />
                 <stop offset="100%" stopColor="#1925AA" stopOpacity={0.02} />
               </linearGradient>
@@ -125,7 +127,7 @@ export function SalesTrendChart({ period }: SalesTrendChartProps) {
               dataKey="revenue"
               stroke="#1925AA"
               strokeWidth={1.5}
-              fill="url(#areaGradient)"
+              fill={`url(#${gradientId})`}
               animationDuration={1200}
               animationEasing="ease-out"
             />

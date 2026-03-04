@@ -1,10 +1,10 @@
 // src/app/(auth)/register/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 
 // ── Validation ──
 interface FormErrors {
@@ -65,7 +65,7 @@ function getPasswordStrength(password: string): {
 }
 
 // ── Animation variants ──
-const slideIn = {
+const slideIn: Variants = {
   hidden: { x: 80, opacity: 0 },
   visible: (i: number) => ({
     x: 0,
@@ -91,11 +91,17 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const strength = useMemo(() => getPasswordStrength(password), [password]);
 
   useEffect(() => {
     setMounted(true);
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current);
+      }
+    };
   }, []);
 
   function clearFieldError(field: keyof FormErrors) {
@@ -124,9 +130,14 @@ export default function RegisterPage() {
     await new Promise((r) => setTimeout(r, 1800));
 
     // Check for existing user
-    const existingUsers = JSON.parse(
-      localStorage.getItem("inventra_users") || "[]"
-    );
+    let existingUsers: { name?: string; email: string; password: string; createdAt?: string }[] = [];
+    try {
+      existingUsers = JSON.parse(
+        localStorage.getItem("inventra_users") || "[]"
+      );
+    } catch {
+      existingUsers = [];
+    }
     if (existingUsers.find((u: { email: string }) => u.email === email)) {
       setErrors({ general: "AN ACCOUNT WITH THIS EMAIL ALREADY EXISTS." });
       setIsLoading(false);
@@ -141,7 +152,7 @@ export default function RegisterPage() {
     setIsSuccess(true);
 
     // Redirect to login after success
-    setTimeout(() => {
+    redirectTimeoutRef.current = setTimeout(() => {
       router.push("/login");
     }, 2500);
   }
@@ -194,7 +205,7 @@ export default function RegisterPage() {
       {/* Section marker */}
       <motion.div
         className="flex items-center justify-between mb-12"
-        variants={slideIn as never}
+        variants={slideIn}
         initial="hidden"
         animate="visible"
         custom={0}
@@ -211,7 +222,7 @@ export default function RegisterPage() {
       <motion.h1
         className="font-sans font-bold text-blue-primary leading-[0.9] tracking-tight mb-4"
         style={{ fontSize: "clamp(44px, 6vw, 72px)" }}
-        variants={slideIn as never}
+        variants={slideIn}
         initial="hidden"
         animate="visible"
         custom={1}
@@ -221,7 +232,7 @@ export default function RegisterPage() {
 
       <motion.p
         className="font-mono text-[12px] tracking-[0.15em] uppercase text-blue-primary opacity-50 mb-10"
-        variants={slideIn as never}
+        variants={slideIn}
         initial="hidden"
         animate="visible"
         custom={2}
@@ -248,7 +259,7 @@ export default function RegisterPage() {
         {/* ── 01 FULL NAME ── */}
         <motion.div
           className="relative pb-6"
-          variants={slideIn as never}
+          variants={slideIn}
           initial="hidden"
           animate="visible"
           custom={3}
@@ -286,7 +297,7 @@ export default function RegisterPage() {
         {/* ── 02 EMAIL ── */}
         <motion.div
           className="relative pb-6"
-          variants={slideIn as never}
+          variants={slideIn}
           initial="hidden"
           animate="visible"
           custom={4}
@@ -324,7 +335,7 @@ export default function RegisterPage() {
         {/* ── 03 PASSWORD ── */}
         <motion.div
           className="relative pb-2"
-          variants={slideIn as never}
+          variants={slideIn}
           initial="hidden"
           animate="visible"
           custom={5}
@@ -371,7 +382,7 @@ export default function RegisterPage() {
         {/* Password strength indicator */}
         <motion.div
           className="pb-6"
-          variants={slideIn as never}
+          variants={slideIn}
           initial="hidden"
           animate="visible"
           custom={5}
@@ -402,7 +413,7 @@ export default function RegisterPage() {
         {/* ── 04 CONFIRM PASSWORD ── */}
         <motion.div
           className="relative pb-6"
-          variants={slideIn as never}
+          variants={slideIn}
           initial="hidden"
           animate="visible"
           custom={6}
@@ -449,7 +460,7 @@ export default function RegisterPage() {
         {/* ── 05 TERMS ── */}
         <motion.div
           className="pb-10"
-          variants={slideIn as never}
+          variants={slideIn}
           initial="hidden"
           animate="visible"
           custom={7}
@@ -469,10 +480,6 @@ export default function RegisterPage() {
                   ? "bg-blue-primary border-blue-primary"
                   : "border-blue-primary/30 group-hover:border-blue-primary/60"
               }`}
-              onClick={() => {
-                setTerms(!terms);
-                clearFieldError("terms");
-              }}
             >
               {terms && (
                 <svg
@@ -516,7 +523,7 @@ export default function RegisterPage() {
           type="submit"
           disabled={isLoading}
           className="relative w-full h-14 bg-blue-primary text-cream-primary font-mono text-[12px] tracking-[0.25em] uppercase overflow-hidden transition-colors duration-300 hover:bg-blue-dark disabled:opacity-70 group"
-          variants={slideIn as never}
+          variants={slideIn}
           initial="hidden"
           animate="visible"
           custom={8}
@@ -538,7 +545,7 @@ export default function RegisterPage() {
       {/* ── Login link ── */}
       <motion.div
         className="mt-8 flex items-center gap-2"
-        variants={slideIn as never}
+        variants={slideIn}
         initial="hidden"
         animate="visible"
         custom={9}

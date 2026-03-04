@@ -1,7 +1,7 @@
 // src/app/(app)/products/categories/page.tsx
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -73,10 +73,33 @@ function validateCategory(
 }
 
 // ————————————————————————————————————————————————
+// SORT ICON
+// ————————————————————————————————————————————————
+
+function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
+  if (sortKey !== col)
+    return (
+      <ChevronsUpDown
+        size={12}
+        strokeWidth={1.5}
+        className="text-blue-primary/20"
+      />
+    );
+  return sortDir === "asc" ? (
+    <ChevronUp size={12} strokeWidth={2} className="text-blue-primary" />
+  ) : (
+    <ChevronDown size={12} strokeWidth={2} className="text-blue-primary" />
+  );
+}
+
+// ————————————————————————————————————————————————
 // PAGE
 // ————————————————————————————————————————————————
 
 export default function CategoriesPage() {
+  // — Mounted (portal hydration fix) —
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
+
   // — Data —
   const [categories, setCategories] = useState<Category[]>(() =>
     CATEGORIES.map((c) => ({
@@ -215,24 +238,6 @@ export default function CategoriesPage() {
     closeDeleteDialog();
   };
 
-  // ——— SORT ICON ———
-
-  const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col)
-      return (
-        <ChevronsUpDown
-          size={12}
-          strokeWidth={1.5}
-          className="text-blue-primary/20"
-        />
-      );
-    return sortDir === "asc" ? (
-      <ChevronUp size={12} strokeWidth={2} className="text-blue-primary" />
-    ) : (
-      <ChevronDown size={12} strokeWidth={2} className="text-blue-primary" />
-    );
-  };
-
   // ——— RENDER ———
 
   return (
@@ -337,7 +342,7 @@ export default function CategoriesPage() {
                     onClick={() => handleSort("name")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors"
                   >
-                    Category <SortIcon col="name" />
+                    Category <SortIcon col="name" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-left px-5 align-middle hidden sm:table-cell">
@@ -350,7 +355,7 @@ export default function CategoriesPage() {
                     onClick={() => handleSort("productCount")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors ml-auto"
                   >
-                    Products <SortIcon col="productCount" />
+                    Products <SortIcon col="productCount" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="w-24 px-5 align-middle" />
@@ -466,7 +471,7 @@ export default function CategoriesPage() {
       </div>
 
       {/* ━━━ ADD/EDIT MODAL ━━━ */}
-      {typeof window !== "undefined" && createPortal(
+      {mounted && createPortal(
       <AnimatePresence>
         {modal.open && (
           <>
@@ -612,7 +617,7 @@ export default function CategoriesPage() {
       )}
 
       {/* ━━━ DELETE CONFIRMATION ━━━ */}
-      {typeof window !== "undefined" && createPortal(
+      {mounted && createPortal(
       <AnimatePresence>
         {deleteDialog.open && deleteDialog.category && (
           <>

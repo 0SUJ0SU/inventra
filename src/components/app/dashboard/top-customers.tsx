@@ -2,6 +2,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { DashboardPeriod, PERIOD_CONFIG, getTopCustomers } from "@/lib/demo-data";
 import { formatNumber } from "@/lib/utils/format";
 
@@ -74,12 +75,12 @@ export function TopCustomers({ period }: TopCustomersProps) {
 
       {/* Footer */}
       <div className="mt-auto pt-3 shrink-0">
-        <a
+        <Link
           href="/customers"
           className="font-mono text-[9px] tracking-[0.12em] uppercase text-blue-primary/40 hover:text-blue-primary transition-colors duration-200"
         >
           [ View All Customers → ]
-        </a>
+        </Link>
       </div>
     </motion.div>
   );

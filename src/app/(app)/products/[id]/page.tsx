@@ -158,9 +158,9 @@ export default function ProductDetailPage() {
         : "bg-emerald-500";
 
   const marginPercent =
-    product.costPrice > 0
+    product.sellingPrice > 0
       ? Math.round(
-          ((product.sellingPrice - product.costPrice) / product.costPrice) * 100
+          ((product.sellingPrice - product.costPrice) / product.sellingPrice) * 100
         )
       : 0;
 
@@ -229,11 +229,17 @@ export default function ProductDetailPage() {
               <Pencil size={12} strokeWidth={1.5} />
               Edit
             </button>
-            <button className="h-9 px-3 border border-blue-primary/15 text-blue-primary/50 font-mono text-[10px] tracking-[0.12em] uppercase flex items-center gap-2 hover:border-blue-primary/30 hover:text-blue-primary transition-colors">
+            <button
+              onClick={() => alert("Not available in demo mode")}
+              className="h-9 px-3 border border-blue-primary/15 text-blue-primary/50 font-mono text-[10px] tracking-[0.12em] uppercase flex items-center gap-2 hover:border-blue-primary/30 hover:text-blue-primary transition-colors"
+            >
               <Power size={12} strokeWidth={1.5} />
               {product.isActive ? "Deactivate" : "Activate"}
             </button>
-            <button className="h-9 px-3 border border-blue-primary/15 text-error/50 font-mono text-[10px] tracking-[0.12em] uppercase flex items-center gap-2 hover:border-error/30 hover:text-error transition-colors">
+            <button
+              onClick={() => alert("Not available in demo mode")}
+              className="h-9 px-3 border border-blue-primary/15 text-error/50 font-mono text-[10px] tracking-[0.12em] uppercase flex items-center gap-2 hover:border-error/30 hover:text-error transition-colors"
+            >
               <Trash2 size={12} strokeWidth={1.5} />
             </button>
           </motion.div>

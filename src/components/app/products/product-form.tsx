@@ -262,7 +262,7 @@ export function ProductForm({
 
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSerialWarning, setShowSerialWarning] = useState(false);
+
 
   const update = useCallback(
     (key: keyof ProductFormData, value: string | boolean) => {
@@ -283,19 +283,17 @@ export function ProductForm({
   };
 
   const handleSerialToggle = (checked: boolean) => {
-    if (
-      mode === "edit" &&
-      checked &&
-      initialData &&
-      initialData.stock > 0 &&
-      !initialData.isSerialTracked
-    ) {
-      setShowSerialWarning(true);
-    }
-    update("isSerialTracked", checked);
-    if (checked) {
-      update("stock", "0");
-    }
+    setForm((prev) => ({
+      ...prev,
+      isSerialTracked: checked,
+      ...(checked ? { stock: "0" } : {}),
+    }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.isSerialTracked;
+      if (checked) delete next.stock;
+      return next;
+    });
   };
 
   const handleSubmit = (andNew = false) => {

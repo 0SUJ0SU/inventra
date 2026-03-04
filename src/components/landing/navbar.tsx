@@ -71,10 +71,10 @@ export function Navbar() {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
             <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute left-1/3 top-0 bottom-0 w-px bg-cream-primary opacity-8" />
-              <div className="absolute left-2/3 top-0 bottom-0 w-px bg-cream-primary opacity-8" />
-              <div className="absolute top-1/3 left-0 right-0 h-px bg-cream-primary opacity-8" />
-              <div className="absolute top-2/3 left-0 right-0 h-px bg-cream-primary opacity-8" />
+              <div className="absolute left-1/3 top-0 bottom-0 w-px bg-cream-primary opacity-[0.08]" />
+              <div className="absolute left-2/3 top-0 bottom-0 w-px bg-cream-primary opacity-[0.08]" />
+              <div className="absolute top-1/3 left-0 right-0 h-px bg-cream-primary opacity-[0.08]" />
+              <div className="absolute top-2/3 left-0 right-0 h-px bg-cream-primary opacity-[0.08]" />
             </div>
 
             <div className="flex flex-col lg:flex-row gap-12 lg:gap-24">

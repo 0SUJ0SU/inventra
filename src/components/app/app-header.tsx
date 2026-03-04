@@ -1,8 +1,9 @@
 // src/components/app/app-header.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -112,12 +113,12 @@ export function AppHeader() {
                       {crumb.label}
                     </span>
                   ) : (
-                    <a
+                    <Link
                       href={crumb.href}
                       className="font-mono text-[11px] tracking-[0.12em] uppercase text-blue-primary/40 hover:text-blue-primary transition-colors"
                     >
                       {crumb.label}
-                    </a>
+                    </Link>
                   )}
                 </div>
               ))}
@@ -199,7 +200,7 @@ export function AppHeader() {
                     </div>
                     {/* Actions */}
                     <div className="py-1">
-                      <a
+                      <Link
                         href="/settings"
                         className="flex items-center gap-2 px-3 h-8 text-blue-primary/60 hover:text-blue-primary hover:bg-blue-primary/5 transition-colors"
                       >
@@ -207,7 +208,7 @@ export function AppHeader() {
                         <span className="font-mono text-[10px] tracking-[0.1em] uppercase">
                           Profile
                         </span>
-                      </a>
+                      </Link>
                       <button
                         onClick={() => {
                           localStorage.removeItem("inventra_session");

@@ -16,13 +16,21 @@ export function AppContentClient({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Read initial state
-    const stored = localStorage.getItem(COLLAPSED_KEY);
-    if (stored === "true") setCollapsed(true);
+    try {
+      const stored = localStorage.getItem(COLLAPSED_KEY);
+      if (stored === "true") setCollapsed(true);
+    } catch {
+      // localStorage may be unavailable (e.g. SSR, privacy mode)
+    }
 
     // Listen for sidebar toggle events (same tab)
     const handleToggle = () => {
-      const current = localStorage.getItem(COLLAPSED_KEY);
-      setCollapsed(current === "true");
+      try {
+        const current = localStorage.getItem(COLLAPSED_KEY);
+        setCollapsed(current === "true");
+      } catch {
+        // localStorage may be unavailable
+      }
     };
 
     window.addEventListener(SIDEBAR_EVENT, handleToggle);

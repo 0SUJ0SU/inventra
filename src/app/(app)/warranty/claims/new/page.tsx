@@ -30,11 +30,15 @@ import {
   type SerializedItem,
   type ClaimType,
   type WarrantyClaim,
-  type ClaimStatusChange,
   getWarrantyStatus,
   getWarrantyDaysRemaining,
 } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils/format";
+import {
+  WARRANTY_EASE as ease,
+  CLAIM_TYPE_SHORT as CLAIM_TYPE_ARROWS,
+  formatClaimDate as formatDate,
+} from "@/lib/warranty-utils";
 
 // ————————————————————————————————————————————————
 // TYPES
@@ -54,18 +58,10 @@ interface FormErrors {
 // CONSTANTS
 // ————————————————————————————————————————————————
 
-const ease = [0.16, 1, 0.3, 1] as const;
-
 const CLAIM_TYPE_ICONS: Record<ClaimType, React.ElementType> = {
   customer_to_store: User,
   store_to_supplier: Truck,
   supplier_to_store: Package,
-};
-
-const CLAIM_TYPE_ARROWS: Record<ClaimType, string> = {
-  customer_to_store: "Customer \u2192 Store",
-  store_to_supplier: "Store \u2192 Supplier",
-  supplier_to_store: "Supplier \u2192 Store",
 };
 
 // ————————————————————————————————————————————————
@@ -82,16 +78,6 @@ function generateClaimNumber(): string {
     return num > max ? num : max;
   }, 0);
   return `WC-${year}-${String(maxNum + 1).padStart(4, "0")}`;
-}
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "\u2014";
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 function getWarrantyLabel(item: SerializedItem): {
@@ -283,6 +269,16 @@ export default function NewWarrantyClaimPage() {
     null
   );
   const searchRef = useRef<HTMLDivElement>(null);
+  const submitTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
+      if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+    };
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -368,7 +364,7 @@ export default function NewWarrantyClaimPage() {
     setIsSubmitting(true);
 
     // Simulate save delay
-    setTimeout(() => {
+    submitTimerRef.current = setTimeout(() => {
       const claimNumber = generateClaimNumber();
       const now = new Date().toISOString().split("T")[0];
 
@@ -421,7 +417,7 @@ export default function NewWarrantyClaimPage() {
       setIsSubmitting(false);
 
       // Redirect after brief success flash
-      setTimeout(() => {
+      redirectTimerRef.current = setTimeout(() => {
         router.push("/warranty/claims");
       }, 800);
     }, 500);
@@ -697,7 +693,7 @@ export default function NewWarrantyClaimPage() {
                                         |
                                       </span>
                                       <span className="font-mono text-[8px] tracking-[0.06em] uppercase text-blue-primary/25">
-                                        {item.status.replace("_", " ")}
+                                        {item.status.replaceAll("_", " ")}
                                       </span>
                                     </div>
                                   </button>
@@ -841,7 +837,7 @@ export default function NewWarrantyClaimPage() {
                   <div className="h-9 px-3 flex items-center border border-blue-primary/8 bg-blue-primary/[0.02]">
                     <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-blue-primary/50">
                       {selectedItem
-                        ? selectedItem.status.replace("_", " ")
+                        ? selectedItem.status.replaceAll("_", " ")
                         : "\u2014"}
                     </span>
                   </div>
@@ -927,6 +923,7 @@ export default function NewWarrantyClaimPage() {
                     }
                     placeholder="Describe the issue in detail. What is the problem? When did it start? Has the customer tried any troubleshooting?"
                     rows={6}
+                    maxLength={500}
                     className={`w-full flex-1 px-3 py-2 bg-cream-light border font-mono text-[11px] tracking-[0.03em] text-blue-primary placeholder:text-blue-primary/20 focus:outline-none transition-colors resize-none ${
                       errors.issueDescription
                         ? "border-error/40 focus:border-error/60"

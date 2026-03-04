@@ -3,9 +3,13 @@ import type { Metadata } from "next";
 import { Sidebar } from "@/components/app/sidebar";
 import { AppHeader } from "@/components/app/app-header";
 import { AppContentClient } from "@/components/app/app-content-client";
+import { AuthGuard } from "@/components/app/auth-guard";
 
 export const metadata: Metadata = {
-  title: "Inventra — Dashboard",
+  title: {
+    template: "%s | Inventra",
+    default: "Dashboard | Inventra",
+  },
   description: "Inventra inventory management system.",
 };
 
@@ -15,17 +19,19 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative min-h-screen bg-cream-primary">
-      {/* ─── Sidebar ─── */}
-      <Sidebar />
+    <AuthGuard>
+      <div className="relative min-h-screen bg-cream-primary">
+        {/* ─── Sidebar ─── */}
+        <Sidebar />
 
-      {/* ─── Main content area ─── */}
-      <AppContentClient>
-        <AppHeader />
-        <main className="px-4 py-6 lg:px-6 lg:py-8">
-          {children}
-        </main>
-      </AppContentClient>
-    </div>
+        {/* ─── Main content area ─── */}
+        <AppContentClient>
+          <AppHeader />
+          <main className="px-4 py-6 lg:px-6 lg:py-8">
+            {children}
+          </main>
+        </AppContentClient>
+      </div>
+    </AuthGuard>
   );
 }

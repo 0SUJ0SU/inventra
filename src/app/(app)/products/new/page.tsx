@@ -15,8 +15,8 @@ export default function AddProductPage() {
 
   const handleSubmitAndNew = (data: ProductFormData) => {
     console.log("[Inventra] Product created:", data);
-    // Reload the page to reset form
-    window.location.href = "/products/new";
+    // Client-side navigation instead of full page reload
+    router.push("/products/new");
   };
 
   return (

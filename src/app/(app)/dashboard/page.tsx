@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { KpiCard } from "@/components/app/dashboard/kpi-card";
 import { PeriodSelector } from "@/components/app/dashboard/period-selector";
@@ -150,12 +151,12 @@ export default function DashboardPage() {
 
           {/* Footer */}
           <div className="mt-auto pt-3 shrink-0">
-            <a
+            <Link
               href="/sales"
               className="font-mono text-[9px] tracking-[0.12em] uppercase text-blue-primary/40 hover:text-blue-primary transition-colors duration-200"
             >
               [ View All Activity → ]
-            </a>
+            </Link>
           </div>
         </motion.div>
       </div>
@@ -176,13 +177,13 @@ export default function DashboardPage() {
             { label: "Stock In", href: "/purchases" },
             { label: "View Reports", href: "/reports" },
           ].map((action) => (
-            <a
+            <Link
               key={action.label}
               href={action.href}
               className="font-mono text-[11px] tracking-[0.12em] uppercase h-10 flex items-center justify-center bg-blue-primary text-cream-primary hover:bg-blue-dark transition-colors duration-200"
             >
               [ {action.label} → ]
-            </a>
+            </Link>
           ))}
         </div>
       </motion.div>

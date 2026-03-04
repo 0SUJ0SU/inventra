@@ -40,6 +40,34 @@ type StatusFilter = "all" | "active" | "inactive";
 type SerialFilter = "all" | "yes" | "no";
 
 // ————————————————————————————————————————————————
+// SORT ICON
+// ————————————————————————————————————————————————
+
+function SortIcon({
+  col,
+  sortKey,
+  sortDir,
+}: {
+  col: SortKey;
+  sortKey: SortKey;
+  sortDir: SortDir;
+}) {
+  if (sortKey !== col)
+    return (
+      <ChevronsUpDown
+        size={12}
+        strokeWidth={1.5}
+        className="text-blue-primary/20"
+      />
+    );
+  return sortDir === "asc" ? (
+    <ChevronUp size={12} strokeWidth={2} className="text-blue-primary" />
+  ) : (
+    <ChevronDown size={12} strokeWidth={2} className="text-blue-primary" />
+  );
+}
+
+// ————————————————————————————————————————————————
 // PAGE
 // ————————————————————————————————————————————————
 
@@ -170,7 +198,7 @@ export default function ProductsPage() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === paginated.length) {
+    if (paginated.every((p) => selectedIds.has(p.id))) {
       setSelectedIds(new Set());
     } else {
       setSelectedIds(new Set(paginated.map((p) => p.id)));
@@ -191,12 +219,14 @@ export default function ProductsPage() {
 
   // — Bulk delete —
   const handleBulkDelete = () => {
+    if (!confirm("Are you sure you want to delete the selected products?")) return;
     setProducts((prev) => prev.filter((p) => !selectedIds.has(p.id)));
     clearSelection();
   };
 
   // — Single delete —
   const handleDelete = (id: string) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
     setProducts((prev) => prev.filter((p) => p.id !== id));
     setActionMenuId(null);
   };
@@ -210,7 +240,7 @@ export default function ProductsPage() {
   };
 
   const allOnPageSelected =
-    paginated.length > 0 && selectedIds.size === paginated.length;
+    paginated.length > 0 && paginated.every((p) => selectedIds.has(p.id));
 
   // Active filter count for badge
   const activeFilterCount = [
@@ -240,24 +270,6 @@ export default function ProductsPage() {
     if (p.stock === 0) return "OUT";
     if (p.stock <= p.minStock) return "LOW";
     return null;
-  };
-
-  // ——— SORT ICON ———
-
-  const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col)
-      return (
-        <ChevronsUpDown
-          size={12}
-          strokeWidth={1.5}
-          className="text-blue-primary/20"
-        />
-      );
-    return sortDir === "asc" ? (
-      <ChevronUp size={12} strokeWidth={2} className="text-blue-primary" />
-    ) : (
-      <ChevronDown size={12} strokeWidth={2} className="text-blue-primary" />
-    );
   };
 
   // ——— RENDER ———
@@ -503,7 +515,7 @@ export default function ProductsPage() {
                     onClick={() => handleSort("sku")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors"
                   >
-                    SKU <SortIcon col="sku" />
+                    SKU <SortIcon col="sku" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-left px-3 align-middle">
@@ -511,7 +523,7 @@ export default function ProductsPage() {
                     onClick={() => handleSort("name")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors"
                   >
-                    Product <SortIcon col="name" />
+                    Product <SortIcon col="name" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-left px-3 align-middle">
@@ -519,7 +531,7 @@ export default function ProductsPage() {
                     onClick={() => handleSort("category")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors"
                   >
-                    Category <SortIcon col="category" />
+                    Category <SortIcon col="category" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-right px-3 align-middle">
@@ -527,7 +539,7 @@ export default function ProductsPage() {
                     onClick={() => handleSort("stock")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors ml-auto"
                   >
-                    Stock <SortIcon col="stock" />
+                    Stock <SortIcon col="stock" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-right px-3 align-middle">
@@ -535,7 +547,7 @@ export default function ProductsPage() {
                     onClick={() => handleSort("sellingPrice")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors ml-auto"
                   >
-                    Price <SortIcon col="sellingPrice" />
+                    Price <SortIcon col="sellingPrice" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-center px-3 align-middle">
@@ -543,7 +555,7 @@ export default function ProductsPage() {
                     onClick={() => handleSort("isActive")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors mx-auto"
                   >
-                    Status <SortIcon col="isActive" />
+                    Status <SortIcon col="isActive" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="w-12 px-3 align-middle" />
@@ -742,9 +754,9 @@ export default function ProductsPage() {
           {/* Left: rows info */}
           <div className="flex items-center gap-3">
             <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/30">
-              {(safePage - 1) * pageSize + 1}–
-              {Math.min(safePage * pageSize, sorted.length)} of{" "}
-              {sorted.length}
+              {sorted.length === 0
+                ? "0 of 0"
+                : `${(safePage - 1) * pageSize + 1}–${Math.min(safePage * pageSize, sorted.length)} of ${sorted.length}`}
             </span>
             <div className="w-px h-3 bg-blue-primary/10" />
             <select

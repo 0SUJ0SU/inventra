@@ -9,10 +9,7 @@ import { notifySidebarToggle } from "./app-content-client";
 import {
   LayoutDashboard,
   Package,
-  Layers,
-  Barcode,
   ShoppingCart,
-  ClipboardList,
   Truck,
   Users as UsersIcon,
   ShieldCheck,
@@ -24,8 +21,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   X,
-  Menu,
-  Search,
   ChevronDown,
 } from "lucide-react";
 
@@ -132,8 +127,10 @@ export function Sidebar() {
           const isChildActive = item.children.some((child) =>
             pathname.startsWith(child.href)
           );
-          if (isChildActive && !expandedItems.includes(item.label)) {
-            setExpandedItems((prev) => [...prev, item.label]);
+          if (isChildActive) {
+            setExpandedItems((prev) =>
+              prev.includes(item.label) ? prev : [...prev, item.label]
+            );
           }
         }
       });

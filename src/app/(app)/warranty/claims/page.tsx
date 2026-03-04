@@ -3,7 +3,6 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
-import * as XLSX from "xlsx";
 import {
   Search,
   ChevronUp,
@@ -15,11 +14,7 @@ import {
   MoreHorizontal,
   Eye,
   ShieldCheck,
-  Clock,
-  Wrench,
   CheckCircle2,
-  XCircle,
-  RefreshCw,
   Plus,
   Download,
 } from "lucide-react";
@@ -32,6 +27,12 @@ import {
   type ClaimType,
   type ClaimStatus,
 } from "@/lib/demo-data";
+import {
+  CLAIM_TYPE_SHORT,
+  STATUS_WORKFLOW_ICONS,
+  WARRANTY_EASE as ease,
+  formatClaimDate as formatDate,
+} from "@/lib/warranty-utils";
 import Link from "next/link";
 
 // ————————————————————————————————————————————————
@@ -56,33 +57,10 @@ type TypeFilter = "all" | ClaimType;
 // ————————————————————————————————————————————————
 
 const PAGE_SIZES = [10, 20, 50] as const;
-const ease = [0.16, 1, 0.3, 1] as const;
-
-const CLAIM_TYPE_SHORT: Record<ClaimType, string> = {
-  customer_to_store: "Customer \u2192 Store",
-  store_to_supplier: "Store \u2192 Supplier",
-  supplier_to_store: "Supplier \u2192 Store",
-};
-
-const STATUS_WORKFLOW_ICONS: Record<ClaimStatus, React.ElementType> = {
-  pending: Clock,
-  in_review: Eye,
-  in_repair: Wrench,
-  repaired: CheckCircle2,
-  replaced: RefreshCw,
-  rejected: XCircle,
-  closed: ShieldCheck,
-};
 
 // ————————————————————————————————————————————————
 // HELPERS
 // ————————————————————————————————————————————————
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "\u2014";
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-}
 
 function getCustomerSupplierLabel(claim: WarrantyClaim): string {
   if (claim.claimType === "customer_to_store") return claim.customerName ?? "\u2014";
@@ -101,6 +79,20 @@ function getUniqueSuppliers(claims: WarrantyClaim[]): string[] {
   const set = new Set<string>();
   claims.forEach((c) => { if (c.supplierName) set.add(c.supplierName); });
   return Array.from(set).sort();
+}
+
+// ————————————————————————————————————————————————
+// SORT ICON
+// ————————————————————————————————————————————————
+
+function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
+  if (sortKey !== col)
+    return <ChevronsUpDown size={12} strokeWidth={1.5} className="text-blue-primary/20" />;
+  return sortDir === "asc" ? (
+    <ChevronUp size={12} strokeWidth={2} className="text-blue-primary" />
+  ) : (
+    <ChevronDown size={12} strokeWidth={2} className="text-blue-primary" />
+  );
 }
 
 // ————————————————————————————————————————————————
@@ -262,11 +254,15 @@ export default function WarrantyClaimsPage() {
   };
 
   const toggleSelectAll = () => {
-    if (paginated.length > 0 && paginated.every((c) => selectedIds.has(c.id))) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(paginated.map((c) => c.id)));
-    }
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (paginated.length > 0 && paginated.every((c) => next.has(c.id))) {
+        paginated.forEach((c) => next.delete(c.id));
+      } else {
+        paginated.forEach((c) => next.add(c.id));
+      }
+      return next;
+    });
   };
 
   const clearSelection = () => setSelectedIds(new Set());
@@ -310,32 +306,22 @@ export default function WarrantyClaimsPage() {
       Resolution: claim.resolution ?? "",
     }));
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    const XLSX = await import("xlsx");
     const ws = XLSX.utils.json_to_sheet(buildExportRows(sorted));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Warranty Claims");
     XLSX.writeFile(wb, `warranty-claims-${new Date().toISOString().split("T")[0]}.xlsx`);
   };
 
-  const handleExportSelected = () => {
+  const handleExportSelected = async () => {
+    const XLSX = await import("xlsx");
     const rows = sorted.filter((c) => selectedIds.has(c.id));
     const ws = XLSX.utils.json_to_sheet(buildExportRows(rows));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Warranty Claims");
     XLSX.writeFile(wb, `warranty-claims-selected-${new Date().toISOString().split("T")[0]}.xlsx`);
     clearSelection();
-  };
-
-  // ——— SORT ICON ———
-
-  const SortIcon = ({ col }: { col: SortKey }) => {
-    if (sortKey !== col)
-      return <ChevronsUpDown size={12} strokeWidth={1.5} className="text-blue-primary/20" />;
-    return sortDir === "asc" ? (
-      <ChevronUp size={12} strokeWidth={2} className="text-blue-primary" />
-    ) : (
-      <ChevronDown size={12} strokeWidth={2} className="text-blue-primary" />
-    );
   };
 
   // ——— STATUS SUMMARY ———
@@ -614,37 +600,37 @@ export default function WarrantyClaimsPage() {
                 </th>
                 <th className="text-left px-3 align-middle">
                   <button onClick={() => handleSort("claimNumber")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors">
-                    Claim # <SortIcon col="claimNumber" />
+                    Claim # <SortIcon col="claimNumber" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-left px-3 align-middle">
                   <button onClick={() => handleSort("serialNumber")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors">
-                    Serial # <SortIcon col="serialNumber" />
+                    Serial # <SortIcon col="serialNumber" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-left px-3 align-middle">
                   <button onClick={() => handleSort("productName")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors">
-                    Product <SortIcon col="productName" />
+                    Product <SortIcon col="productName" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-center px-3 align-middle">
                   <button onClick={() => handleSort("claimType")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors mx-auto">
-                    Type <SortIcon col="claimType" />
+                    Type <SortIcon col="claimType" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-center px-3 align-middle">
                   <button onClick={() => handleSort("status")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors mx-auto">
-                    Status <SortIcon col="status" />
+                    Status <SortIcon col="status" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-center px-3 align-middle">
                   <button onClick={() => handleSort("claimDate")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors mx-auto">
-                    Date <SortIcon col="claimDate" />
+                    Date <SortIcon col="claimDate" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-right pl-3 pr-8 align-middle">
                   <button onClick={() => handleSort("customerSupplier")} className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors ml-auto">
-                    Customer / Supplier <SortIcon col="customerSupplier" />
+                    Customer / Supplier <SortIcon col="customerSupplier" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="w-12 px-3 align-middle" />

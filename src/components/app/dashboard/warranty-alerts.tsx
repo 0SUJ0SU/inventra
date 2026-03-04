@@ -2,6 +2,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { WARRANTY_ALERTS } from "@/lib/demo-data";
 
 export function WarrantyAlerts() {
@@ -94,12 +95,12 @@ export function WarrantyAlerts() {
 
       {/* Footer action */}
       <div className="mt-auto pt-3 shrink-0">
-        <a
+        <Link
           href="/warranty"
           className="font-mono text-[9px] tracking-[0.12em] uppercase text-blue-primary/40 hover:text-blue-primary transition-colors duration-200"
         >
           [ View All Claims → ]
-        </a>
+        </Link>
       </div>
     </motion.div>
   );

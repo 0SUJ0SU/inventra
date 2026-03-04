@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 
-export function LoadingScreen({ onComplete }: { onComplete: () => void }) {
+export function LoadingScreen({ onComplete }: { onComplete?: () => void } = {}) {
   const bgRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
   const iconRef = useRef<SVGSVGElement>(null);
@@ -11,74 +11,91 @@ export function LoadingScreen({ onComplete }: { onComplete: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Find the actual navbar logo position
-    const navbarLogo = document.querySelector("[data-navbar-logo]");
-    if (!navbarLogo || !logoRef.current) return;
+    if (!logoRef.current) return;
 
-    const targetRect = navbarLogo.getBoundingClientRect();
-
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        onComplete: () => {
-          if (containerRef.current) {
-            containerRef.current.style.display = "none";
-          }
-          onComplete();
-        },
+    // Retry mechanism: navbar may not have mounted yet
+    const findNavbarLogo = (retries = 10): Promise<Element | null> => {
+      return new Promise((resolve) => {
+        const attempt = (remaining: number) => {
+          const el = document.querySelector("[data-navbar-logo]");
+          if (el || remaining <= 0) return resolve(el);
+          requestAnimationFrame(() => attempt(remaining - 1));
+        };
+        attempt(retries);
       });
+    };
 
-      // Phase 1: Hold centered logo
-      tl.to({}, { duration: 1.2 });
+    let ctx: gsap.Context | undefined;
 
-      // Phase 2: Move logo to exact navbar logo position
-      tl.to(
-        logoRef.current,
-        {
-          top: targetRect.top,
-          left: targetRect.left,
-          transform: "translate(0, 0)",
-          duration: 1,
-          ease: "expo.out",
-        },
-        1.2
-      );
+    findNavbarLogo().then((navbarLogo) => {
+      if (!navbarLogo || !logoRef.current) return;
 
-      tl.to(
-        iconRef.current,
-        {
-          width: 28,
-          height: 28,
-          duration: 1,
-          ease: "expo.out",
-        },
-        1.2
-      );
+      const targetRect = navbarLogo.getBoundingClientRect();
 
-      tl.to(
-        textRef.current,
-        {
-          fontSize: "12px",
-          letterSpacing: "0.25em",
-          duration: 1,
-          ease: "expo.out",
-        },
-        1.2
-      );
+      ctx = gsap.context(() => {
+        const tl = gsap.timeline({
+          onComplete: () => {
+            if (containerRef.current) {
+              containerRef.current.style.display = "none";
+            }
+            onComplete?.();
+          },
+        });
 
-      // Phase 3: Blue background slides up
-      tl.to(
-        bgRef.current,
-        {
-          yPercent: -100,
-          duration: 0.8,
-          ease: "expo.out",
-        },
-        2.0
-      );
+        // Phase 1: Hold centered logo
+        tl.to({}, { duration: 1.2 });
+
+        // Phase 2: Move logo to exact navbar logo position
+        tl.to(
+          logoRef.current,
+          {
+            top: targetRect.top,
+            left: targetRect.left,
+            transform: "translate(0, 0)",
+            duration: 1,
+            ease: "expo.out",
+          },
+          1.2
+        );
+
+        tl.to(
+          iconRef.current,
+          {
+            width: 28,
+            height: 28,
+            duration: 1,
+            ease: "expo.out",
+          },
+          1.2
+        );
+
+        tl.to(
+          textRef.current,
+          {
+            fontSize: "12px",
+            letterSpacing: "0.25em",
+            duration: 1,
+            ease: "expo.out",
+          },
+          1.2
+        );
+
+        // Phase 3: Blue background slides up
+        tl.to(
+          bgRef.current,
+          {
+            yPercent: -100,
+            duration: 0.8,
+            ease: "expo.out",
+          },
+          2.0
+        );
+      });
     });
 
-    return () => ctx.revert();
-  }, [onComplete]);
+    return () => ctx?.revert();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div ref={containerRef} className="fixed inset-0 z-100 pointer-events-none">
