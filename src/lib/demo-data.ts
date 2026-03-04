@@ -2417,3 +2417,371 @@ export const CLAIM_STATUS_CONFIG: Record<ClaimStatus, { label: string; color: st
   rejected: { label: "Rejected", color: "text-error", bg: "bg-error/10" },
   closed: { label: "Closed", color: "text-blue-primary/40", bg: "bg-blue-primary/5" },
 };
+
+// ————————————————————————————————————————————————
+// SALES HISTORY
+// ————————————————————————————————————————————————
+
+export type PaymentMethod = "cash" | "card" | "transfer";
+export type SaleStatus = "completed" | "refunded" | "partial_refund" | "voided";
+
+export interface SaleLineItem {
+  id: string;
+  productName: string;
+  sku: string;
+  qty: number;
+  unitPrice: number;
+  lineTotal: number;
+  serialNumber?: string;
+}
+
+export interface SaleRecord {
+  id: string;
+  saleNumber: string;
+  date: string;
+  customerName: string;
+  items: SaleLineItem[];
+  subtotal: number;
+  discount: number;
+  total: number;
+  paymentMethod: PaymentMethod;
+  status: SaleStatus;
+  handledBy: string;
+  notes?: string;
+}
+
+export const SALE_STATUS_CONFIG: Record<SaleStatus, { label: string; color: string; bg: string }> = {
+  completed:      { label: "Completed",      color: "text-emerald-700",     bg: "bg-emerald-700/10"     },
+  refunded:       { label: "Refunded",       color: "text-error",           bg: "bg-error/10"           },
+  partial_refund: { label: "Partial Refund", color: "text-warning",         bg: "bg-warning/10"         },
+  voided:         { label: "Voided",         color: "text-blue-primary/40", bg: "bg-blue-primary/5"     },
+};
+
+export const PAYMENT_METHOD_CONFIG: Record<PaymentMethod, { label: string }> = {
+  cash:     { label: "Cash"     },
+  card:     { label: "Card"     },
+  transfer: { label: "Transfer" },
+};
+
+export const SALE_RECORDS: SaleRecord[] = [
+  {
+    id: "sale-001",
+    saleNumber: "SAL-1847",
+    date: "2025-03-04",
+    customerName: "Tech Haven",
+    items: [
+      { id: "li-001-1", productName: "iPhone 15 Pro 256GB Black", sku: "IP15P-256-BK", qty: 1, unitPrice: 999, lineTotal: 999, serialNumber: "SN-IP15-00847" },
+      { id: "li-001-2", productName: "AirPods Pro 2", sku: "APP2-USB-C", qty: 1, unitPrice: 249, lineTotal: 249 },
+    ],
+    subtotal: 1248,
+    discount: 0,
+    total: 1248,
+    paymentMethod: "card",
+    status: "completed",
+    handledBy: "Admin",
+  },
+  {
+    id: "sale-002",
+    saleNumber: "SAL-1846",
+    date: "2025-03-04",
+    customerName: "Circuit Hub",
+    items: [
+      { id: "li-002-1", productName: "Galaxy S24 Ultra 512GB", sku: "GS24U-512-GR", qty: 1, unitPrice: 1199, lineTotal: 1199, serialNumber: "SN-GS24-01283" },
+    ],
+    subtotal: 1199,
+    discount: 0,
+    total: 1199,
+    paymentMethod: "transfer",
+    status: "completed",
+    handledBy: "Admin",
+  },
+  {
+    id: "sale-003",
+    saleNumber: "SAL-1845",
+    date: "2025-03-03",
+    customerName: "Digital Edge",
+    items: [
+      { id: "li-003-1", productName: "MacBook Air M3 256GB", sku: "MBA-M3-256", qty: 1, unitPrice: 1099, lineTotal: 1099, serialNumber: "SN-MBA3-00291" },
+      { id: "li-003-2", productName: "USB-C Hub 7-in-1", sku: "ACC-USBC-HUB", qty: 2, unitPrice: 49, lineTotal: 98 },
+    ],
+    subtotal: 1197,
+    discount: 50,
+    total: 1147,
+    paymentMethod: "card",
+    status: "completed",
+    handledBy: "Admin",
+    notes: "Loyalty discount applied.",
+  },
+  {
+    id: "sale-004",
+    saleNumber: "SAL-1844",
+    date: "2025-03-03",
+    customerName: "Gadget Zone",
+    items: [
+      { id: "li-004-1", productName: "iPad Air 64GB WiFi", sku: "IPD-AIR-64", qty: 2, unitPrice: 599, lineTotal: 1198 },
+    ],
+    subtotal: 1198,
+    discount: 0,
+    total: 1198,
+    paymentMethod: "cash",
+    status: "completed",
+    handledBy: "Admin",
+  },
+  {
+    id: "sale-005",
+    saleNumber: "SAL-1843",
+    date: "2025-03-02",
+    customerName: "Nex Mobile",
+    items: [
+      { id: "li-005-1", productName: "Apple Watch Series 9 45mm", sku: "AW9-45-MN", qty: 1, unitPrice: 399, lineTotal: 399, serialNumber: "SN-AW9-00770" },
+      { id: "li-005-2", productName: "Apple Watch Ultra 2 49mm", sku: "AWU2-49-OR", qty: 1, unitPrice: 799, lineTotal: 799, serialNumber: "SN-AWU2-00090" },
+    ],
+    subtotal: 1198,
+    discount: 100,
+    total: 1098,
+    paymentMethod: "card",
+    status: "completed",
+    handledBy: "Admin",
+    notes: "Bundle deal discount.",
+  },
+  {
+    id: "sale-006",
+    saleNumber: "SAL-1842",
+    date: "2025-03-02",
+    customerName: "Tech Haven",
+    items: [
+      { id: "li-006-1", productName: "AirPods Pro 2", sku: "APP2-USB-C", qty: 3, unitPrice: 249, lineTotal: 747 },
+    ],
+    subtotal: 747,
+    discount: 0,
+    total: 747,
+    paymentMethod: "transfer",
+    status: "completed",
+    handledBy: "Admin",
+  },
+  {
+    id: "sale-007",
+    saleNumber: "SAL-1841",
+    date: "2025-03-01",
+    customerName: "Circuit Hub",
+    items: [
+      { id: "li-007-1", productName: "Galaxy Watch 6 44mm", sku: "GW6-44-BK", qty: 2, unitPrice: 299, lineTotal: 598, serialNumber: "SN-GW6-00441" },
+      { id: "li-007-2", productName: "USB-C Hub 7-in-1", sku: "ACC-USBC-HUB", qty: 1, unitPrice: 49, lineTotal: 49 },
+    ],
+    subtotal: 647,
+    discount: 0,
+    total: 647,
+    paymentMethod: "cash",
+    status: "refunded",
+    handledBy: "Admin",
+    notes: "Customer returned items — defective watch screen.",
+  },
+  {
+    id: "sale-008",
+    saleNumber: "SAL-1840",
+    date: "2025-03-01",
+    customerName: "Digital Edge",
+    items: [
+      { id: "li-008-1", productName: "iPhone 15 Pro 256GB Black", sku: "IP15P-256-BK", qty: 1, unitPrice: 999, lineTotal: 999, serialNumber: "SN-IP15-00623" },
+    ],
+    subtotal: 999,
+    discount: 0,
+    total: 999,
+    paymentMethod: "card",
+    status: "completed",
+    handledBy: "Admin",
+  },
+  {
+    id: "sale-009",
+    saleNumber: "SAL-1839",
+    date: "2025-02-28",
+    customerName: "Gadget Zone",
+    items: [
+      { id: "li-009-1", productName: "MacBook Air M3 256GB", sku: "MBA-M3-256", qty: 1, unitPrice: 1099, lineTotal: 1099, serialNumber: "SN-MBA3-60291" },
+      { id: "li-009-2", productName: "AirPods Pro 2", sku: "APP2-USB-C", qty: 1, unitPrice: 249, lineTotal: 249 },
+    ],
+    subtotal: 1348,
+    discount: 0,
+    total: 1348,
+    paymentMethod: "card",
+    status: "completed",
+    handledBy: "Admin",
+  },
+  {
+    id: "sale-010",
+    saleNumber: "SAL-1838",
+    date: "2025-02-28",
+    customerName: "Nex Mobile",
+    items: [
+      { id: "li-010-1", productName: "Galaxy S24 Ultra 512GB", sku: "GS24U-512-GR", qty: 2, unitPrice: 1199, lineTotal: 2398, serialNumber: "SN-GS24-01290" },
+    ],
+    subtotal: 2398,
+    discount: 200,
+    total: 2198,
+    paymentMethod: "transfer",
+    status: "completed",
+    handledBy: "Admin",
+    notes: "Bulk order discount.",
+  },
+  {
+    id: "sale-011",
+    saleNumber: "SAL-1837",
+    date: "2025-02-27",
+    customerName: "Tech Haven",
+    items: [
+      { id: "li-011-1", productName: "iPad Air 64GB WiFi", sku: "IPD-AIR-64", qty: 1, unitPrice: 599, lineTotal: 599 },
+      { id: "li-011-2", productName: "Apple Watch Series 9 45mm", sku: "AW9-45-MN", qty: 1, unitPrice: 399, lineTotal: 399, serialNumber: "SN-AW9-00771" },
+    ],
+    subtotal: 998,
+    discount: 0,
+    total: 998,
+    paymentMethod: "cash",
+    status: "completed",
+    handledBy: "Admin",
+  },
+  {
+    id: "sale-012",
+    saleNumber: "SAL-1836",
+    date: "2025-02-26",
+    customerName: "Circuit Hub",
+    items: [
+      { id: "li-012-1", productName: "AirPods Max Silver", sku: "APP-MAX-SL", qty: 1, unitPrice: 549, lineTotal: 549, serialNumber: "SN-APM-00119" },
+    ],
+    subtotal: 549,
+    discount: 0,
+    total: 549,
+    paymentMethod: "card",
+    status: "partial_refund",
+    handledBy: "Admin",
+    notes: "One earcup replaced under partial return.",
+  },
+  {
+    id: "sale-013",
+    saleNumber: "SAL-1835",
+    date: "2025-02-25",
+    customerName: "Digital Edge",
+    items: [
+      { id: "li-013-1", productName: "iPhone 15 Pro 256GB Black", sku: "IP15P-256-BK", qty: 1, unitPrice: 999, lineTotal: 999, serialNumber: "SN-IP15-00831" },
+      { id: "li-013-2", productName: "USB-C Hub 7-in-1", sku: "ACC-USBC-HUB", qty: 3, unitPrice: 49, lineTotal: 147 },
+    ],
+    subtotal: 1146,
+    discount: 0,
+    total: 1146,
+    paymentMethod: "transfer",
+    status: "completed",
+    handledBy: "Admin",
+  },
+  {
+    id: "sale-014",
+    saleNumber: "SAL-1834",
+    date: "2025-02-24",
+    customerName: "Gadget Zone",
+    items: [
+      { id: "li-014-1", productName: "Galaxy Watch 6 44mm", sku: "GW6-44-BK", qty: 1, unitPrice: 299, lineTotal: 299, serialNumber: "SN-GW6-00450" },
+    ],
+    subtotal: 299,
+    discount: 0,
+    total: 299,
+    paymentMethod: "cash",
+    status: "voided",
+    handledBy: "Admin",
+    notes: "Transaction voided — payment issue.",
+  },
+  {
+    id: "sale-015",
+    saleNumber: "SAL-1833",
+    date: "2025-02-23",
+    customerName: "Nex Mobile",
+    items: [
+      { id: "li-015-1", productName: "MacBook Air M3 256GB", sku: "MBA-M3-256", qty: 1, unitPrice: 1099, lineTotal: 1099, serialNumber: "SN-MBA3-00312" },
+      { id: "li-015-2", productName: "AirPods Pro 2", sku: "APP2-USB-C", qty: 2, unitPrice: 249, lineTotal: 498 },
+      { id: "li-015-3", productName: "USB-C Hub 7-in-1", sku: "ACC-USBC-HUB", qty: 1, unitPrice: 49, lineTotal: 49 },
+    ],
+    subtotal: 1646,
+    discount: 150,
+    total: 1496,
+    paymentMethod: "card",
+    status: "completed",
+    handledBy: "Admin",
+    notes: "Corporate package deal.",
+  },
+  {
+    id: "sale-016",
+    saleNumber: "SAL-1832",
+    date: "2025-02-22",
+    customerName: "Tech Haven",
+    items: [
+      { id: "li-016-1", productName: "Galaxy S24 Ultra 512GB", sku: "GS24U-512-GR", qty: 1, unitPrice: 1199, lineTotal: 1199, serialNumber: "SN-GS24-01299" },
+    ],
+    subtotal: 1199,
+    discount: 0,
+    total: 1199,
+    paymentMethod: "transfer",
+    status: "completed",
+    handledBy: "Admin",
+  },
+  {
+    id: "sale-017",
+    saleNumber: "SAL-1831",
+    date: "2025-02-21",
+    customerName: "Circuit Hub",
+    items: [
+      { id: "li-017-1", productName: "iPad Air 64GB WiFi", sku: "IPD-AIR-64", qty: 3, unitPrice: 599, lineTotal: 1797 },
+    ],
+    subtotal: 1797,
+    discount: 100,
+    total: 1697,
+    paymentMethod: "card",
+    status: "completed",
+    handledBy: "Admin",
+    notes: "School supply order.",
+  },
+  {
+    id: "sale-018",
+    saleNumber: "SAL-1830",
+    date: "2025-02-20",
+    customerName: "Digital Edge",
+    items: [
+      { id: "li-018-1", productName: "Apple Watch Ultra 2 49mm", sku: "AWU2-49-OR", qty: 1, unitPrice: 799, lineTotal: 799, serialNumber: "SN-AWU2-00095" },
+      { id: "li-018-2", productName: "Apple Watch Series 9 45mm", sku: "AW9-45-MN", qty: 2, unitPrice: 399, lineTotal: 798, serialNumber: "SN-AW9-00775" },
+    ],
+    subtotal: 1597,
+    discount: 0,
+    total: 1597,
+    paymentMethod: "cash",
+    status: "completed",
+    handledBy: "Admin",
+  },
+  {
+    id: "sale-019",
+    saleNumber: "SAL-1829",
+    date: "2025-02-19",
+    customerName: "Gadget Zone",
+    items: [
+      { id: "li-019-1", productName: "iPhone 15 Pro 256GB Black", sku: "IP15P-256-BK", qty: 2, unitPrice: 999, lineTotal: 1998, serialNumber: "SN-IP15-00812" },
+      { id: "li-019-2", productName: "AirPods Max Silver", sku: "APP-MAX-SL", qty: 1, unitPrice: 549, lineTotal: 549, serialNumber: "SN-APM-00127" },
+    ],
+    subtotal: 2547,
+    discount: 250,
+    total: 2297,
+    paymentMethod: "transfer",
+    status: "completed",
+    handledBy: "Admin",
+    notes: "VIP customer — negotiated rate.",
+  },
+  {
+    id: "sale-020",
+    saleNumber: "SAL-1828",
+    date: "2025-02-18",
+    customerName: "Nex Mobile",
+    items: [
+      { id: "li-020-1", productName: "MacBook Air M3 256GB", sku: "MBA-M3-256", qty: 1, unitPrice: 1099, lineTotal: 1099, serialNumber: "SN-MBA3-00298" },
+    ],
+    subtotal: 1099,
+    discount: 0,
+    total: 1099,
+    paymentMethod: "card",
+    status: "completed",
+    handledBy: "Admin",
+  },
+];
