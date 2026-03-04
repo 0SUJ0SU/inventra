@@ -2,8 +2,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import * as XLSX from "xlsx";
 import {
   Search,
@@ -17,17 +16,9 @@ import {
   Eye,
   ShieldCheck,
   Clock,
-  Package,
-  CircleDot,
-  CalendarDays,
-  User,
-  Truck,
-  Barcode,
-  ArrowRight,
-  Send,
+  Wrench,
   CheckCircle2,
   XCircle,
-  Wrench,
   RefreshCw,
   Plus,
   Download,
@@ -38,11 +29,9 @@ import {
   CLAIM_TYPE_CONFIG,
   CLAIM_STATUS_TRANSITIONS,
   type WarrantyClaim,
-  type WarrantyClaimNote,
   type ClaimType,
   type ClaimStatus,
 } from "@/lib/demo-data";
-import { formatCurrency } from "@/lib/utils/format";
 import Link from "next/link";
 
 // ————————————————————————————————————————————————
@@ -95,11 +84,6 @@ function formatDate(dateStr: string | null): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-function formatDateShort(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" });
-}
-
 function getCustomerSupplierLabel(claim: WarrantyClaim): string {
   if (claim.claimType === "customer_to_store") return claim.customerName ?? "\u2014";
   if (claim.claimType === "store_to_supplier") return claim.supplierName ?? "\u2014";
@@ -147,12 +131,6 @@ export default function WarrantyClaimsPage() {
   // — Action menu —
   const [actionMenuId, setActionMenuId] = useState<string | null>(null);
 
-  // — Detail modal —
-  const [detailClaim, setDetailClaim] = useState<WarrantyClaim | null>(null);
-
-  // — Note input —
-  const [newNote, setNewNote] = useState("");
-
   // — Local mutable state (demo) —
   const [claims, setClaims] = useState<WarrantyClaim[]>(() => [...WARRANTY_CLAIMS]);
 
@@ -172,7 +150,6 @@ export default function WarrantyClaimsPage() {
   const filtered = useMemo(() => {
     let data = [...claims];
 
-    // Search
     if (search.trim()) {
       const q = search.toLowerCase().trim();
       data = data.filter(
@@ -185,33 +162,12 @@ export default function WarrantyClaimsPage() {
       );
     }
 
-    // Status
-    if (statusFilter !== "all") {
-      data = data.filter((c) => c.status === statusFilter);
-    }
-
-    // Claim type
-    if (typeFilter !== "all") {
-      data = data.filter((c) => c.claimType === typeFilter);
-    }
-
-    // Customer
-    if (customerFilter !== "all") {
-      data = data.filter((c) => c.customerName === customerFilter);
-    }
-
-    // Supplier
-    if (supplierFilter !== "all") {
-      data = data.filter((c) => c.supplierName === supplierFilter);
-    }
-
-    // Date range — ISO date strings compare lexicographically
-    if (dateFrom) {
-      data = data.filter((c) => c.claimDate >= dateFrom);
-    }
-    if (dateTo) {
-      data = data.filter((c) => c.claimDate <= dateTo);
-    }
+    if (statusFilter !== "all") data = data.filter((c) => c.status === statusFilter);
+    if (typeFilter !== "all") data = data.filter((c) => c.claimType === typeFilter);
+    if (customerFilter !== "all") data = data.filter((c) => c.customerName === customerFilter);
+    if (supplierFilter !== "all") data = data.filter((c) => c.supplierName === supplierFilter);
+    if (dateFrom) data = data.filter((c) => c.claimDate >= dateFrom);
+    if (dateTo) data = data.filter((c) => c.claimDate <= dateTo);
 
     return data;
   }, [search, statusFilter, typeFilter, customerFilter, supplierFilter, dateFrom, dateTo, claims]);
@@ -221,18 +177,10 @@ export default function WarrantyClaimsPage() {
     data.sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
-        case "claimNumber":
-          cmp = a.claimNumber.localeCompare(b.claimNumber);
-          break;
-        case "serialNumber":
-          cmp = a.serialNumber.localeCompare(b.serialNumber);
-          break;
-        case "productName":
-          cmp = a.productName.localeCompare(b.productName);
-          break;
-        case "claimType":
-          cmp = a.claimType.localeCompare(b.claimType);
-          break;
+        case "claimNumber":   cmp = a.claimNumber.localeCompare(b.claimNumber); break;
+        case "serialNumber":  cmp = a.serialNumber.localeCompare(b.serialNumber); break;
+        case "productName":   cmp = a.productName.localeCompare(b.productName); break;
+        case "claimType":     cmp = a.claimType.localeCompare(b.claimType); break;
         case "status": {
           const order: Record<ClaimStatus, number> = {
             pending: 0, in_review: 1, in_repair: 2, repaired: 3, replaced: 4, rejected: 5, closed: 6,
@@ -240,12 +188,8 @@ export default function WarrantyClaimsPage() {
           cmp = order[a.status] - order[b.status];
           break;
         }
-        case "claimDate":
-          cmp = a.claimDate.localeCompare(b.claimDate);
-          break;
-        case "customerSupplier":
-          cmp = getCustomerSupplierLabel(a).localeCompare(getCustomerSupplierLabel(b));
-          break;
+        case "claimDate":        cmp = a.claimDate.localeCompare(b.claimDate); break;
+        case "customerSupplier": cmp = getCustomerSupplierLabel(a).localeCompare(getCustomerSupplierLabel(b)); break;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
@@ -269,7 +213,6 @@ export default function WarrantyClaimsPage() {
     }
   };
 
-  // Active filter count — date range counts as 1 if either field is set
   const activeFilterCount = [
     statusFilter !== "all",
     typeFilter !== "all",
@@ -289,12 +232,12 @@ export default function WarrantyClaimsPage() {
     resetPage();
   };
 
-  // — Status update —
+  // — Status update (inline from action menu) —
   const handleStatusUpdate = (claimId: string, newStatus: ClaimStatus) => {
+    const now = new Date().toISOString().split("T")[0];
     setClaims((prev) =>
       prev.map((c) => {
         if (c.id !== claimId) return c;
-        const now = new Date().toISOString().split("T")[0];
         return {
           ...c,
           status: newStatus,
@@ -306,51 +249,14 @@ export default function WarrantyClaimsPage() {
         };
       })
     );
-    setDetailClaim((prev) => {
-      if (!prev || prev.id !== claimId) return prev;
-      const now = new Date().toISOString().split("T")[0];
-      return {
-        ...prev,
-        status: newStatus,
-        updatedAt: now,
-        statusHistory: [
-          ...prev.statusHistory,
-          { from: prev.status, to: newStatus, date: now, note: `Status changed to ${CLAIM_STATUS_CONFIG[newStatus].label}` },
-        ],
-      };
-    });
     setActionMenuId(null);
-  };
-
-  // — Add note —
-  const handleAddNote = (claimId: string) => {
-    if (!newNote.trim()) return;
-    const now = new Date().toISOString().split("T")[0];
-    const noteObj: WarrantyClaimNote = {
-      id: `wcn-${Date.now()}`,
-      warrantyClaimId: claimId,
-      note: newNote.trim(),
-      createdBy: "Admin",
-      createdAt: now,
-    };
-    setClaims((prev) =>
-      prev.map((c) =>
-        c.id === claimId ? { ...c, notes: [...c.notes, noteObj], updatedAt: now } : c
-      )
-    );
-    setDetailClaim((prev) => {
-      if (!prev || prev.id !== claimId) return prev;
-      return { ...prev, notes: [...prev.notes, noteObj], updatedAt: now };
-    });
-    setNewNote("");
   };
 
   // — Selection handlers —
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) next.delete(id); else next.add(id);
       return next;
     });
   };
@@ -368,7 +274,7 @@ export default function WarrantyClaimsPage() {
   const allOnPageSelected =
     paginated.length > 0 && paginated.every((c) => selectedIds.has(c.id));
 
-  // — Bulk close (only non-closed claims affected) —
+  // — Bulk close —
   const handleBulkClose = () => {
     const now = new Date().toISOString().split("T")[0];
     setClaims((prev) =>
@@ -404,7 +310,6 @@ export default function WarrantyClaimsPage() {
       Resolution: claim.resolution ?? "",
     }));
 
-  // Export all filtered+sorted claims
   const handleExport = () => {
     const ws = XLSX.utils.json_to_sheet(buildExportRows(sorted));
     const wb = XLSX.utils.book_new();
@@ -412,7 +317,6 @@ export default function WarrantyClaimsPage() {
     XLSX.writeFile(wb, `warranty-claims-${new Date().toISOString().split("T")[0]}.xlsx`);
   };
 
-  // Export only selected claims
   const handleExportSelected = () => {
     const rows = sorted.filter((c) => selectedIds.has(c.id));
     const ws = XLSX.utils.json_to_sheet(buildExportRows(rows));
@@ -479,7 +383,6 @@ export default function WarrantyClaimsPage() {
           <span className="font-mono text-[10px] tracking-[0.15em] text-blue-primary/20 hidden sm:block">
             [INV.WTY]
           </span>
-          {/* Export all filtered */}
           <button
             onClick={handleExport}
             className="h-9 px-4 border border-blue-primary/15 text-blue-primary/50 font-mono text-[10px] tracking-[0.12em] uppercase flex items-center gap-2 hover:border-blue-primary/30 hover:text-blue-primary transition-colors"
@@ -510,10 +413,7 @@ export default function WarrantyClaimsPage() {
         {(Object.entries(CLAIM_STATUS_CONFIG) as [ClaimStatus, typeof CLAIM_STATUS_CONFIG[ClaimStatus]][]).map(([key, cfg]) => (
           <button
             key={key}
-            onClick={() => {
-              setStatusFilter(statusFilter === key ? "all" : key);
-              resetPage();
-            }}
+            onClick={() => { setStatusFilter(statusFilter === key ? "all" : key); resetPage(); }}
             className={`bg-cream-light px-2 py-3 text-center transition-colors hover:bg-blue-primary/[0.03] ${
               statusFilter === key ? "ring-1 ring-inset ring-blue-primary/30" : ""
             }`}
@@ -537,13 +437,8 @@ export default function WarrantyClaimsPage() {
       >
         {/* Row 1: Search + dropdowns */}
         <div className="flex flex-col lg:flex-row gap-3">
-          {/* Search */}
           <div className="relative flex-1 max-w-md">
-            <Search
-              size={14}
-              strokeWidth={1.5}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-primary/30"
-            />
+            <Search size={14} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-primary/30" />
             <input
               type="text"
               placeholder="SEARCH CLAIM #, SERIAL, PRODUCT..."
@@ -561,9 +456,7 @@ export default function WarrantyClaimsPage() {
             )}
           </div>
 
-          {/* Dropdown filters */}
           <div className="grid grid-cols-2 lg:flex lg:flex-wrap gap-2">
-            {/* Status */}
             <select
               value={statusFilter}
               onChange={(e) => { setStatusFilter(e.target.value as StatusFilter); resetPage(); }}
@@ -575,7 +468,6 @@ export default function WarrantyClaimsPage() {
               ))}
             </select>
 
-            {/* Claim Type */}
             <select
               value={typeFilter}
               onChange={(e) => { setTypeFilter(e.target.value as TypeFilter); resetPage(); }}
@@ -587,7 +479,6 @@ export default function WarrantyClaimsPage() {
               <option value="supplier_to_store">Supplier to Store</option>
             </select>
 
-            {/* Customer */}
             <select
               value={customerFilter}
               onChange={(e) => { setCustomerFilter(e.target.value); resetPage(); }}
@@ -599,7 +490,6 @@ export default function WarrantyClaimsPage() {
               ))}
             </select>
 
-            {/* Supplier */}
             <select
               value={supplierFilter}
               onChange={(e) => { setSupplierFilter(e.target.value); resetPage(); }}
@@ -611,7 +501,6 @@ export default function WarrantyClaimsPage() {
               ))}
             </select>
 
-            {/* Clear filters */}
             {activeFilterCount > 0 && (
               <button
                 onClick={clearFilters}
@@ -623,7 +512,7 @@ export default function WarrantyClaimsPage() {
           </div>
         </div>
 
-        {/* Row 2: Date range filter */}
+        {/* Row 2: Date range */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/30 shrink-0">
             Date range
@@ -656,7 +545,7 @@ export default function WarrantyClaimsPage() {
           )}
         </div>
 
-        {/* Row 3: Bulk actions bar — shown when items are selected */}
+        {/* Row 3: Bulk actions bar */}
         {selectedIds.size > 0 && (
           <motion.div
             className="bg-blue-primary text-cream-primary"
@@ -703,7 +592,6 @@ export default function WarrantyClaimsPage() {
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.15, ease }}
       >
-        {/* Table header label */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-blue-primary/8">
           <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">
             Claims Registry
@@ -711,12 +599,10 @@ export default function WarrantyClaimsPage() {
           <span className="font-mono text-[9px] tracking-[0.1em] text-blue-primary/20">/001</span>
         </div>
 
-        {/* Scrollable table */}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1100px]">
             <thead>
               <tr className="border-b border-blue-primary/10 h-11">
-                {/* Checkbox column */}
                 <th className="w-12 px-4 align-middle">
                   <input
                     type="checkbox"
@@ -769,30 +655,14 @@ export default function WarrantyClaimsPage() {
               {isLoading ? (
                 Array.from({ length: 6 }).map((_, i) => (
                   <tr key={i} className="border-b border-blue-primary/6 h-14">
-                    <td className="w-12 px-4 align-middle">
-                      <div className="w-3.5 h-3.5 bg-blue-primary/8 animate-pulse" />
-                    </td>
-                    <td className="px-3 align-middle">
-                      <div className="h-2.5 w-28 bg-blue-primary/8 animate-pulse" />
-                    </td>
-                    <td className="px-3 align-middle">
-                      <div className="h-2.5 w-24 bg-blue-primary/8 animate-pulse" />
-                    </td>
-                    <td className="px-3 align-middle">
-                      <div className="h-2.5 w-36 bg-blue-primary/8 animate-pulse" />
-                    </td>
-                    <td className="px-3 align-middle">
-                      <div className="h-5 w-24 bg-blue-primary/8 animate-pulse mx-auto" />
-                    </td>
-                    <td className="px-3 align-middle">
-                      <div className="h-5 w-16 bg-blue-primary/8 animate-pulse mx-auto" />
-                    </td>
-                    <td className="px-3 align-middle">
-                      <div className="h-2.5 w-20 bg-blue-primary/8 animate-pulse mx-auto" />
-                    </td>
-                    <td className="pl-3 pr-8 align-middle">
-                      <div className="h-2.5 w-20 bg-blue-primary/8 animate-pulse ml-auto" />
-                    </td>
+                    <td className="w-12 px-4 align-middle"><div className="w-3.5 h-3.5 bg-blue-primary/8 animate-pulse" /></td>
+                    <td className="px-3 align-middle"><div className="h-2.5 w-28 bg-blue-primary/8 animate-pulse" /></td>
+                    <td className="px-3 align-middle"><div className="h-2.5 w-24 bg-blue-primary/8 animate-pulse" /></td>
+                    <td className="px-3 align-middle"><div className="h-2.5 w-36 bg-blue-primary/8 animate-pulse" /></td>
+                    <td className="px-3 align-middle"><div className="h-5 w-24 bg-blue-primary/8 animate-pulse mx-auto" /></td>
+                    <td className="px-3 align-middle"><div className="h-5 w-16 bg-blue-primary/8 animate-pulse mx-auto" /></td>
+                    <td className="px-3 align-middle"><div className="h-2.5 w-20 bg-blue-primary/8 animate-pulse mx-auto" /></td>
+                    <td className="pl-3 pr-8 align-middle"><div className="h-2.5 w-20 bg-blue-primary/8 animate-pulse ml-auto" /></td>
                     <td className="w-12 px-3 align-middle" />
                   </tr>
                 ))
@@ -830,9 +700,7 @@ export default function WarrantyClaimsPage() {
                     <tr
                       key={claim.id}
                       className={`border-b border-blue-primary/6 transition-colors duration-150 h-14 ${
-                        isSelected
-                          ? "bg-blue-primary/[0.03]"
-                          : "hover:bg-blue-primary/[0.02]"
+                        isSelected ? "bg-blue-primary/[0.03]" : "hover:bg-blue-primary/[0.02]"
                       }`}
                     >
                       {/* Checkbox */}
@@ -844,14 +712,14 @@ export default function WarrantyClaimsPage() {
                           className="w-3.5 h-3.5 accent-blue-primary cursor-pointer block"
                         />
                       </td>
-                      {/* Claim # */}
+                      {/* Claim # — now a link to detail page */}
                       <td className="px-3 align-middle">
-                        <button
-                          onClick={() => setDetailClaim(claim)}
-                          className="font-mono text-[10px] tracking-[0.06em] uppercase text-blue-primary hover:underline underline-offset-2 decoration-blue-primary/30 transition-colors text-left"
+                        <Link
+                          href={`/warranty/claims/${claim.id}`}
+                          className="font-mono text-[10px] tracking-[0.06em] uppercase text-blue-primary hover:underline underline-offset-2 decoration-blue-primary/30 transition-colors"
                         >
                           {claim.claimNumber}
-                        </button>
+                        </Link>
                       </td>
                       {/* Serial # */}
                       <td className="px-3 align-middle">
@@ -905,12 +773,14 @@ export default function WarrantyClaimsPage() {
                           <>
                             <div className="fixed inset-0 z-10" onClick={() => setActionMenuId(null)} />
                             <div className="absolute right-3 top-full z-20 w-44 bg-cream-primary border border-blue-primary/10 shadow-sm py-1">
-                              <button
-                                onClick={() => { setActionMenuId(null); setDetailClaim(claim); }}
+                              {/* View Details — navigates to detail page */}
+                              <Link
+                                href={`/warranty/claims/${claim.id}`}
+                                onClick={() => setActionMenuId(null)}
                                 className="w-full flex items-center gap-2 px-3 py-2 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/60 hover:bg-blue-primary/5 hover:text-blue-primary transition-colors"
                               >
                                 <Eye size={12} strokeWidth={1.5} /> View Details
-                              </button>
+                              </Link>
                               {CLAIM_STATUS_TRANSITIONS[claim.status].length > 0 && (
                                 <>
                                   <div className="h-px bg-blue-primary/8 mx-2 my-1" />
@@ -1015,293 +885,6 @@ export default function WarrantyClaimsPage() {
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">[INV.WTY.END]</span>
         <div className="h-px flex-1 bg-blue-primary/8" />
-      </div>
-
-      {/* ━━━ DETAIL MODAL ━━━ */}
-      {typeof window !== "undefined" && createPortal(
-        <AnimatePresence>
-          {detailClaim && (
-            <>
-              {/* Backdrop */}
-              <motion.div
-                className="fixed inset-0 bg-blue-primary/20 z-40"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => { setDetailClaim(null); setNewNote(""); }}
-              />
-              {/* Panel */}
-              <motion.div
-                className="fixed inset-0 z-50 flex items-center justify-center p-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <motion.div
-                  className="w-full max-w-2xl max-h-[88vh] bg-cream-primary border border-blue-primary/10 shadow-lg flex flex-col"
-                  initial={{ y: 30, scale: 0.97 }}
-                  animate={{ y: 0, scale: 1 }}
-                  exit={{ y: 20, scale: 0.97 }}
-                  transition={{ duration: 0.3, ease }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* Modal header */}
-                  <div className="flex items-center justify-between px-5 py-3 border-b border-blue-primary/8 shrink-0">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <ShieldCheck size={16} strokeWidth={1.5} className="text-blue-primary/40 shrink-0" />
-                      <p className="font-mono text-[11px] tracking-[0.08em] uppercase text-blue-primary truncate">
-                        {detailClaim.claimNumber}
-                      </p>
-                      <span className={`inline-block font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-0.5 shrink-0 ${CLAIM_STATUS_CONFIG[detailClaim.status].color} ${CLAIM_STATUS_CONFIG[detailClaim.status].bg}`}>
-                        {CLAIM_STATUS_CONFIG[detailClaim.status].label}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() => { setDetailClaim(null); setNewNote(""); }}
-                      className="w-6 h-6 flex items-center justify-center text-blue-primary/30 hover:text-blue-primary transition-colors shrink-0"
-                    >
-                      <X size={14} strokeWidth={2} />
-                    </button>
-                  </div>
-
-                  {/* Modal body */}
-                  <div className="p-5 space-y-5 overflow-y-auto flex-1">
-
-                    {/* Status + Type + Date row */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-blue-primary/10 border border-blue-primary/10">
-                      <div className="bg-cream-light px-4 py-3 text-center">
-                        <span className="font-mono text-[8px] tracking-[0.15em] uppercase text-blue-primary/40 block mb-1.5">Claim Type</span>
-                        <span className="inline-block font-mono text-[9px] tracking-[0.08em] uppercase text-blue-primary/70 px-2 py-1 bg-blue-primary/5">
-                          {CLAIM_TYPE_SHORT[detailClaim.claimType]}
-                        </span>
-                      </div>
-                      <div className="bg-cream-light px-4 py-3 text-center">
-                        <span className="font-mono text-[8px] tracking-[0.15em] uppercase text-blue-primary/40 block mb-1.5">Claim Date</span>
-                        <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/70">
-                          {formatDate(detailClaim.claimDate)}
-                        </span>
-                      </div>
-                      <div className="bg-cream-light px-4 py-3 text-center">
-                        <span className="font-mono text-[8px] tracking-[0.15em] uppercase text-blue-primary/40 block mb-1.5">
-                          {detailClaim.repairCost !== null ? "Repair Cost" : "Cost"}
-                        </span>
-                        <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/70">
-                          {detailClaim.repairCost !== null ? formatCurrency(detailClaim.repairCost) : "\u2014"}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Serial + Contact info */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-3">
-                        <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 pb-1 border-b border-blue-primary/8">
-                          Serial Info
-                        </p>
-                        <DetailRow icon={Barcode} label="Serial Number" value={detailClaim.serialNumber} />
-                        <DetailRow icon={Package} label="Product" value={detailClaim.productName} />
-                        {detailClaim.replacementSerialNumber && (
-                          <DetailRow icon={RefreshCw} label="Replacement" value={detailClaim.replacementSerialNumber} />
-                        )}
-                      </div>
-                      <div className="space-y-3">
-                        <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 pb-1 border-b border-blue-primary/8">
-                          Contact
-                        </p>
-                        {detailClaim.customerName && (
-                          <DetailRow icon={User} label="Customer" value={detailClaim.customerName} />
-                        )}
-                        {detailClaim.supplierName && (
-                          <DetailRow icon={Truck} label="Supplier" value={detailClaim.supplierName} />
-                        )}
-                        <DetailRow icon={CalendarDays} label="Last Updated" value={formatDate(detailClaim.updatedAt)} />
-                      </div>
-                    </div>
-
-                    {/* Issue Description */}
-                    <div>
-                      <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 pb-1 border-b border-blue-primary/8 mb-2">
-                        Issue Description
-                      </p>
-                      <div className="p-3 bg-cream-light border border-blue-primary/8">
-                        <p className="font-mono text-[10px] tracking-[0.03em] text-blue-primary/60 leading-relaxed">
-                          {detailClaim.issueDescription}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Resolution */}
-                    {detailClaim.resolution && (
-                      <div>
-                        <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 pb-1 border-b border-blue-primary/8 mb-2">
-                          Resolution
-                        </p>
-                        <div className="p-3 bg-emerald-700/5 border border-emerald-700/10">
-                          <p className="font-mono text-[10px] tracking-[0.03em] text-emerald-700/70 leading-relaxed">
-                            {detailClaim.resolution}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Workflow Actions */}
-                    {CLAIM_STATUS_TRANSITIONS[detailClaim.status].length > 0 && (
-                      <div>
-                        <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 pb-1 border-b border-blue-primary/8 mb-2">
-                          Workflow Actions
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {CLAIM_STATUS_TRANSITIONS[detailClaim.status].map((nextStatus) => {
-                            const nCfg = CLAIM_STATUS_CONFIG[nextStatus];
-                            const Icon = STATUS_WORKFLOW_ICONS[nextStatus];
-                            return (
-                              <button
-                                key={nextStatus}
-                                onClick={() => handleStatusUpdate(detailClaim.id, nextStatus)}
-                                className={`h-8 px-3 border border-blue-primary/10 font-mono text-[9px] tracking-[0.1em] uppercase flex items-center gap-1.5 hover:border-blue-primary/30 transition-colors ${nCfg.color}`}
-                              >
-                                <Icon size={12} strokeWidth={1.5} />
-                                {nCfg.label}
-                                <ArrowRight size={10} strokeWidth={1.5} className="text-blue-primary/20" />
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Status History Timeline */}
-                    <div>
-                      <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 pb-1 border-b border-blue-primary/8 mb-3">
-                        Status History
-                      </p>
-                      <div className="space-y-0">
-                        {detailClaim.statusHistory.map((entry, i) => {
-                          const Icon = STATUS_WORKFLOW_ICONS[entry.to] ?? CircleDot;
-                          const isLast = i === detailClaim.statusHistory.length - 1;
-                          const cfg = CLAIM_STATUS_CONFIG[entry.to];
-                          return (
-                            <div key={i} className="flex gap-3">
-                              <div className="flex flex-col items-center shrink-0">
-                                <div className={`w-6 h-6 flex items-center justify-center border ${
-                                  isLast ? "border-blue-primary/30 bg-blue-primary/5" : "border-blue-primary/10 bg-cream-light"
-                                }`}>
-                                  <Icon size={11} strokeWidth={1.5} className={isLast ? "text-blue-primary/60" : "text-blue-primary/25"} />
-                                </div>
-                                {!isLast && <div className="w-px flex-1 min-h-[16px] bg-blue-primary/10" />}
-                              </div>
-                              <div className="pb-3 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className={`font-mono text-[9px] tracking-[0.08em] uppercase px-1.5 py-0.5 leading-none ${cfg.color} ${cfg.bg}`}>
-                                    {cfg.label}
-                                  </span>
-                                  <span className="font-mono text-[8px] tracking-[0.06em] text-blue-primary/25 leading-none">
-                                    {formatDateShort(entry.date)}
-                                  </span>
-                                </div>
-                                <p className="font-mono text-[9px] tracking-[0.02em] text-blue-primary/40 mt-1 leading-relaxed">
-                                  {entry.note}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Notes / Communication Log */}
-                    <div>
-                      <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 pb-1 border-b border-blue-primary/8 mb-3">
-                        Notes ({detailClaim.notes.length})
-                      </p>
-                      {detailClaim.notes.length > 0 ? (
-                        <div className="space-y-2 mb-3">
-                          {detailClaim.notes.map((note) => (
-                            <div key={note.id} className="p-3 bg-cream-light border border-blue-primary/8">
-                              <p className="font-mono text-[10px] tracking-[0.03em] text-blue-primary/60 leading-relaxed">
-                                {note.note}
-                              </p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <span className="font-mono text-[8px] tracking-[0.1em] uppercase text-blue-primary/30">
-                                  {note.createdBy}
-                                </span>
-                                <span className="font-mono text-[8px] tracking-[0.06em] text-blue-primary/20">
-                                  {formatDateShort(note.createdAt)}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="font-mono text-[9px] tracking-[0.08em] uppercase text-blue-primary/20 mb-3">
-                          No notes yet
-                        </p>
-                      )}
-                      {detailClaim.status !== "closed" && (
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={newNote}
-                            onChange={(e) => setNewNote(e.target.value)}
-                            onKeyDown={(e) => { if (e.key === "Enter") handleAddNote(detailClaim.id); }}
-                            placeholder="ADD A NOTE..."
-                            className="flex-1 h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.06em] uppercase text-blue-primary placeholder:text-blue-primary/20 focus:outline-none focus:border-blue-primary/30 transition-colors"
-                          />
-                          <button
-                            onClick={() => handleAddNote(detailClaim.id)}
-                            disabled={!newNote.trim()}
-                            className="h-9 px-3 bg-blue-primary text-cream-primary font-mono text-[9px] tracking-[0.1em] uppercase flex items-center gap-1.5 hover:bg-blue-dark transition-colors disabled:opacity-30 disabled:pointer-events-none"
-                          >
-                            <Send size={11} strokeWidth={1.5} />
-                            Add
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Modal footer */}
-                  <div className="flex items-center justify-end px-5 py-3 border-t border-blue-primary/8 shrink-0">
-                    <button
-                      onClick={() => { setDetailClaim(null); setNewNote(""); }}
-                      className="h-9 px-5 border border-blue-primary/15 font-mono text-[9px] tracking-[0.12em] uppercase text-blue-primary/50 hover:text-blue-primary hover:border-blue-primary/30 transition-colors"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
-    </div>
-  );
-}
-
-// ————————————————————————————————————————————————
-// DETAIL ROW COMPONENT
-// ————————————————————————————————————————————————
-
-function DetailRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-start gap-2">
-      <Icon size={12} strokeWidth={1.5} className="text-blue-primary/20 mt-0.5 shrink-0" />
-      <div className="min-w-0">
-        <span className="font-mono text-[8px] tracking-[0.12em] uppercase text-blue-primary/30 block leading-none">
-          {label}
-        </span>
-        <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/70 block mt-0.5 leading-snug truncate">
-          {value}
-        </span>
       </div>
     </div>
   );
