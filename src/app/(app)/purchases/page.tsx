@@ -1,4 +1,4 @@
-// src/app/(app)/sales/history/page.tsx
+// src/app/(app)/purchases/page.tsx
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
@@ -15,16 +15,14 @@ import {
   Eye,
   Download,
   Plus,
-  ShoppingCart,
+  Truck,
   Ban,
 } from "lucide-react";
 import {
-  SALE_RECORDS,
-  SALE_STATUS_CONFIG,
-  PAYMENT_METHOD_CONFIG,
-  type SaleRecord,
-  type SaleStatus,
-  type PaymentMethod,
+  PURCHASE_ORDERS,
+  PURCHASE_STATUS_CONFIG,
+  type PurchaseOrder,
+  type PurchaseStatus,
 } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils/format";
 import Link from "next/link";
@@ -34,12 +32,12 @@ import Link from "next/link";
 // ————————————————————————————————————————————————
 
 type SortKey =
-  | "saleNumber"
+  | "poNumber"
   | "date"
-  | "customerName"
+  | "expectedDate"
+  | "supplierName"
   | "itemCount"
   | "total"
-  | "paymentMethod"
   | "status";
 type SortDir = "asc" | "desc";
 
@@ -54,7 +52,7 @@ const ease = [0.16, 1, 0.3, 1] as const;
 // HELPERS
 // ————————————————————————————————————————————————
 
-function formatSaleDate(iso: string): string {
+function formatPoDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -62,8 +60,8 @@ function formatSaleDate(iso: string): string {
   });
 }
 
-function getUniqueCustomers(sales: SaleRecord[]): string[] {
-  const set = new Set(sales.map((s) => s.customerName));
+function getUniqueSuppliers(orders: PurchaseOrder[]): string[] {
+  const set = new Set(orders.map((o) => o.supplierName));
   return Array.from(set).sort();
 }
 
@@ -95,12 +93,11 @@ function SortIcon({
 // PAGE
 // ————————————————————————————————————————————————
 
-export default function SalesHistoryPage() {
+export default function PurchaseOrdersPage() {
   // — Filter state —
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<SaleStatus | "all">("all");
-  const [paymentFilter, setPaymentFilter] = useState<PaymentMethod | "all">("all");
-  const [customerFilter, setCustomerFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<PurchaseStatus | "all">("all");
+  const [supplierFilter, setSupplierFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
@@ -119,7 +116,7 @@ export default function SalesHistoryPage() {
   const [actionMenuId, setActionMenuId] = useState<string | null>(null);
 
   // — Local mutable state —
-  const [sales, setSales] = useState<SaleRecord[]>(() => [...SALE_RECORDS]);
+  const [orders, setOrders] = useState<PurchaseOrder[]>(() => [...PURCHASE_ORDERS]);
 
   // — Loading skeleton on mount —
   const [isLoading, setIsLoading] = useState(true);
@@ -128,51 +125,49 @@ export default function SalesHistoryPage() {
     return () => clearTimeout(t);
   }, []);
 
-  const uniqueCustomers = useMemo(() => getUniqueCustomers(sales), [sales]);
+  const uniqueSuppliers = useMemo(() => getUniqueSuppliers(orders), [orders]);
 
   // ——— DERIVED DATA ———
 
   const filtered = useMemo(() => {
-    let data = [...sales];
+    let data = [...orders];
 
     if (search.trim()) {
       const q = search.toLowerCase().trim();
       data = data.filter(
-        (s) =>
-          s.saleNumber.toLowerCase().includes(q) ||
-          s.customerName.toLowerCase().includes(q) ||
-          s.items.some(
+        (o) =>
+          o.poNumber.toLowerCase().includes(q) ||
+          o.supplierName.toLowerCase().includes(q) ||
+          o.items.some(
             (i) =>
               i.productName.toLowerCase().includes(q) ||
-              i.sku.toLowerCase().includes(q) ||
-              (i.serialNumber && i.serialNumber.toLowerCase().includes(q))
+              i.sku.toLowerCase().includes(q)
           )
       );
     }
 
-    if (statusFilter !== "all") data = data.filter((s) => s.status === statusFilter);
-    if (paymentFilter !== "all") data = data.filter((s) => s.paymentMethod === paymentFilter);
-    if (customerFilter !== "all") data = data.filter((s) => s.customerName === customerFilter);
-    if (dateFrom) data = data.filter((s) => s.date >= dateFrom);
-    if (dateTo) data = data.filter((s) => s.date <= dateTo);
+    if (statusFilter !== "all") data = data.filter((o) => o.status === statusFilter);
+    if (supplierFilter !== "all") data = data.filter((o) => o.supplierName === supplierFilter);
+    if (dateFrom) data = data.filter((o) => o.date >= dateFrom);
+    if (dateTo) data = data.filter((o) => o.date <= dateTo);
 
     return data;
-  }, [search, statusFilter, paymentFilter, customerFilter, dateFrom, dateTo, sales]);
+  }, [search, statusFilter, supplierFilter, dateFrom, dateTo, orders]);
 
   const sorted = useMemo(() => {
     const data = [...filtered];
     data.sort((a, b) => {
       let cmp = 0;
       switch (sortKey) {
-        case "saleNumber":   cmp = a.saleNumber.localeCompare(b.saleNumber); break;
+        case "poNumber":     cmp = a.poNumber.localeCompare(b.poNumber); break;
         case "date":         cmp = a.date.localeCompare(b.date); break;
-        case "customerName": cmp = a.customerName.localeCompare(b.customerName); break;
+        case "expectedDate": cmp = a.expectedDate.localeCompare(b.expectedDate); break;
+        case "supplierName": cmp = a.supplierName.localeCompare(b.supplierName); break;
         case "itemCount":    cmp = a.items.length - b.items.length; break;
         case "total":        cmp = a.total - b.total; break;
-        case "paymentMethod":cmp = a.paymentMethod.localeCompare(b.paymentMethod); break;
         case "status": {
-          const order: Record<SaleStatus, number> = {
-            completed: 0, partial_refund: 1, refunded: 2, voided: 3,
+          const order: Record<PurchaseStatus, number> = {
+            draft: 0, sent: 1, partial: 2, received: 3, cancelled: 4,
           };
           cmp = order[a.status] - order[b.status];
           break;
@@ -202,26 +197,24 @@ export default function SalesHistoryPage() {
 
   const activeFilterCount = [
     statusFilter !== "all",
-    paymentFilter !== "all",
-    customerFilter !== "all",
+    supplierFilter !== "all",
     !!(dateFrom || dateTo),
   ].filter(Boolean).length;
 
   const clearFilters = () => {
     setSearch("");
     setStatusFilter("all");
-    setPaymentFilter("all");
-    setCustomerFilter("all");
+    setSupplierFilter("all");
     setDateFrom("");
     setDateTo("");
     resetPage();
   };
 
-  // — Void single sale —
-  const handleVoid = (id: string) => {
-    if (!confirm("Void this sale? This cannot be undone.")) return;
-    setSales((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, status: "voided" as SaleStatus } : s))
+  // — Cancel single order —
+  const handleCancel = (id: string) => {
+    if (!confirm("Cancel this purchase order? This cannot be undone.")) return;
+    setOrders((prev) =>
+      prev.map((o) => (o.id === id ? { ...o, status: "cancelled" as PurchaseStatus } : o))
     );
     setActionMenuId(null);
   };
@@ -239,10 +232,10 @@ export default function SalesHistoryPage() {
   const toggleSelectAll = () => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (paginated.length > 0 && paginated.every((s) => next.has(s.id))) {
-        paginated.forEach((s) => next.delete(s.id));
+      if (paginated.length > 0 && paginated.every((o) => next.has(o.id))) {
+        paginated.forEach((o) => next.delete(o.id));
       } else {
-        paginated.forEach((s) => next.add(s.id));
+        paginated.forEach((o) => next.add(o.id));
       }
       return next;
     });
@@ -250,54 +243,55 @@ export default function SalesHistoryPage() {
 
   const clearSelection = () => setSelectedIds(new Set());
   const allOnPageSelected =
-    paginated.length > 0 && paginated.every((s) => selectedIds.has(s.id));
+    paginated.length > 0 && paginated.every((o) => selectedIds.has(o.id));
 
-  // — Bulk void —
-  const handleBulkVoid = () => {
-    if (!confirm(`Void ${selectedIds.size} selected sale(s)?`)) return;
-    setSales((prev) =>
-      prev.map((s) =>
-        selectedIds.has(s.id) && s.status !== "voided"
-          ? { ...s, status: "voided" as SaleStatus }
-          : s
+  // — Bulk cancel —
+  const handleBulkCancel = () => {
+    if (!confirm(`Cancel ${selectedIds.size} selected order(s)?`)) return;
+    setOrders((prev) =>
+      prev.map((o) =>
+        selectedIds.has(o.id) && o.status !== "cancelled"
+          ? { ...o, status: "cancelled" as PurchaseStatus }
+          : o
       )
     );
     clearSelection();
   };
 
   // — Export helpers —
-  const buildExportRows = (rows: SaleRecord[]) =>
-    rows.map((s) => ({
-      "Sale #": s.saleNumber,
-      Date: s.date,
-      Customer: s.customerName,
-      Items: s.items.map((i) => `${i.productName} x${i.qty}`).join("; "),
-      Subtotal: s.subtotal,
-      Discount: s.discount,
-      Total: s.total,
-      "Payment Method": PAYMENT_METHOD_CONFIG[s.paymentMethod].label,
-      Status: SALE_STATUS_CONFIG[s.status].label,
-      "Handled By": s.handledBy,
-      Notes: s.notes ?? "",
+  const buildExportRows = (rows: PurchaseOrder[]) =>
+    rows.map((o) => ({
+      "PO #": o.poNumber,
+      "Date": o.date,
+      "Expected": o.expectedDate,
+      "Supplier": o.supplierName,
+      "Contact": o.supplierContact,
+      "Items": o.items.map((i) => `${i.productName} x${i.qty}`).join("; "),
+      "Subtotal": o.subtotal,
+      "Shipping": o.shippingCost,
+      "Total": o.total,
+      "Status": PURCHASE_STATUS_CONFIG[o.status].label,
+      "Handled By": o.handledBy,
+      "Notes": o.notes ?? "",
     }));
 
   const handleExport = async () => {
     const XLSX = await import("xlsx");
     const ws = XLSX.utils.json_to_sheet(buildExportRows(sorted));
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sales History");
-    XLSX.writeFile(wb, `sales-history-${new Date().toISOString().split("T")[0]}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, "Purchase Orders");
+    XLSX.writeFile(wb, `purchase-orders-${new Date().toISOString().split("T")[0]}.xlsx`);
   };
 
   const handleExportSelected = async () => {
     const XLSX = await import("xlsx");
-    const rows = sorted.filter((s) => selectedIds.has(s.id));
+    const rows = sorted.filter((o) => selectedIds.has(o.id));
     const ws = XLSX.utils.json_to_sheet(buildExportRows(rows));
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sales History");
+    XLSX.utils.book_append_sheet(wb, ws, "Purchase Orders");
     XLSX.writeFile(
       wb,
-      `sales-selected-${new Date().toISOString().split("T")[0]}.xlsx`
+      `purchases-selected-${new Date().toISOString().split("T")[0]}.xlsx`
     );
     clearSelection();
   };
@@ -305,23 +299,26 @@ export default function SalesHistoryPage() {
   // ——— STATUS SUMMARY ———
 
   const statusSummary = useMemo(() => {
-    const counts: Record<SaleStatus, number> = {
-      completed: 0, refunded: 0, partial_refund: 0, voided: 0,
+    const counts: Record<PurchaseStatus, number> = {
+      draft: 0, sent: 0, partial: 0, received: 0, cancelled: 0,
     };
-    sales.forEach((s) => { counts[s.status]++; });
+    orders.forEach((o) => { counts[o.status]++; });
     return counts;
-  }, [sales]);
+  }, [orders]);
 
-  const totalRevenue = useMemo(
-    () => sales.filter((s) => s.status === "completed").reduce((acc, s) => acc + s.total, 0),
-    [sales]
+  const totalSpend = useMemo(
+    () =>
+      orders
+        .filter((o) => o.status === "received" || o.status === "partial")
+        .reduce((acc, o) => acc + o.total, 0),
+    [orders]
   );
 
   // ——— RENDER ———
 
   return (
     <div className="space-y-6">
-      {/* ━━━ PAGE HEADER ━━━ */}
+      {/* ┌── PAGE HEADER ──┐ */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <motion.h1
@@ -330,7 +327,7 @@ export default function SalesHistoryPage() {
             animate={{ x: 0 }}
             transition={{ duration: 0.5, ease }}
           >
-            Sales History
+            Purchase Orders
           </motion.h1>
           <motion.p
             className="font-mono text-[11px] tracking-[0.15em] uppercase text-blue-primary/40 mt-2"
@@ -338,8 +335,8 @@ export default function SalesHistoryPage() {
             animate={{ x: 0 }}
             transition={{ duration: 0.5, delay: 0.05, ease }}
           >
-            {sales.length} total transaction{sales.length !== 1 && "s"}&nbsp;&middot;&nbsp;
-            {formatCurrency(totalRevenue)} revenue
+            {orders.length} total order{orders.length !== 1 && "s"}&nbsp;&middot;&nbsp;
+            {formatCurrency(totalSpend)} total spend
           </motion.p>
         </div>
         <motion.div
@@ -349,7 +346,7 @@ export default function SalesHistoryPage() {
           transition={{ duration: 0.4, delay: 0.1, ease }}
         >
           <span className="font-mono text-[10px] tracking-[0.15em] text-blue-primary/20 hidden sm:block">
-            [INV.SALES]
+            [INV.PO]
           </span>
           <button
             onClick={handleExport}
@@ -359,11 +356,11 @@ export default function SalesHistoryPage() {
             Export
           </button>
           <Link
-            href="/sales/pos"
+            href="/purchases/new"
             className="h-9 px-4 bg-blue-primary text-cream-primary font-mono text-[10px] tracking-[0.12em] uppercase flex items-center gap-2 hover:bg-blue-dark transition-colors"
           >
             <Plus size={13} strokeWidth={1.5} />
-            New Sale
+            New Order
           </Link>
         </motion.div>
       </div>
@@ -371,17 +368,17 @@ export default function SalesHistoryPage() {
       {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ━━━ STATUS SUMMARY CARDS ━━━ */}
+      {/* ┌── STATUS SUMMARY CARDS ──┐ */}
       <motion.div
-        className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-blue-primary/10 border border-blue-primary/10"
+        className="grid grid-cols-2 sm:grid-cols-5 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.08, ease }}
       >
         {(
-          Object.entries(SALE_STATUS_CONFIG) as [
-            SaleStatus,
-            (typeof SALE_STATUS_CONFIG)[SaleStatus]
+          Object.entries(PURCHASE_STATUS_CONFIG) as [
+            PurchaseStatus,
+            (typeof PURCHASE_STATUS_CONFIG)[PurchaseStatus]
           ][]
         ).map(([key, cfg]) => (
           <button
@@ -406,7 +403,7 @@ export default function SalesHistoryPage() {
         ))}
       </motion.div>
 
-      {/* ━━━ FILTERS ━━━ */}
+      {/* ┌── FILTERS ──┐ */}
       <motion.div
         className="space-y-2"
         initial={{ y: 20 }}
@@ -423,7 +420,7 @@ export default function SalesHistoryPage() {
             />
             <input
               type="text"
-              placeholder="SEARCH SALE #, CUSTOMER, PRODUCT, SERIAL..."
+              placeholder="SEARCH PO #, SUPPLIER, PRODUCT, SKU..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -449,16 +446,16 @@ export default function SalesHistoryPage() {
             <select
               value={statusFilter}
               onChange={(e) => {
-                setStatusFilter(e.target.value as SaleStatus | "all");
+                setStatusFilter(e.target.value as PurchaseStatus | "all");
                 resetPage();
               }}
               className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[120px]"
             >
               <option value="all">All Status</option>
               {(
-                Object.entries(SALE_STATUS_CONFIG) as [
-                  SaleStatus,
-                  (typeof SALE_STATUS_CONFIG)[SaleStatus]
+                Object.entries(PURCHASE_STATUS_CONFIG) as [
+                  PurchaseStatus,
+                  (typeof PURCHASE_STATUS_CONFIG)[PurchaseStatus]
                 ][]
               ).map(([key, cfg]) => (
                 <option key={key} value={key}>
@@ -467,32 +464,17 @@ export default function SalesHistoryPage() {
               ))}
             </select>
 
-            {/* Payment */}
+            {/* Supplier */}
             <select
-              value={paymentFilter}
+              value={supplierFilter}
               onChange={(e) => {
-                setPaymentFilter(e.target.value as PaymentMethod | "all");
+                setSupplierFilter(e.target.value);
                 resetPage();
               }}
-              className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[130px]"
+              className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[160px]"
             >
-              <option value="all">All Payments</option>
-              <option value="cash">Cash</option>
-              <option value="card">Card</option>
-              <option value="transfer">Transfer</option>
-            </select>
-
-            {/* Customer */}
-            <select
-              value={customerFilter}
-              onChange={(e) => {
-                setCustomerFilter(e.target.value);
-                resetPage();
-              }}
-              className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[140px]"
-            >
-              <option value="all">All Customers</option>
-              {uniqueCustomers.map((name) => (
+              <option value="all">All Suppliers</option>
+              {uniqueSuppliers.map((name) => (
                 <option key={name} value={name}>
                   {name}
                 </option>
@@ -513,7 +495,7 @@ export default function SalesHistoryPage() {
         {/* Row 2: Date range */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/30 shrink-0">
-            Date range
+            Order date
           </span>
           <input
             type="date"
@@ -563,16 +545,16 @@ export default function SalesHistoryPage() {
           >
             <div className="px-4 h-9 flex items-center justify-center border-b border-cream-primary/10">
               <span className="font-mono text-[10px] tracking-[0.12em] uppercase">
-                {selectedIds.size} sale{selectedIds.size !== 1 && "s"} selected
+                {selectedIds.size} order{selectedIds.size !== 1 && "s"} selected
               </span>
             </div>
             <div className="grid grid-cols-3 divide-x divide-cream-primary/10">
               <button
-                onClick={handleBulkVoid}
+                onClick={handleBulkCancel}
                 className="font-mono text-[9px] tracking-[0.1em] uppercase text-cream-primary/70 hover:text-cream-primary hover:bg-cream-primary/5 flex items-center justify-center gap-1.5 h-9 transition-colors"
               >
                 <Ban size={12} strokeWidth={1.5} />
-                Void Selected
+                Cancel Selected
               </button>
               <button
                 onClick={handleExportSelected}
@@ -593,7 +575,7 @@ export default function SalesHistoryPage() {
         )}
       </motion.div>
 
-      {/* ━━━ TABLE ━━━ */}
+      {/* ┌── TABLE ──┐ */}
       <motion.div
         className="border border-blue-primary/10 bg-cream-light overflow-hidden"
         initial={{ y: 30 }}
@@ -602,7 +584,7 @@ export default function SalesHistoryPage() {
       >
         <div className="flex items-center justify-between px-5 py-3 border-b border-blue-primary/8">
           <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">
-            Transaction Registry
+            Order Registry
           </p>
           <span className="font-mono text-[9px] tracking-[0.1em] text-blue-primary/20">
             /001
@@ -610,7 +592,7 @@ export default function SalesHistoryPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px]">
+          <table className="w-full min-w-[960px]">
             <thead>
               <tr className="border-b border-blue-primary/10 h-11">
                 <th className="w-12 px-4 align-middle">
@@ -624,10 +606,10 @@ export default function SalesHistoryPage() {
                 </th>
                 <th className="text-left px-3 align-middle">
                   <button
-                    onClick={() => handleSort("saleNumber")}
+                    onClick={() => handleSort("poNumber")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors"
                   >
-                    Sale # <SortIcon col="saleNumber" sortKey={sortKey} sortDir={sortDir} />
+                    PO # <SortIcon col="poNumber" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-left px-3 align-middle">
@@ -635,15 +617,23 @@ export default function SalesHistoryPage() {
                     onClick={() => handleSort("date")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors"
                   >
-                    Date <SortIcon col="date" sortKey={sortKey} sortDir={sortDir} />
+                    Order Date <SortIcon col="date" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-left px-3 align-middle">
                   <button
-                    onClick={() => handleSort("customerName")}
+                    onClick={() => handleSort("expectedDate")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors"
                   >
-                    Customer <SortIcon col="customerName" sortKey={sortKey} sortDir={sortDir} />
+                    Expected <SortIcon col="expectedDate" sortKey={sortKey} sortDir={sortDir} />
+                  </button>
+                </th>
+                <th className="text-left px-3 align-middle">
+                  <button
+                    onClick={() => handleSort("supplierName")}
+                    className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors"
+                  >
+                    Supplier <SortIcon col="supplierName" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-center px-3 align-middle">
@@ -651,7 +641,7 @@ export default function SalesHistoryPage() {
                     onClick={() => handleSort("itemCount")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors mx-auto"
                   >
-                    Items <SortIcon col="itemCount" sortKey={sortKey} sortDir={sortDir} />
+                    Lines <SortIcon col="itemCount" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-right px-3 align-middle">
@@ -660,14 +650,6 @@ export default function SalesHistoryPage() {
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors ml-auto"
                   >
                     Total <SortIcon col="total" sortKey={sortKey} sortDir={sortDir} />
-                  </button>
-                </th>
-                <th className="text-center px-3 align-middle">
-                  <button
-                    onClick={() => handleSort("paymentMethod")}
-                    className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors mx-auto"
-                  >
-                    Payment <SortIcon col="paymentMethod" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-center px-3 align-middle">
@@ -682,7 +664,7 @@ export default function SalesHistoryPage() {
               </tr>
             </thead>
             <tbody>
-              {/* ── LOADING SKELETON ── */}
+              {/* —— LOADING SKELETON —— */}
               {isLoading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <tr key={i} className="border-b border-blue-primary/6 h-14">
@@ -690,13 +672,16 @@ export default function SalesHistoryPage() {
                       <div className="w-3.5 h-3.5 bg-blue-primary/8 animate-pulse" />
                     </td>
                     <td className="px-3 align-middle">
-                      <div className="h-2.5 w-24 bg-blue-primary/8 animate-pulse" />
+                      <div className="h-2.5 w-20 bg-blue-primary/8 animate-pulse" />
                     </td>
                     <td className="px-3 align-middle">
                       <div className="h-2.5 w-24 bg-blue-primary/8 animate-pulse" />
                     </td>
                     <td className="px-3 align-middle">
-                      <div className="h-2.5 w-28 bg-blue-primary/8 animate-pulse" />
+                      <div className="h-2.5 w-24 bg-blue-primary/8 animate-pulse" />
+                    </td>
+                    <td className="px-3 align-middle">
+                      <div className="h-2.5 w-36 bg-blue-primary/8 animate-pulse" />
                     </td>
                     <td className="px-3 align-middle">
                       <div className="h-2.5 w-8 bg-blue-primary/8 animate-pulse mx-auto" />
@@ -705,32 +690,29 @@ export default function SalesHistoryPage() {
                       <div className="h-2.5 w-20 bg-blue-primary/8 animate-pulse ml-auto" />
                     </td>
                     <td className="px-3 align-middle">
-                      <div className="h-5 w-16 bg-blue-primary/8 animate-pulse mx-auto" />
-                    </td>
-                    <td className="px-3 align-middle">
                       <div className="h-5 w-20 bg-blue-primary/8 animate-pulse mx-auto" />
                     </td>
                     <td className="w-12 px-3 align-middle" />
                   </tr>
                 ))
               ) : paginated.length === 0 ? (
-                /* ── EMPTY STATE ── */
+                /* —— EMPTY STATE —— */
                 <tr>
                   <td colSpan={9} className="text-center py-16">
-                    <ShoppingCart
+                    <Truck
                       size={28}
                       strokeWidth={1}
                       className="text-blue-primary/15 mx-auto mb-3"
                     />
                     <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-blue-primary/30">
                       {search || activeFilterCount > 0
-                        ? "No sales found"
-                        : "No sales recorded yet"}
+                        ? "No orders found"
+                        : "No purchase orders yet"}
                     </p>
                     <p className="font-mono text-[9px] tracking-[0.08em] uppercase text-blue-primary/20 mt-1">
                       {search || activeFilterCount > 0
                         ? "Try adjusting your filters or date range"
-                        : "Sales will appear once transactions are processed"}
+                        : "Purchase orders will appear once created"}
                     </p>
                     {activeFilterCount > 0 && (
                       <button
@@ -743,16 +725,17 @@ export default function SalesHistoryPage() {
                   </td>
                 </tr>
               ) : (
-                /* ── DATA ROWS ── */
-                paginated.map((sale) => {
-                  const isSelected = selectedIds.has(sale.id);
-                  const sCfg = SALE_STATUS_CONFIG[sale.status];
-                  const totalItems = sale.items.reduce((acc, i) => acc + i.qty, 0);
-                  const hasDiscount = sale.discount > 0;
+                /* —— DATA ROWS —— */
+                paginated.map((order) => {
+                  const isSelected = selectedIds.has(order.id);
+                  const sCfg = PURCHASE_STATUS_CONFIG[order.status];
+                  const totalQty = order.items.reduce((acc, i) => acc + i.qty, 0);
+                  const totalReceived = order.items.reduce((acc, i) => acc + i.qtyReceived, 0);
+                  const hasShipping = order.shippingCost > 0;
 
                   return (
                     <tr
-                      key={sale.id}
+                      key={order.id}
                       className={`border-b border-blue-primary/6 transition-colors duration-150 h-14 ${
                         isSelected
                           ? "bg-blue-primary/[0.03]"
@@ -764,65 +747,73 @@ export default function SalesHistoryPage() {
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => toggleSelect(sale.id)}
+                          onChange={() => toggleSelect(order.id)}
                           className="w-3.5 h-3.5 accent-blue-primary cursor-pointer block"
                         />
                       </td>
-                      {/* Sale # */}
+                      {/* PO # */}
                       <td className="px-3 align-middle">
                         <Link
-                          href={`/sales/history/${sale.id}`}
+                          href={`/purchases/${order.id}`}
                           className="font-mono text-[10px] tracking-[0.06em] uppercase text-blue-primary hover:underline underline-offset-2 decoration-blue-primary/30 transition-colors"
                         >
-                          {sale.saleNumber}
+                          {order.poNumber}
                         </Link>
                       </td>
-                      {/* Date */}
+                      {/* Order Date */}
                       <td className="px-3 align-middle">
                         <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/50">
-                          {formatSaleDate(sale.date)}
+                          {formatPoDate(order.date)}
                         </span>
                       </td>
-                      {/* Customer */}
+                      {/* Expected */}
                       <td className="px-3 align-middle">
-                        <p className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary truncate max-w-[160px] leading-none">
-                          {sale.customerName}
+                        <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/50">
+                          {formatPoDate(order.expectedDate)}
+                        </span>
+                      </td>
+                      {/* Supplier */}
+                      <td className="px-3 align-middle">
+                        <p className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary truncate max-w-[180px] leading-none">
+                          {order.supplierName}
+                        </p>
+                        <p className="font-mono text-[8px] tracking-[0.06em] text-blue-primary/30 mt-0.5 leading-none truncate max-w-[180px]">
+                          {order.supplierContact}
                         </p>
                       </td>
-                      {/* Items */}
+                      {/* Lines */}
                       <td className="px-3 align-middle text-center">
-                        <span className="font-mono text-[11px] tracking-[0.04em] font-semibold text-blue-primary/60 block">
-                          {totalItems}
+                        <span className="font-mono text-[11px] tracking-[0.04em] font-semibold text-blue-primary/60">
+                          {order.items.length}
                         </span>
                         <span className="font-mono text-[8px] tracking-[0.08em] uppercase text-blue-primary/25 block leading-none mt-0.5">
-                          {sale.items.length} line{sale.items.length !== 1 && "s"}
+                          {totalQty} units
                         </span>
                       </td>
                       {/* Total */}
                       <td className="px-3 align-middle text-right">
                         <span className="font-mono text-[12px] tracking-[0.03em] font-semibold text-blue-primary leading-none block">
-                          {formatCurrency(sale.total)}
+                          {formatCurrency(order.total)}
                         </span>
-                        {hasDiscount && (
+                        {hasShipping && (
                           <span className="font-mono text-[8px] tracking-[0.08em] uppercase text-blue-primary/25 block mt-0.5 leading-none">
-                            -{formatCurrency(sale.discount)} disc
+                            +{formatCurrency(order.shippingCost)} ship
                           </span>
                         )}
                       </td>
-                      {/* Payment */}
-                      <td className="px-3 align-middle text-center">
-                        <span className="inline-block font-mono text-[8px] tracking-[0.1em] uppercase px-2 py-1 leading-none bg-blue-primary/5 text-blue-primary/50">
-                          {PAYMENT_METHOD_CONFIG[sale.paymentMethod].label}
-                        </span>
-                      </td>
                       {/* Status */}
                       <td className="px-3 align-middle">
-                        <div className="flex justify-center">
+                        <div className="flex flex-col items-center gap-1">
                           <span
                             className={`font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${sCfg.color} ${sCfg.bg}`}
                           >
                             {sCfg.label}
                           </span>
+                          {(order.status === "partial" || order.status === "received") && (
+                            <span className="font-mono text-[7px] tracking-[0.08em] uppercase text-blue-primary/30 leading-none">
+                              {totalReceived}/{totalQty} recv
+                            </span>
+                          )}
                         </div>
                       </td>
                       {/* Actions */}
@@ -830,40 +821,41 @@ export default function SalesHistoryPage() {
                         <button
                           onClick={() =>
                             setActionMenuId(
-                              actionMenuId === sale.id ? null : sale.id
+                              actionMenuId === order.id ? null : order.id
                             )
                           }
                           className="p-1 text-blue-primary/30 hover:text-blue-primary transition-colors"
                         >
                           <MoreHorizontal size={14} strokeWidth={1.5} />
                         </button>
-                        {actionMenuId === sale.id && (
+                        {actionMenuId === order.id && (
                           <>
                             <div
                               className="fixed inset-0 z-10"
                               onClick={() => setActionMenuId(null)}
                             />
-                            <div className="absolute right-3 top-full z-20 w-40 bg-cream-primary border border-blue-primary/10 shadow-sm py-1">
+                            <div className="absolute right-3 top-full z-20 w-44 bg-cream-primary border border-blue-primary/10 shadow-sm py-1">
                               <Link
-                                href={`/sales/history/${sale.id}`}
+                                href={`/purchases/${order.id}`}
                                 onClick={() => setActionMenuId(null)}
                                 className="w-full flex items-center gap-2 px-3 py-2 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/60 hover:bg-blue-primary/5 hover:text-blue-primary transition-colors"
                               >
                                 <Eye size={12} strokeWidth={1.5} />
                                 View Details
                               </Link>
-                              {sale.status !== "voided" && (
-                                <>
-                                  <div className="h-px bg-blue-primary/8 mx-2 my-1" />
-                                  <button
-                                    onClick={() => handleVoid(sale.id)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 font-mono text-[9px] tracking-[0.1em] uppercase text-error/60 hover:bg-error/5 hover:text-error transition-colors"
-                                  >
-                                    <Ban size={12} strokeWidth={1.5} />
-                                    Void Sale
-                                  </button>
-                                </>
-                              )}
+                              {order.status !== "cancelled" &&
+                                order.status !== "received" && (
+                                  <>
+                                    <div className="h-px bg-blue-primary/8 mx-2 my-1" />
+                                    <button
+                                      onClick={() => handleCancel(order.id)}
+                                      className="w-full flex items-center gap-2 px-3 py-2 font-mono text-[9px] tracking-[0.1em] uppercase text-error/60 hover:bg-error/5 hover:text-error transition-colors"
+                                    >
+                                      <Ban size={12} strokeWidth={1.5} />
+                                      Cancel Order
+                                    </button>
+                                  </>
+                                )}
                             </div>
                           </>
                         )}
@@ -876,7 +868,7 @@ export default function SalesHistoryPage() {
           </table>
         </div>
 
-        {/* ━━━ PAGINATION ━━━ */}
+        {/* ┌── PAGINATION ──┐ */}
         <div className="flex items-center justify-between px-5 py-3 border-t border-blue-primary/8">
           <div className="flex items-center gap-3">
             <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/30">
@@ -954,7 +946,7 @@ export default function SalesHistoryPage() {
       <div className="flex items-center justify-between pt-4">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">
-          [INV.SALES.END]
+          [INV.PO.END]
         </span>
         <div className="h-px flex-1 bg-blue-primary/8" />
       </div>

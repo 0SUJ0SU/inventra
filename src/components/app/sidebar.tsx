@@ -109,18 +109,37 @@ const COLLAPSED_KEY = "inventra_sidebar_collapsed";
 // ─── SIDEBAR COMPONENT ──────────────────────────────────
 export function Sidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(COLLAPSED_KEY) === "true";
+    }
+    return false;
+  });
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
+  const [expandedItems, setExpandedItems] = useState<string[]>(() => {
+    const expanded: string[] = [];
+    NAV_GROUPS.forEach((group) => {
+      group.items.forEach((item) => {
+        if (item.children) {
+          const isChildActive = item.children.some((child) =>
+            pathname.startsWith(child.href)
+          );
+          if (isChildActive) {
+            expanded.push(item.label);
+          }
+        }
+      });
+    });
+    return expanded;
+  });
 
-  // Load collapsed state from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(COLLAPSED_KEY);
-    if (stored === "true") setCollapsed(true);
-  }, []);
-
-  // Auto-expand parent of active route
-  useEffect(() => {
+  // Adjust state when pathname changes (React-recommended pattern)
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
+    // Close mobile on route change
+    if (mobileOpen) setMobileOpen(false);
+    // Auto-expand parent of active route
     NAV_GROUPS.forEach((group) => {
       group.items.forEach((item) => {
         if (item.children) {
@@ -135,7 +154,7 @@ export function Sidebar() {
         }
       });
     });
-  }, [pathname]);
+  }
 
   // Toggle collapsed
   const toggleCollapsed = useCallback(() => {
@@ -162,11 +181,6 @@ export function Sidebar() {
     if (item.href) return isActive(item.href);
     return item.children?.some((child) => pathname.startsWith(child.href)) ?? false;
   };
-
-  // Close mobile on route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
 
   // ─── RENDER NAV ITEM ────────────────────────────────
   const renderNavItem = (item: NavItem) => {

@@ -2785,3 +2785,396 @@ export const SALE_RECORDS: SaleRecord[] = [
     handledBy: "Admin",
   },
 ];
+
+// ————————————————————————————————————————————————
+// PURCHASE ORDERS
+// ————————————————————————————————————————————————
+
+export type PurchaseStatus =
+  | "draft"
+  | "sent"
+  | "partial"
+  | "received"
+  | "cancelled";
+
+export const PURCHASE_STATUS_CONFIG: Record<
+  PurchaseStatus,
+  { label: string; color: string; bg: string }
+> = {
+  draft:     { label: "Draft",     color: "text-blue-primary/50",  bg: "bg-blue-primary/5"   },
+  sent:      { label: "Sent",      color: "text-blue-primary",     bg: "bg-blue-primary/10"  },
+  partial:   { label: "Partial",   color: "text-warning",          bg: "bg-warning/10"        },
+  received:  { label: "Received",  color: "text-success",          bg: "bg-success/10"        },
+  cancelled: { label: "Cancelled", color: "text-error/70",         bg: "bg-error/8"           },
+};
+
+export interface PurchaseLineItem {
+  id: string;
+  productName: string;
+  sku: string;
+  qty: number;
+  qtyReceived: number;
+  unitCost: number;
+  lineTotal: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  poNumber: string;
+  date: string;
+  expectedDate: string;
+  supplierName: string;
+  supplierContact: string;
+  items: PurchaseLineItem[];
+  subtotal: number;
+  shippingCost: number;
+  total: number;
+  status: PurchaseStatus;
+  handledBy: string;
+  notes?: string;
+}
+
+export const PURCHASE_ORDERS: PurchaseOrder[] = [
+  {
+    id: "po-001",
+    poNumber: "PO-2247",
+    date: "2025-03-10",
+    expectedDate: "2025-03-17",
+    supplierName: "Apple Distribution SEA",
+    supplierContact: "orders@appledist-sea.com",
+    items: [
+      { id: "pli-001-1", productName: "iPhone 15 Pro 256GB Black", sku: "IP15P-256-BK", qty: 10, qtyReceived: 10, unitCost: 820, lineTotal: 8200 },
+      { id: "pli-001-2", productName: "AirPods Pro 2", sku: "APP2-USB-C", qty: 15, qtyReceived: 15, unitCost: 180, lineTotal: 2700 },
+    ],
+    subtotal: 10900,
+    shippingCost: 120,
+    total: 11020,
+    status: "received",
+    handledBy: "Admin",
+    notes: "Priority restock for Q1 campaign.",
+  },
+  {
+    id: "po-002",
+    poNumber: "PO-2246",
+    date: "2025-03-08",
+    expectedDate: "2025-03-15",
+    supplierName: "Samsung Business MY",
+    supplierContact: "b2b@samsung-my.com",
+    items: [
+      { id: "pli-002-1", productName: "Galaxy S24 Ultra 512GB", sku: "GS24U-512-GR", qty: 8, qtyReceived: 8, unitCost: 980, lineTotal: 7840 },
+      { id: "pli-002-2", productName: "Galaxy Watch 6 44mm", sku: "GW6-44-BK", qty: 12, qtyReceived: 12, unitCost: 210, lineTotal: 2520 },
+    ],
+    subtotal: 10360,
+    shippingCost: 0,
+    total: 10360,
+    status: "received",
+    handledBy: "Admin",
+  },
+  {
+    id: "po-003",
+    poNumber: "PO-2245",
+    date: "2025-03-05",
+    expectedDate: "2025-03-20",
+    supplierName: "Apple Distribution SEA",
+    supplierContact: "orders@appledist-sea.com",
+    items: [
+      { id: "pli-003-1", productName: "MacBook Air M3 256GB", sku: "MBA-M3-256", qty: 5, qtyReceived: 3, unitCost: 900, lineTotal: 4500 },
+      { id: "pli-003-2", productName: "iPad Air 64GB WiFi", sku: "IPD-AIR-64", qty: 8, qtyReceived: 4, unitCost: 460, lineTotal: 3680 },
+    ],
+    subtotal: 8180,
+    shippingCost: 95,
+    total: 8275,
+    status: "partial",
+    handledBy: "Admin",
+    notes: "Remaining units delayed — ETA revised to Mar 22.",
+  },
+  {
+    id: "po-004",
+    poNumber: "PO-2244",
+    date: "2025-03-03",
+    expectedDate: "2025-03-10",
+    supplierName: "TechLine Accessories HQ",
+    supplierContact: "supply@techline-hq.com",
+    items: [
+      { id: "pli-004-1", productName: "USB-C Hub 7-in-1", sku: "ACC-USBC-HUB", qty: 50, qtyReceived: 50, unitCost: 28, lineTotal: 1400 },
+      { id: "pli-004-2", productName: "USB-C Charging Cable 2m", sku: "ACC-USBC-2M", qty: 100, qtyReceived: 100, unitCost: 8, lineTotal: 800 },
+    ],
+    subtotal: 2200,
+    shippingCost: 45,
+    total: 2245,
+    status: "received",
+    handledBy: "Admin",
+  },
+  {
+    id: "po-005",
+    poNumber: "PO-2243",
+    date: "2025-03-01",
+    expectedDate: "2025-03-14",
+    supplierName: "Samsung Business MY",
+    supplierContact: "b2b@samsung-my.com",
+    items: [
+      { id: "pli-005-1", productName: "Galaxy S24 Ultra 512GB", sku: "GS24U-512-GR", qty: 6, qtyReceived: 0, unitCost: 980, lineTotal: 5880 },
+    ],
+    subtotal: 5880,
+    shippingCost: 0,
+    total: 5880,
+    status: "sent",
+    handledBy: "Admin",
+    notes: "Awaiting dispatch confirmation.",
+  },
+  {
+    id: "po-006",
+    poNumber: "PO-2242",
+    date: "2025-02-27",
+    expectedDate: "2025-03-06",
+    supplierName: "Apple Distribution SEA",
+    supplierContact: "orders@appledist-sea.com",
+    items: [
+      { id: "pli-006-1", productName: "Apple Watch Ultra 2 49mm", sku: "AWU2-49-OR", qty: 4, qtyReceived: 4, unitCost: 620, lineTotal: 2480 },
+      { id: "pli-006-2", productName: "Apple Watch Series 9 45mm", sku: "AW9-45-MN", qty: 10, qtyReceived: 10, unitCost: 290, lineTotal: 2900 },
+      { id: "pli-006-3", productName: "AirPods Max Silver", sku: "APP-MAX-SL", qty: 5, qtyReceived: 5, unitCost: 420, lineTotal: 2100 },
+    ],
+    subtotal: 7480,
+    shippingCost: 80,
+    total: 7560,
+    status: "received",
+    handledBy: "Admin",
+  },
+  {
+    id: "po-007",
+    poNumber: "PO-2241",
+    date: "2025-02-25",
+    expectedDate: "2025-03-04",
+    supplierName: "Lenovo Enterprise MY",
+    supplierContact: "ent@lenovo-my.com",
+    items: [
+      { id: "pli-007-1", productName: "ThinkPad X1 Carbon Gen 12", sku: "LNV-X1C-G12", qty: 3, qtyReceived: 3, unitCost: 1100, lineTotal: 3300 },
+    ],
+    subtotal: 3300,
+    shippingCost: 60,
+    total: 3360,
+    status: "received",
+    handledBy: "Admin",
+  },
+  {
+    id: "po-008",
+    poNumber: "PO-2240",
+    date: "2025-02-22",
+    expectedDate: "2025-03-08",
+    supplierName: "TechLine Accessories HQ",
+    supplierContact: "supply@techline-hq.com",
+    items: [
+      { id: "pli-008-1", productName: "USB-C Hub 7-in-1", sku: "ACC-USBC-HUB", qty: 30, qtyReceived: 0, unitCost: 28, lineTotal: 840 },
+      { id: "pli-008-2", productName: "Laptop Stand Aluminum", sku: "ACC-LSTD-AL", qty: 20, qtyReceived: 0, unitCost: 35, lineTotal: 700 },
+    ],
+    subtotal: 1540,
+    shippingCost: 30,
+    total: 1570,
+    status: "sent",
+    handledBy: "Admin",
+  },
+  {
+    id: "po-009",
+    poNumber: "PO-2239",
+    date: "2025-02-20",
+    expectedDate: "2025-02-27",
+    supplierName: "Samsung Business MY",
+    supplierContact: "b2b@samsung-my.com",
+    items: [
+      { id: "pli-009-1", productName: "Galaxy S24 Ultra 512GB", sku: "GS24U-512-GR", qty: 5, qtyReceived: 5, unitCost: 980, lineTotal: 4900 },
+      { id: "pli-009-2", productName: "Galaxy Watch 6 44mm", sku: "GW6-44-BK", qty: 8, qtyReceived: 8, unitCost: 210, lineTotal: 1680 },
+    ],
+    subtotal: 6580,
+    shippingCost: 0,
+    total: 6580,
+    status: "received",
+    handledBy: "Admin",
+  },
+  {
+    id: "po-010",
+    poNumber: "PO-2238",
+    date: "2025-02-18",
+    expectedDate: "2025-02-25",
+    supplierName: "Apple Distribution SEA",
+    supplierContact: "orders@appledist-sea.com",
+    items: [
+      { id: "pli-010-1", productName: "iPhone 15 Pro 256GB Black", sku: "IP15P-256-BK", qty: 12, qtyReceived: 12, unitCost: 820, lineTotal: 9840 },
+    ],
+    subtotal: 9840,
+    shippingCost: 100,
+    total: 9940,
+    status: "received",
+    handledBy: "Admin",
+  },
+  {
+    id: "po-011",
+    poNumber: "PO-2237",
+    date: "2025-02-15",
+    expectedDate: "2025-02-28",
+    supplierName: "Lenovo Enterprise MY",
+    supplierContact: "ent@lenovo-my.com",
+    items: [
+      { id: "pli-011-1", productName: "ThinkPad X1 Carbon Gen 12", sku: "LNV-X1C-G12", qty: 2, qtyReceived: 0, unitCost: 1100, lineTotal: 2200 },
+    ],
+    subtotal: 2200,
+    shippingCost: 60,
+    total: 2260,
+    status: "cancelled",
+    handledBy: "Admin",
+    notes: "Cancelled — customer order fell through.",
+  },
+  {
+    id: "po-012",
+    poNumber: "PO-2236",
+    date: "2025-02-12",
+    expectedDate: "2025-02-19",
+    supplierName: "TechLine Accessories HQ",
+    supplierContact: "supply@techline-hq.com",
+    items: [
+      { id: "pli-012-1", productName: "USB-C Charging Cable 2m", sku: "ACC-USBC-2M", qty: 150, qtyReceived: 150, unitCost: 8, lineTotal: 1200 },
+      { id: "pli-012-2", productName: "USB-C Hub 7-in-1", sku: "ACC-USBC-HUB", qty: 40, qtyReceived: 40, unitCost: 28, lineTotal: 1120 },
+    ],
+    subtotal: 2320,
+    shippingCost: 40,
+    total: 2360,
+    status: "received",
+    handledBy: "Admin",
+  },
+  {
+    id: "po-013",
+    poNumber: "PO-2235",
+    date: "2025-02-10",
+    expectedDate: "2025-02-17",
+    supplierName: "Apple Distribution SEA",
+    supplierContact: "orders@appledist-sea.com",
+    items: [
+      { id: "pli-013-1", productName: "MacBook Air M3 256GB", sku: "MBA-M3-256", qty: 4, qtyReceived: 4, unitCost: 900, lineTotal: 3600 },
+      { id: "pli-013-2", productName: "iPad Air 64GB WiFi", sku: "IPD-AIR-64", qty: 6, qtyReceived: 6, unitCost: 460, lineTotal: 2760 },
+    ],
+    subtotal: 6360,
+    shippingCost: 75,
+    total: 6435,
+    status: "received",
+    handledBy: "Admin",
+  },
+  {
+    id: "po-014",
+    poNumber: "PO-2234",
+    date: "2025-02-07",
+    expectedDate: "2025-02-14",
+    supplierName: "Samsung Business MY",
+    supplierContact: "b2b@samsung-my.com",
+    items: [
+      { id: "pli-014-1", productName: "Galaxy Watch 6 44mm", sku: "GW6-44-BK", qty: 15, qtyReceived: 15, unitCost: 210, lineTotal: 3150 },
+    ],
+    subtotal: 3150,
+    shippingCost: 0,
+    total: 3150,
+    status: "received",
+    handledBy: "Admin",
+  },
+  {
+    id: "po-015",
+    poNumber: "PO-2233",
+    date: "2025-02-05",
+    expectedDate: "2025-02-12",
+    supplierName: "Apple Distribution SEA",
+    supplierContact: "orders@appledist-sea.com",
+    items: [
+      { id: "pli-015-1", productName: "AirPods Pro 2", sku: "APP2-USB-C", qty: 20, qtyReceived: 20, unitCost: 180, lineTotal: 3600 },
+      { id: "pli-015-2", productName: "AirPods Max Silver", sku: "APP-MAX-SL", qty: 6, qtyReceived: 6, unitCost: 420, lineTotal: 2520 },
+    ],
+    subtotal: 6120,
+    shippingCost: 65,
+    total: 6185,
+    status: "received",
+    handledBy: "Admin",
+  },
+  {
+    id: "po-016",
+    poNumber: "PO-2232",
+    date: "2025-02-03",
+    expectedDate: "2025-02-10",
+    supplierName: "TechLine Accessories HQ",
+    supplierContact: "supply@techline-hq.com",
+    items: [
+      { id: "pli-016-1", productName: "Laptop Stand Aluminum", sku: "ACC-LSTD-AL", qty: 25, qtyReceived: 0, unitCost: 35, lineTotal: 875 },
+    ],
+    subtotal: 875,
+    shippingCost: 25,
+    total: 900,
+    status: "cancelled",
+    handledBy: "Admin",
+    notes: "Supplier out of stock — reordering next cycle.",
+  },
+  {
+    id: "po-017",
+    poNumber: "PO-2231",
+    date: "2025-01-30",
+    expectedDate: "2025-02-06",
+    supplierName: "Samsung Business MY",
+    supplierContact: "b2b@samsung-my.com",
+    items: [
+      { id: "pli-017-1", productName: "Galaxy S24 Ultra 512GB", sku: "GS24U-512-GR", qty: 10, qtyReceived: 10, unitCost: 980, lineTotal: 9800 },
+      { id: "pli-017-2", productName: "Galaxy Watch 6 44mm", sku: "GW6-44-BK", qty: 10, qtyReceived: 10, unitCost: 210, lineTotal: 2100 },
+    ],
+    subtotal: 11900,
+    shippingCost: 0,
+    total: 11900,
+    status: "received",
+    handledBy: "Admin",
+    notes: "Large restock — end of month clearance pricing.",
+  },
+  {
+    id: "po-018",
+    poNumber: "PO-2230",
+    date: "2025-01-27",
+    expectedDate: "2025-02-03",
+    supplierName: "Apple Distribution SEA",
+    supplierContact: "orders@appledist-sea.com",
+    items: [
+      { id: "pli-018-1", productName: "iPhone 15 Pro 256GB Black", sku: "IP15P-256-BK", qty: 8, qtyReceived: 8, unitCost: 820, lineTotal: 6560 },
+      { id: "pli-018-2", productName: "Apple Watch Ultra 2 49mm", sku: "AWU2-49-OR", qty: 3, qtyReceived: 3, unitCost: 620, lineTotal: 1860 },
+    ],
+    subtotal: 8420,
+    shippingCost: 90,
+    total: 8510,
+    status: "received",
+    handledBy: "Admin",
+  },
+  {
+    id: "po-019",
+    poNumber: "PO-2229",
+    date: "2025-03-12",
+    expectedDate: "2025-03-19",
+    supplierName: "Lenovo Enterprise MY",
+    supplierContact: "ent@lenovo-my.com",
+    items: [
+      { id: "pli-019-1", productName: "ThinkPad X1 Carbon Gen 12", sku: "LNV-X1C-G12", qty: 4, qtyReceived: 0, unitCost: 1100, lineTotal: 4400 },
+    ],
+    subtotal: 4400,
+    shippingCost: 80,
+    total: 4480,
+    status: "draft",
+    handledBy: "Admin",
+    notes: "Pending approval from management.",
+  },
+  {
+    id: "po-020",
+    poNumber: "PO-2228",
+    date: "2025-03-11",
+    expectedDate: "2025-03-18",
+    supplierName: "TechLine Accessories HQ",
+    supplierContact: "supply@techline-hq.com",
+    items: [
+      { id: "pli-020-1", productName: "USB-C Hub 7-in-1", sku: "ACC-USBC-HUB", qty: 60, qtyReceived: 0, unitCost: 28, lineTotal: 1680 },
+      { id: "pli-020-2", productName: "USB-C Charging Cable 2m", sku: "ACC-USBC-2M", qty: 200, qtyReceived: 0, unitCost: 8, lineTotal: 1600 },
+      { id: "pli-020-3", productName: "Laptop Stand Aluminum", sku: "ACC-LSTD-AL", qty: 30, qtyReceived: 0, unitCost: 35, lineTotal: 1050 },
+    ],
+    subtotal: 4330,
+    shippingCost: 55,
+    total: 4385,
+    status: "draft",
+    handledBy: "Admin",
+  },
+];
