@@ -1,4 +1,3 @@
-// src/components/app/dashboard/low-stock-alerts.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -13,7 +12,6 @@ export function LowStockAlerts() {
       animate={{ y: 0 }}
       transition={{ duration: 0.5, delay: 0.55, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">
@@ -28,7 +26,6 @@ export function LowStockAlerts() {
         </span>
       </div>
 
-      {/* Table header */}
       <div className="grid grid-cols-[1fr_48px_48px] gap-x-3 pb-2 border-b border-blue-primary/10">
         <span className="font-mono text-[8px] tracking-[0.15em] uppercase text-blue-primary/25">
           Product
@@ -41,7 +38,6 @@ export function LowStockAlerts() {
         </span>
       </div>
 
-      {/* Rows */}
       <div className="divide-y divide-blue-primary/6 border-b border-blue-primary/6">
         {LOW_STOCK_ALERTS.map((item) => {
           const stockColor =
@@ -75,7 +71,6 @@ export function LowStockAlerts() {
         })}
       </div>
 
-      {/* Footer action */}
       <div className="mt-auto pt-3 shrink-0">
         <Link
           href="/products"

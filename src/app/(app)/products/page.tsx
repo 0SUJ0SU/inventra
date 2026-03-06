@@ -1,4 +1,3 @@
-// src/app/(app)/products/page.tsx
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
@@ -23,10 +22,6 @@ import {
 import { PRODUCTS, CATEGORIES, type Product } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils/format";
 
-// ————————————————————————————————————————————————
-// TYPES
-// ————————————————————————————————————————————————
-
 type SortKey =
   | "sku"
   | "name"
@@ -38,10 +33,6 @@ type SortDir = "asc" | "desc";
 type StockFilter = "all" | "low" | "out";
 type StatusFilter = "all" | "active" | "inactive";
 type SerialFilter = "all" | "yes" | "no";
-
-// ————————————————————————————————————————————————
-// SORT ICON
-// ————————————————————————————————————————————————
 
 function SortIcon({
   col,
@@ -67,73 +58,56 @@ function SortIcon({
   );
 }
 
-// ————————————————————————————————————————————————
-// PAGE
-// ————————————————————————————————————————————————
-
 const PAGE_SIZES = [10, 20, 50] as const;
 
 export default function ProductsPage() {
-  // — Filter state —
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
   const [serialFilter, setSerialFilter] = useState<SerialFilter>("all");
 
-  // — Sort state —
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  // — Pagination —
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(10);
 
-  // — Selection —
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // — Action menu —
   const [actionMenuId, setActionMenuId] = useState<string | null>(null);
 
-  // — Local mutable products (demo: allows delete/toggle) —
   const [products, setProducts] = useState<Product[]>(() => [...PRODUCTS]);
 
   const router = useRouter();
 
-  // ——— DERIVED DATA ———
-
   const filtered = useMemo(() => {
     let data = [...products];
 
-    // Search
     if (search.trim()) {
-      const q = search.toLowerCase().trim();
+      const searchQuery = search.toLowerCase().trim();
       data = data.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.sku.toLowerCase().includes(q)
+        (product) =>
+          product.name.toLowerCase().includes(searchQuery) ||
+          product.sku.toLowerCase().includes(searchQuery)
       );
     }
 
-    // Category
     if (categoryFilter !== "all") {
-      data = data.filter((p) => p.categoryId === categoryFilter);
+      data = data.filter((product) => product.categoryId === categoryFilter);
     }
 
-    // Status
-    if (statusFilter === "active") data = data.filter((p) => p.isActive);
-    if (statusFilter === "inactive") data = data.filter((p) => !p.isActive);
+    if (statusFilter === "active") data = data.filter((product) => product.isActive);
+    if (statusFilter === "inactive") data = data.filter((product) => !product.isActive);
 
-    // Stock level
     if (stockFilter === "low")
-      data = data.filter((p) => p.stock > 0 && p.stock <= p.minStock);
-    if (stockFilter === "out") data = data.filter((p) => p.stock === 0);
+      data = data.filter((product) => product.stock > 0 && product.stock <= product.minStock);
+    if (stockFilter === "out") data = data.filter((product) => product.stock === 0);
 
-    // Serial tracked
     if (serialFilter === "yes")
-      data = data.filter((p) => p.isSerialTracked);
+      data = data.filter((product) => product.isSerialTracked);
     if (serialFilter === "no")
-      data = data.filter((p) => !p.isSerialTracked);
+      data = data.filter((product) => !product.isSerialTracked);
 
     return data;
   }, [search, categoryFilter, statusFilter, stockFilter, serialFilter, products]);
@@ -174,14 +148,11 @@ export default function ProductsPage() {
     safePage * pageSize
   );
 
-  // Reset page on filter change
   const resetPage = useCallback(() => setPage(1), []);
-
-  // ——— HANDLERS ———
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+      setSortDir((currentDir) => (currentDir === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
       setSortDir("asc");
@@ -198,51 +169,46 @@ export default function ProductsPage() {
   };
 
   const toggleSelectAll = () => {
-    if (paginated.every((p) => selectedIds.has(p.id))) {
+    if (paginated.every((product) => selectedIds.has(product.id))) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(paginated.map((p) => p.id)));
+      setSelectedIds(new Set(paginated.map((product) => product.id)));
     }
   };
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  // — Bulk toggle status —
   const handleBulkToggleStatus = () => {
     setProducts((prev) =>
-      prev.map((p) =>
-        selectedIds.has(p.id) ? { ...p, isActive: !p.isActive } : p
+      prev.map((product) =>
+        selectedIds.has(product.id) ? { ...product, isActive: !product.isActive } : product
       )
     );
     clearSelection();
   };
 
-  // — Bulk delete —
   const handleBulkDelete = () => {
     if (!confirm("Are you sure you want to delete the selected products?")) return;
-    setProducts((prev) => prev.filter((p) => !selectedIds.has(p.id)));
+    setProducts((prev) => prev.filter((product) => !selectedIds.has(product.id)));
     clearSelection();
   };
 
-  // — Single delete —
   const handleDelete = (id: string) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
-    setProducts((prev) => prev.filter((p) => p.id !== id));
+    setProducts((prev) => prev.filter((product) => product.id !== id));
     setActionMenuId(null);
   };
 
-  // — Single toggle status —
   const handleToggleStatus = (id: string) => {
     setProducts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, isActive: !p.isActive } : p))
+      prev.map((product) => (product.id === id ? { ...product, isActive: !product.isActive } : product))
     );
     setActionMenuId(null);
   };
 
   const allOnPageSelected =
-    paginated.length > 0 && paginated.every((p) => selectedIds.has(p.id));
+    paginated.length > 0 && paginated.every((product) => selectedIds.has(product.id));
 
-  // Active filter count for badge
   const activeFilterCount = [
     categoryFilter !== "all",
     statusFilter !== "all",
@@ -259,24 +225,20 @@ export default function ProductsPage() {
     resetPage();
   };
 
-  // Stock color helper
-  const stockColor = (p: Product) => {
-    if (p.stock === 0) return "text-error";
-    if (p.stock <= p.minStock) return "text-warning";
+  const stockColor = (product: Product) => {
+    if (product.stock === 0) return "text-error";
+    if (product.stock <= product.minStock) return "text-warning";
     return "text-blue-primary";
   };
 
-  const stockLabel = (p: Product) => {
-    if (p.stock === 0) return "OUT";
-    if (p.stock <= p.minStock) return "LOW";
+  const stockLabel = (product: Product) => {
+    if (product.stock === 0) return "OUT";
+    if (product.stock <= product.minStock) return "LOW";
     return null;
   };
 
-  // ——— RENDER ———
-
   return (
     <div className="space-y-6">
-      {/* ━━━ PAGE HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <motion.h1
@@ -323,19 +285,15 @@ export default function ProductsPage() {
         </motion.div>
       </div>
 
-      {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ━━━ FILTERS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <motion.div
         className="space-y-3"
         initial={{ y: 20 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
       >
-        {/* Search + filter row */}
         <div className="flex flex-col lg:flex-row gap-3">
-          {/* Search */}
           <div className="relative flex-1 max-w-md">
             <Search
               size={14}
@@ -346,8 +304,8 @@ export default function ProductsPage() {
               type="text"
               placeholder="SEARCH BY NAME OR SKU..."
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
+              onChange={(event) => {
+                setSearch(event.target.value);
                 resetPage();
               }}
               className="w-full h-9 pl-9 pr-3 bg-cream-light border border-blue-primary/10 font-mono text-[11px] tracking-[0.08em] uppercase text-blue-primary placeholder:text-blue-primary/25 focus:outline-none focus:border-blue-primary/30 transition-colors"
@@ -365,13 +323,11 @@ export default function ProductsPage() {
             )}
           </div>
 
-          {/* Filter pills */}
           <div className="grid grid-cols-2 lg:flex lg:flex-wrap gap-2">
-            {/* Category */}
             <select
               value={categoryFilter}
-              onChange={(e) => {
-                setCategoryFilter(e.target.value);
+              onChange={(event) => {
+                setCategoryFilter(event.target.value);
                 resetPage();
               }}
               className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[130px]"
@@ -384,12 +340,14 @@ export default function ProductsPage() {
               ))}
             </select>
 
-            {/* Status */}
             <select
               value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value as StatusFilter);
-                resetPage();
+              onChange={(event) => {
+                const val = event.target.value;
+                if (val === "all" || val === "active" || val === "inactive") {
+                  setStatusFilter(val);
+                  resetPage();
+                }
               }}
               className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[110px]"
             >
@@ -398,12 +356,14 @@ export default function ProductsPage() {
               <option value="inactive">Inactive</option>
             </select>
 
-            {/* Stock */}
             <select
               value={stockFilter}
-              onChange={(e) => {
-                setStockFilter(e.target.value as StockFilter);
-                resetPage();
+              onChange={(event) => {
+                const val = event.target.value;
+                if (val === "all" || val === "low" || val === "out") {
+                  setStockFilter(val);
+                  resetPage();
+                }
               }}
               className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[120px]"
             >
@@ -412,12 +372,14 @@ export default function ProductsPage() {
               <option value="out">Out of Stock</option>
             </select>
 
-            {/* Serial */}
             <select
               value={serialFilter}
-              onChange={(e) => {
-                setSerialFilter(e.target.value as SerialFilter);
-                resetPage();
+              onChange={(event) => {
+                const val = event.target.value;
+                if (val === "all" || val === "yes" || val === "no") {
+                  setSerialFilter(val);
+                  resetPage();
+                }
               }}
               className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[130px]"
             >
@@ -426,7 +388,6 @@ export default function ProductsPage() {
               <option value="no">Non-Tracked</option>
             </select>
 
-            {/* Clear filters */}
             {activeFilterCount > 0 && (
               <button
                 onClick={clearFilters}
@@ -438,7 +399,6 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        {/* Bulk actions bar */}
         {selectedIds.size > 0 && (
           <motion.div
             className="bg-blue-primary text-cream-primary"
@@ -446,13 +406,11 @@ export default function ProductsPage() {
             animate={{ y: 0 }}
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           >
-            {/* Top: count */}
             <div className="px-4 h-9 flex items-center justify-center border-b border-cream-primary/10">
               <span className="font-mono text-[10px] tracking-[0.12em] uppercase">
                 {selectedIds.size} item{selectedIds.size !== 1 && "s"} selected
               </span>
             </div>
-            {/* Bottom: three equal actions */}
             <div className="grid grid-cols-3 divide-x divide-cream-primary/10">
               <button
                 onClick={handleBulkToggleStatus}
@@ -480,14 +438,12 @@ export default function ProductsPage() {
         )}
       </motion.div>
 
-      {/* ━━━ TABLE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <motion.div
         className="border border-blue-primary/10 bg-cream-light overflow-hidden"
         initial={{ y: 30 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
       >
-        {/* Table header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-blue-primary/8">
           <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">
             Product Inventory
@@ -497,7 +453,6 @@ export default function ProductsPage() {
           </span>
         </div>
 
-        {/* Scrollable table */}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px]">
             <thead>
@@ -588,7 +543,6 @@ export default function ProductsPage() {
                         ${isSelected ? "bg-blue-primary/[0.03]" : "hover:bg-blue-primary/[0.02]"}
                       `}
                     >
-                      {/* Checkbox */}
                       <td className="w-12 px-4 align-middle">
                         <input
                           type="checkbox"
@@ -597,13 +551,11 @@ export default function ProductsPage() {
                           className="w-3.5 h-3.5 accent-blue-primary cursor-pointer block"
                         />
                       </td>
-                      {/* SKU */}
                       <td className="px-3 align-middle">
                         <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-blue-primary/50">
                           {product.sku}
                         </span>
                       </td>
-                      {/* Name */}
                       <td className="px-3 align-middle">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 shrink-0 border border-blue-primary/10 bg-cream-primary flex items-center justify-center">
@@ -631,13 +583,11 @@ export default function ProductsPage() {
                           </div>
                         </div>
                       </td>
-                      {/* Category */}
                       <td className="px-3 align-middle">
                         <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-blue-primary/50">
                           {product.category}
                         </span>
                       </td>
-                      {/* Stock */}
                       <td className="px-3 align-middle text-right">
                         <div className="flex items-center justify-end gap-2">
                           <span
@@ -661,7 +611,6 @@ export default function ProductsPage() {
                           min: {product.minStock}
                         </span>
                       </td>
-                      {/* Price */}
                       <td className="px-3 align-middle text-right">
                         <span className="font-mono text-[12px] tracking-[0.03em] font-semibold text-blue-primary leading-none block">
                           {formatCurrency(product.sellingPrice)}
@@ -670,7 +619,6 @@ export default function ProductsPage() {
                           cost: {formatCurrency(product.costPrice)}
                         </span>
                       </td>
-                      {/* Status */}
                       <td className="px-3 align-middle text-center">
                         <span
                           className={`inline-block font-mono text-[8px] tracking-[0.15em] uppercase px-2 py-1 leading-none ${
@@ -682,7 +630,6 @@ export default function ProductsPage() {
                           {product.isActive ? "Active" : "Inactive"}
                         </span>
                       </td>
-                      {/* Actions */}
                       <td className="w-12 px-3 align-middle text-center relative">
                         <button
                           onClick={() =>
@@ -694,7 +641,6 @@ export default function ProductsPage() {
                         >
                           <MoreHorizontal size={14} strokeWidth={1.5} />
                         </button>
-                        {/* Dropdown */}
                         {actionMenuId === product.id && (
                           <>
                             <div
@@ -749,9 +695,7 @@ export default function ProductsPage() {
           </table>
         </div>
 
-        {/* ━━━ PAGINATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
         <div className="flex items-center justify-between px-5 py-3 border-t border-blue-primary/8">
-          {/* Left: rows info */}
           <div className="flex items-center gap-3">
             <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/30">
               {sorted.length === 0
@@ -761,64 +705,62 @@ export default function ProductsPage() {
             <div className="w-px h-3 bg-blue-primary/10" />
             <select
               value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
+              onChange={(event) => {
+                setPageSize(Number(event.target.value));
                 setPage(1);
               }}
               className="h-7 px-2 bg-transparent border border-blue-primary/10 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/50 focus:outline-none cursor-pointer appearance-none"
             >
-              {PAGE_SIZES.map((s) => (
-                <option key={s} value={s}>
-                  {s} rows
+              {PAGE_SIZES.map((size) => (
+                <option key={size} value={size}>
+                  {size} rows
                 </option>
               ))}
             </select>
           </div>
 
-          {/* Right: page controls */}
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
               disabled={safePage <= 1}
               className="w-7 h-7 flex items-center justify-center border border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 disabled:opacity-20 disabled:pointer-events-none transition-colors"
             >
               <ChevronLeft size={12} strokeWidth={2} />
             </button>
 
-            {/* Page numbers */}
             {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((p) => {
+              .filter((pageNum) => {
                 if (totalPages <= 5) return true;
-                if (p === 1 || p === totalPages) return true;
-                if (Math.abs(p - safePage) <= 1) return true;
+                if (pageNum === 1 || pageNum === totalPages) return true;
+                if (Math.abs(pageNum - safePage) <= 1) return true;
                 return false;
               })
-              .map((p, idx, arr) => {
+              .map((pageNum, idx, arr) => {
                 const prev = arr[idx - 1];
-                const showEllipsis = prev != null && p - prev > 1;
+                const showEllipsis = prev != null && pageNum - prev > 1;
                 return (
-                  <span key={p} className="flex items-center">
+                  <span key={pageNum} className="flex items-center">
                     {showEllipsis && (
                       <span className="w-7 h-7 flex items-center justify-center font-mono text-[9px] text-blue-primary/20">
                         ...
                       </span>
                     )}
                     <button
-                      onClick={() => setPage(p)}
+                      onClick={() => setPage(pageNum)}
                       className={`w-7 h-7 flex items-center justify-center font-mono text-[10px] tracking-[0.05em] border transition-colors ${
-                        p === safePage
+                        pageNum === safePage
                           ? "bg-blue-primary text-cream-primary border-blue-primary"
                           : "border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30"
                       }`}
                     >
-                      {p}
+                      {pageNum}
                     </button>
                   </span>
                 );
               })}
 
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
               disabled={safePage >= totalPages}
               className="w-7 h-7 flex items-center justify-center border border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 disabled:opacity-20 disabled:pointer-events-none transition-colors"
             >
@@ -828,7 +770,6 @@ export default function ProductsPage() {
         </div>
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between pt-4">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">

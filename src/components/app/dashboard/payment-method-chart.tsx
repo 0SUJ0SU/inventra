@@ -1,4 +1,3 @@
-// src/components/app/dashboard/payment-method-chart.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -18,16 +17,16 @@ interface PaymentMethodChartProps {
 
 export function PaymentMethodChart({ period }: PaymentMethodChartProps) {
   const data = getPaymentMethods(period);
-  const total = data.reduce((sum, m) => sum + m.value, 0);
-  const totalTransactions = data.reduce((s, m) => s + m.transactions, 0);
+  const total = data.reduce((sum, method) => sum + method.value, 0);
+  const totalTransactions = data.reduce((sum, method) => sum + method.transactions, 0);
 
   let cumulative = 0;
   const gradientStops = total === 0
     ? "transparent 0deg 360deg"
     : data
-        .map((m, i) => {
+        .map((method, i) => {
           const start = cumulative;
-          cumulative += (m.value / total) * 360;
+          cumulative += (method.value / total) * 360;
           return `${METHOD_COLORS[i % METHOD_COLORS.length]} ${start}deg ${cumulative}deg`;
         })
         .join(", ");
@@ -39,7 +38,6 @@ export function PaymentMethodChart({ period }: PaymentMethodChartProps) {
       animate={{ y: 0 }}
       transition={{ duration: 0.5, delay: 0.42, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-5 shrink-0">
         <div className="flex items-center gap-3">
           <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">
@@ -54,7 +52,6 @@ export function PaymentMethodChart({ period }: PaymentMethodChartProps) {
         </span>
       </div>
 
-      {/* Donut */}
       <div className="flex justify-center mb-5">
         <div className="relative w-36 h-36">
           <div
@@ -72,10 +69,9 @@ export function PaymentMethodChart({ period }: PaymentMethodChartProps) {
         </div>
       </div>
 
-      {/* Legend */}
       <div className="space-y-2.5">
-        {data.map((m, i) => (
-          <div key={m.method}>
+        {data.map((method, i) => (
+          <div key={method.method}>
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <div
@@ -83,15 +79,15 @@ export function PaymentMethodChart({ period }: PaymentMethodChartProps) {
                   style={{ backgroundColor: METHOD_COLORS[i % METHOD_COLORS.length] }}
                 />
                 <span className="font-mono text-[10px] tracking-[0.05em] uppercase text-blue-primary/60">
-                  {m.method}
+                  {method.method}
                 </span>
               </div>
               <div className="flex items-center gap-2.5">
                 <span className="font-mono text-[10px] tracking-[0.05em] text-blue-primary/70 font-medium tabular-nums">
-                  ${formatNumber(m.value)}
+                  ${formatNumber(method.value)}
                 </span>
                 <span className="font-mono text-[9px] tracking-[0.05em] text-blue-primary/50 tabular-nums w-7 text-right">
-                  {m.percentage}%
+                  {method.percentage}%
                 </span>
               </div>
             </div>
@@ -100,7 +96,7 @@ export function PaymentMethodChart({ period }: PaymentMethodChartProps) {
                 className="h-full"
                 style={{
                   backgroundColor: METHOD_COLORS[i % METHOD_COLORS.length],
-                  width: `${m.percentage}%`,
+                  width: `${method.percentage}%`,
                 }}
               />
             </div>
@@ -108,7 +104,6 @@ export function PaymentMethodChart({ period }: PaymentMethodChartProps) {
         ))}
       </div>
 
-      {/* Footer */}
       <div className="mt-auto pt-3 shrink-0">
         <Link
           href="/sales"

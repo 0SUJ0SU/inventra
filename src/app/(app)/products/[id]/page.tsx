@@ -1,4 +1,3 @@
-// src/app/(app)/products/[id]/page.tsx
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
@@ -17,23 +16,15 @@ import {
 import { PRODUCTS, CATEGORIES } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils/format";
 
-// ————————————————————————————————————————————
-// CONSTANTS
-// ————————————————————————————————————————————
-
 const ease = [0.16, 1, 0.3, 1] as const;
-
-// ————————————————————————————————————————————
-// COMPONENTS
-// ————————————————————————————————————————————
 
 function InfoRow({
   label,
-  value,
+  content,
   mono = false,
 }: {
   label: string;
-  value: React.ReactNode;
+  content: React.ReactNode;
   mono?: boolean;
 }) {
   return (
@@ -48,7 +39,7 @@ function InfoRow({
             : "font-mono text-[11px] tracking-[0.03em]"
         } text-blue-primary`}
       >
-        {value}
+        {content}
       </span>
     </div>
   );
@@ -56,12 +47,12 @@ function InfoRow({
 
 function StatCard({
   label,
-  value,
+  metric,
   sub,
   color = "text-blue-primary",
 }: {
   label: string;
-  value: string | number;
+  metric: string | number;
   sub?: string;
   color?: string;
 }) {
@@ -72,7 +63,7 @@ function StatCard({
           {label}
         </p>
         <p className={`font-mono text-2xl font-bold tracking-tight mt-1 ${color}`}>
-          {value}
+          {metric}
         </p>
         {sub && (
           <p className="font-mono text-[8px] tracking-[0.1em] uppercase text-blue-primary/30 mt-0.5">
@@ -105,18 +96,14 @@ function CardHeader({
   );
 }
 
-// ————————————————————————————————————————————
-// PAGE
-// ————————————————————————————————————————————
-
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
+  const id = String(params.id);
 
-  const product = PRODUCTS.find((p) => p.id === id);
+  const product = PRODUCTS.find((product) => product.id === id);
   const category = product
-    ? CATEGORIES.find((c) => c.id === product.categoryId)
+    ? CATEGORIES.find((cat) => cat.id === product.categoryId)
     : null;
 
   if (!product) {
@@ -166,7 +153,6 @@ export default function ProductDetailPage() {
 
   return (
     <div className="space-y-4">
-      {/* ━━━ BACK + HEADER ━━━ */}
       <div className="flex flex-col gap-3">
         <motion.button
           onClick={() => router.push("/products")}
@@ -248,7 +234,6 @@ export default function ProductDetailPage() {
 
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ━━━ STAT CARDS ━━━ */}
       <motion.div
         className="grid grid-cols-2 lg:grid-cols-4 gap-3"
         initial={{ y: 20 }}
@@ -257,35 +242,33 @@ export default function ProductDetailPage() {
       >
         <StatCard
           label="Current Stock"
-          value={product.stock}
+          metric={product.stock}
           sub={`Min: ${product.minStock}`}
           color={stockColor}
         />
         <StatCard
           label="Selling Price"
-          value={formatCurrency(product.sellingPrice)}
+          metric={formatCurrency(product.sellingPrice)}
           sub={`Cost: ${formatCurrency(product.costPrice)}`}
         />
         <StatCard
           label="Margin"
-          value={`${marginPercent}%`}
+          metric={`${marginPercent}%`}
           sub={`${formatCurrency(product.sellingPrice - product.costPrice)} per unit`}
         />
         <StatCard
           label="Stock Value"
-          value={formatCurrency(product.stock * product.costPrice)}
+          metric={formatCurrency(product.stock * product.costPrice)}
           sub={`${product.stock} units × ${formatCurrency(product.costPrice)}`}
         />
       </motion.div>
 
-      {/* ━━━ ROW: Stock bar + Serial & Warranty (horizontal strip) ━━━ */}
       <motion.div
         className="grid grid-cols-1 sm:grid-cols-3 gap-4"
         initial={{ y: 20 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.12, ease }}
       >
-        {/* Stock Status */}
         <div className="border border-blue-primary/10 bg-cream-light">
           <CardHeader title="Stock Status" />
           <div className="p-5 flex items-center gap-3">
@@ -318,7 +301,6 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* Serial Tracking */}
         <div className="border border-blue-primary/10 bg-cream-light">
           <CardHeader title="Serial Tracking" />
           <div className="p-5 flex items-center gap-3">
@@ -336,7 +318,6 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* Warranty */}
         <div className="border border-blue-primary/10 bg-cream-light">
           <CardHeader title="Warranty" />
           <div className="p-5 flex items-center gap-3">
@@ -357,65 +338,61 @@ export default function ProductDetailPage() {
         </div>
       </motion.div>
 
-      {/* ━━━ ROW: Product Details + Pricing (2/3 + 1/3) ━━━ */}
       <motion.div
         className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch"
         initial={{ y: 25 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.15, ease }}
       >
-        {/* Product Details */}
         <div className="lg:col-span-2 flex flex-col">
           <div className="border border-blue-primary/10 bg-cream-light flex-1">
             <CardHeader title="Product Details" marker="/001" />
             <div className="px-5 py-2">
-              <InfoRow label="Product Name" value={product.name} mono />
-              <InfoRow label="SKU" value={product.sku} mono />
-              <InfoRow label="Category" value={category?.name ?? "—"} mono />
+              <InfoRow label="Product Name" content={product.name} mono />
+              <InfoRow label="SKU" content={product.sku} mono />
+              <InfoRow label="Category" content={category?.name ?? "—"} mono />
               <InfoRow
                 label="Description"
-                value={
+                content={
                   <span className="max-w-xs text-blue-primary/70 normal-case">
                     {product.description}
                   </span>
                 }
               />
-              <InfoRow label="Created" value={product.createdAt} mono />
+              <InfoRow label="Created" content={product.createdAt} mono />
             </div>
           </div>
         </div>
 
-        {/* Pricing & Stock */}
         <div className="flex flex-col">
           <div className="border border-blue-primary/10 bg-cream-light flex-1">
             <CardHeader title="Pricing & Stock" marker="/002" />
             <div className="px-5 py-2">
               <InfoRow
                 label="Selling Price"
-                value={formatCurrency(product.sellingPrice)}
+                content={formatCurrency(product.sellingPrice)}
                 mono
               />
               <InfoRow
                 label="Cost Price"
-                value={formatCurrency(product.costPrice)}
+                content={formatCurrency(product.costPrice)}
                 mono
               />
-              <InfoRow label="Margin" value={`${marginPercent}%`} mono />
+              <InfoRow label="Margin" content={`${marginPercent}%`} mono />
               <InfoRow
                 label="Current Stock"
-                value={
+                content={
                   <span className={stockColor}>{product.stock}</span>
                 }
                 mono
               />
-              <InfoRow label="Min Stock" value={product.minStock} mono />
-              <InfoRow label="Unit" value="PCS" mono />
+              <InfoRow label="Min Stock" content={product.minStock} mono />
+              <InfoRow label="Unit" content="PCS" mono />
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* ━━━ ROW: Recent Transactions + Serial Numbers (side by side) ━━━ */}
       <motion.div
         className="grid grid-cols-1 lg:grid-cols-2 gap-4"
         initial={{ y: 20 }}
@@ -460,7 +437,6 @@ export default function ProductDetailPage() {
         )}
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">

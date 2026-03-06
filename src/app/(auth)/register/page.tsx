@@ -1,4 +1,3 @@
-// src/app/(auth)/register/page.tsx
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -6,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, type Variants } from "framer-motion";
 
-// ── Validation ──
 interface FormErrors {
   name?: string;
   email?: string;
@@ -44,7 +42,6 @@ function validateRegister(
   return errors;
 }
 
-// ── Password strength ──
 function getPasswordStrength(password: string): {
   score: number;
   label: string;
@@ -64,7 +61,6 @@ function getPasswordStrength(password: string): {
   return { score: 5, label: "EXCELLENT" };
 }
 
-// ── Animation variants ──
 const slideIn: Variants = {
   hidden: { x: 80, opacity: 0 },
   visible: (i: number) => ({
@@ -105,11 +101,11 @@ export default function RegisterPage() {
   }, []);
 
   function clearFieldError(field: keyof FormErrors) {
-    if (errors[field]) setErrors((p) => ({ ...p, [field]: undefined }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: undefined }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(formEvent: React.FormEvent) {
+    formEvent.preventDefault();
     setErrors({});
 
     const validationErrors = validateRegister(
@@ -126,10 +122,8 @@ export default function RegisterPage() {
 
     setIsLoading(true);
 
-    // Simulate network delay
-    await new Promise((r) => setTimeout(r, 1800));
+    await new Promise((resolve) => setTimeout(resolve, 1800));
 
-    // Check for existing user
     let existingUsers: { name?: string; email: string; password: string; createdAt?: string }[] = [];
     try {
       existingUsers = JSON.parse(
@@ -138,20 +132,18 @@ export default function RegisterPage() {
     } catch {
       existingUsers = [];
     }
-    if (existingUsers.find((u: { email: string }) => u.email === email)) {
+    if (existingUsers.find((user: { email: string }) => user.email === email)) {
       setErrors({ general: "AN ACCOUNT WITH THIS EMAIL ALREADY EXISTS." });
       setIsLoading(false);
       return;
     }
 
-    // Save user
     existingUsers.push({ name, email, password, createdAt: new Date().toISOString() });
     localStorage.setItem("inventra_users", JSON.stringify(existingUsers));
 
     setIsLoading(false);
     setIsSuccess(true);
 
-    // Redirect to login after success
     redirectTimeoutRef.current = setTimeout(() => {
       router.push("/login");
     }, 2500);
@@ -159,7 +151,6 @@ export default function RegisterPage() {
 
   if (!mounted) return null;
 
-  // ── Success state ──
   if (isSuccess) {
     return (
       <div className="w-full max-w-lg mx-auto lg:mx-0">
@@ -186,7 +177,6 @@ export default function RegisterPage() {
             Redirecting to login...
           </p>
 
-          {/* Animated progress line */}
           <div className="w-full h-px bg-blue-primary/10 overflow-hidden">
             <motion.div
               className="h-full bg-blue-primary"
@@ -202,7 +192,6 @@ export default function RegisterPage() {
 
   return (
     <div className="w-full max-w-lg mx-auto lg:mx-0">
-      {/* Section marker */}
       <motion.div
         className="flex items-center justify-between mb-12"
         variants={slideIn}
@@ -218,7 +207,6 @@ export default function RegisterPage() {
         </span>
       </motion.div>
 
-      {/* Headline */}
       <motion.h1
         className="font-sans font-bold text-blue-primary leading-[0.9] tracking-tight mb-4"
         style={{ fontSize: "clamp(44px, 6vw, 72px)" }}
@@ -240,7 +228,6 @@ export default function RegisterPage() {
         Create your Inventra account.
       </motion.p>
 
-      {/* General error */}
       {errors.general && (
         <motion.div
           className="mb-6 py-3 px-4 border border-blue-primary bg-blue-primary/[0.04]"
@@ -254,9 +241,7 @@ export default function RegisterPage() {
         </motion.div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-0">
-        {/* ── 01 FULL NAME ── */}
         <motion.div
           className="relative pb-6"
           variants={slideIn}
@@ -279,8 +264,8 @@ export default function RegisterPage() {
             id="name"
             type="text"
             value={name}
-            onChange={(e) => {
-              setName(e.target.value);
+            onChange={(event) => {
+              setName(event.target.value);
               clearFieldError("name");
             }}
             placeholder="Jonathan Doe"
@@ -294,7 +279,6 @@ export default function RegisterPage() {
           )}
         </motion.div>
 
-        {/* ── 02 EMAIL ── */}
         <motion.div
           className="relative pb-6"
           variants={slideIn}
@@ -317,8 +301,8 @@ export default function RegisterPage() {
             id="reg-email"
             type="email"
             value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
+            onChange={(event) => {
+              setEmail(event.target.value);
               clearFieldError("email");
             }}
             placeholder="name@company.com"
@@ -332,7 +316,6 @@ export default function RegisterPage() {
           )}
         </motion.div>
 
-        {/* ── 03 PASSWORD ── */}
         <motion.div
           className="relative pb-2"
           variants={slideIn}
@@ -356,8 +339,8 @@ export default function RegisterPage() {
               id="reg-password"
               type={showPassword ? "text" : "password"}
               value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
+              onChange={(event) => {
+                setPassword(event.target.value);
                 clearFieldError("password");
               }}
               placeholder="Minimum 8 characters"
@@ -379,7 +362,6 @@ export default function RegisterPage() {
           )}
         </motion.div>
 
-        {/* Password strength indicator */}
         <motion.div
           className="pb-6"
           variants={slideIn}
@@ -410,7 +392,6 @@ export default function RegisterPage() {
           )}
         </motion.div>
 
-        {/* ── 04 CONFIRM PASSWORD ── */}
         <motion.div
           className="relative pb-6"
           variants={slideIn}
@@ -434,8 +415,8 @@ export default function RegisterPage() {
               id="confirm-password"
               type={showConfirm ? "text" : "password"}
               value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
+              onChange={(event) => {
+                setConfirmPassword(event.target.value);
                 clearFieldError("confirmPassword");
               }}
               placeholder="Re-enter password"
@@ -457,7 +438,6 @@ export default function RegisterPage() {
           )}
         </motion.div>
 
-        {/* ── 05 TERMS ── */}
         <motion.div
           className="pb-10"
           variants={slideIn}
@@ -501,8 +481,8 @@ export default function RegisterPage() {
             <input
               type="checkbox"
               checked={terms}
-              onChange={(e) => {
-                setTerms(e.target.checked);
+              onChange={(event) => {
+                setTerms(event.target.checked);
                 clearFieldError("terms");
               }}
               className="sr-only"
@@ -518,7 +498,6 @@ export default function RegisterPage() {
           )}
         </motion.div>
 
-        {/* ── Submit button ── */}
         <motion.button
           type="submit"
           disabled={isLoading}
@@ -542,7 +521,6 @@ export default function RegisterPage() {
         </motion.button>
       </form>
 
-      {/* ── Login link ── */}
       <motion.div
         className="mt-8 flex items-center gap-2"
         variants={slideIn}

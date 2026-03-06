@@ -42,10 +42,8 @@ export function LoadingScreen({ onComplete }: { onComplete?: () => void } = {}) 
           },
         });
 
-        // Phase 1: Hold centered logo
         tl.to({}, { duration: 1.2 });
 
-        // Phase 2: Move logo to exact navbar logo position
         tl.to(
           logoRef.current,
           {
@@ -80,7 +78,6 @@ export function LoadingScreen({ onComplete }: { onComplete?: () => void } = {}) 
           1.2
         );
 
-        // Phase 3: Blue background slides up
         tl.to(
           bgRef.current,
           {

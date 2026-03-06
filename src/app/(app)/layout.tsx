@@ -1,4 +1,3 @@
-// src/app/(app)/layout.tsx
 import type { Metadata } from "next";
 import { Sidebar } from "@/components/app/sidebar";
 import { AppHeader } from "@/components/app/app-header";
@@ -21,10 +20,8 @@ export default function AppLayout({
   return (
     <AuthGuard>
       <div className="relative min-h-screen bg-cream-primary">
-        {/* ─── Sidebar ─── */}
         <Sidebar />
 
-        {/* ─── Main content area ─── */}
         <AppContentClient>
           <AppHeader />
           <main className="px-4 py-6 lg:px-6 lg:py-8">

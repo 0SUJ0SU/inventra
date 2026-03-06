@@ -9,18 +9,16 @@ export function About() {
   const col1Ref = useRef<HTMLDivElement>(null);
   const col2Ref = useRef<HTMLDivElement>(null);
 
-
   useEffect(() => {
     if (!sectionRef.current) return;
 
-    // Set initial hidden state immediately
     gsap.set(paragraphRef.current, { yPercent: 100 });
     gsap.set(col1Ref.current, { yPercent: 100 });
     gsap.set(col2Ref.current, { yPercent: 100 });
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
+      ([intersectionEntry]) => {
+        if (!intersectionEntry.isIntersecting) return;
 
         const tl = gsap.timeline({
           defaults: { ease: "power3.out", force3D: true },
@@ -41,17 +39,14 @@ export function About() {
 
   return (
     <section ref={sectionRef} className="relative">
-      {/* ── ABOUT CONTENT (BLUE BG) ── */}
       <div className="bg-blue-primary text-cream-primary">
         <div className="relative z-10 px-6">
-          {/* Section marker */}
           <div className="flex justify-end pt-6">
             <span className="font-mono text-xs tracking-[0.15em] text-cream-primary">
               [INV.2]
             </span>
           </div>
 
-          {/* Main paragraph — large, confident */}
           <div className="pt-16 pb-16 md:pt-20 md:pb-20">
             <div className="overflow-hidden">
               <p
@@ -67,13 +62,10 @@ export function About() {
             </div>
           </div>
 
-          {/* Two monospace columns */}
           <div className="pb-16 md:pb-20">
-            {/* Thin divider line */}
             <div className="w-full h-px bg-cream-primary/20 mb-8" />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-24">
-              {/* Column 1 */}
               <div className="overflow-hidden">
                 <div ref={col1Ref} className="will-change-transform">
                   <p className="font-mono text-[13px] md:text-sm uppercase tracking-[0.1em] leading-[1.8] text-cream-primary/70">
@@ -85,7 +77,6 @@ export function About() {
                 </div>
               </div>
 
-              {/* Column 2 */}
               <div className="overflow-hidden">
                 <div ref={col2Ref} className="will-change-transform">
                   <p className="font-mono text-[13px] md:text-sm uppercase tracking-[0.1em] leading-[1.8] text-cream-primary/70">

@@ -1,4 +1,3 @@
-// src/app/(app)/employees/page.tsx
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -17,10 +16,6 @@ import {
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils/format";
 
-// ——————————————————————————————————————————————————
-// TYPES
-// ——————————————————————————————————————————————————
-
 export interface Employee {
   id: string;
   name: string;
@@ -30,15 +25,11 @@ export interface Employee {
   phone: string;
   status: "active" | "on_leave" | "inactive";
   hireDate: string;
-  salary: number; // annual, USD
+  salary: number;
 }
 
 type SortKey = "name" | "role" | "department" | "status" | "hireDate" | "salary";
 type SortDir = "asc" | "desc";
-
-// ——————————————————————————————————————————————————
-// CONSTANTS
-// ——————————————————————————————————————————————————
 
 const PAGE_SIZES = [10, 20, 50] as const;
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -156,10 +147,6 @@ export const EMPLOYEES: Employee[] = [
   },
 ];
 
-// ——————————————————————————————————————————————————
-// HELPERS
-// ——————————————————————————————————————————————————
-
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
@@ -179,10 +166,6 @@ export const STATUS_LABEL: Record<Employee["status"], string> = {
   inactive: "Inactive",
 };
 
-// ——————————————————————————————————————————————————
-// SORT ICON
-// ——————————————————————————————————————————————————
-
 function SortIcon({
   col,
   sortKey,
@@ -201,10 +184,6 @@ function SortIcon({
   );
 }
 
-// ——————————————————————————————————————————————————
-// PAGE
-// ——————————————————————————————————————————————————
-
 export default function EmployeesPage() {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("name");
@@ -214,49 +193,46 @@ export default function EmployeesPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 600);
-    return () => clearTimeout(t);
+    const loadingTimer = setTimeout(() => setIsLoading(false), 600);
+    return () => clearTimeout(loadingTimer);
   }, []);
 
-  // ——— KPIs ———
   const totalEmployees = EMPLOYEES.length;
-  const activeCount = EMPLOYEES.filter((e) => e.status === "active").length;
-  const departmentCount = new Set(EMPLOYEES.map((e) => e.department)).size;
-  const totalAnnualPayroll = EMPLOYEES.filter((e) => e.status !== "inactive").reduce(
-    (acc, e) => acc + e.salary,
+  const activeCount = EMPLOYEES.filter((employee) => employee.status === "active").length;
+  const departmentCount = new Set(EMPLOYEES.map((employee) => employee.department)).size;
+  const totalAnnualPayroll = EMPLOYEES.filter((employee) => employee.status !== "inactive").reduce(
+    (payrollSum, employee) => payrollSum + employee.salary,
     0
   );
   const monthlyPayroll = totalAnnualPayroll / 12;
 
-  // ——— Filter ———
   const filtered = useMemo(() => {
     if (!search.trim()) return EMPLOYEES;
-    const q = search.toLowerCase().trim();
+    const searchLower = search.toLowerCase().trim();
     return EMPLOYEES.filter(
-      (e) =>
-        e.name.toLowerCase().includes(q) ||
-        e.role.toLowerCase().includes(q) ||
-        e.department.toLowerCase().includes(q) ||
-        e.email.toLowerCase().includes(q)
+      (employee) =>
+        employee.name.toLowerCase().includes(searchLower) ||
+        employee.role.toLowerCase().includes(searchLower) ||
+        employee.department.toLowerCase().includes(searchLower) ||
+        employee.email.toLowerCase().includes(searchLower)
     );
   }, [search]);
 
-  // ——— Sort ———
   const sorted = useMemo(() => {
-    const data = [...filtered];
-    data.sort((a, b) => {
-      let cmp = 0;
+    const employeesCopy = [...filtered];
+    employeesCopy.sort((left, right) => {
+      let comparison = 0;
       switch (sortKey) {
-        case "name":       cmp = a.name.localeCompare(b.name); break;
-        case "role":       cmp = a.role.localeCompare(b.role); break;
-        case "department": cmp = a.department.localeCompare(b.department); break;
-        case "status":     cmp = a.status.localeCompare(b.status); break;
-        case "hireDate":   cmp = a.hireDate.localeCompare(b.hireDate); break;
-        case "salary":     cmp = a.salary - b.salary; break;
+        case "name":       comparison = left.name.localeCompare(right.name); break;
+        case "role":       comparison = left.role.localeCompare(right.role); break;
+        case "department": comparison = left.department.localeCompare(right.department); break;
+        case "status":     comparison = left.status.localeCompare(right.status); break;
+        case "hireDate":   comparison = left.hireDate.localeCompare(right.hireDate); break;
+        case "salary":     comparison = left.salary - right.salary; break;
       }
-      return sortDir === "asc" ? cmp : -cmp;
+      return sortDir === "asc" ? comparison : -comparison;
     });
-    return data;
+    return employeesCopy;
   }, [filtered, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
@@ -264,18 +240,13 @@ export default function EmployeesPage() {
   const paginated = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const handleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    if (sortKey === key) setSortDir((currentDir) => (currentDir === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
   };
-
-  // ——————————————————————————————————————————————————
-  // RENDER
-  // ——————————————————————————————————————————————————
 
   return (
     <div className="space-y-6">
 
-      {/* ┌── PAGE HEADER ──┐ */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <motion.h1
@@ -306,10 +277,8 @@ export default function EmployeesPage() {
         </motion.span>
       </div>
 
-      {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ┌── KPI CARDS ──┐ */}
       <motion.div
         className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
@@ -352,7 +321,6 @@ export default function EmployeesPage() {
         ))}
       </motion.div>
 
-      {/* ┌── SEARCH ──┐ */}
       <motion.div
         initial={{ y: 20 }}
         animate={{ y: 0 }}
@@ -368,7 +336,7 @@ export default function EmployeesPage() {
             type="text"
             placeholder="SEARCH NAME, ROLE, DEPARTMENT..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(event) => { setSearch(event.target.value); setPage(1); }}
             className="w-full h-9 pl-9 pr-3 bg-cream-light border border-blue-primary/10 font-mono text-[11px] tracking-[0.08em] uppercase text-blue-primary placeholder:text-blue-primary/25 focus:outline-none focus:border-blue-primary/30 transition-colors"
           />
           {search && (
@@ -382,7 +350,6 @@ export default function EmployeesPage() {
         </div>
       </motion.div>
 
-      {/* ┌── TABLE ──┐ */}
       <motion.div
         className="border border-blue-primary/10 bg-cream-light overflow-hidden"
         initial={{ y: 30 }}
@@ -452,10 +419,9 @@ export default function EmployeesPage() {
               </tr>
             </thead>
             <tbody>
-              {/* ── LOADING SKELETON ── */}
               {isLoading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <tr key={i} className="border-b border-blue-primary/6 h-16">
+                Array.from({ length: 6 }).map((_, skeletonIndex) => (
+                  <tr key={skeletonIndex} className="border-b border-blue-primary/6 h-16">
                     <td className="px-5 align-middle">
                       <div className="h-2.5 w-36 bg-blue-primary/8 animate-pulse mb-1.5" />
                       <div className="h-2 w-44 bg-blue-primary/5 animate-pulse" />
@@ -479,7 +445,6 @@ export default function EmployeesPage() {
                   </tr>
                 ))
               ) : paginated.length === 0 ? (
-                /* ── EMPTY STATE ── */
                 <tr>
                   <td colSpan={7} className="text-center py-16">
                     <Users size={28} strokeWidth={1} className="text-blue-primary/15 mx-auto mb-3" />
@@ -500,13 +465,11 @@ export default function EmployeesPage() {
                   </td>
                 </tr>
               ) : (
-                /* ── DATA ROWS ── */
                 paginated.map((emp) => (
                   <tr
                     key={emp.id}
                     className="border-b border-blue-primary/6 hover:bg-blue-primary/[0.02] transition-colors duration-150 h-16"
                   >
-                    {/* Name */}
                     <td className="px-5 align-middle">
                       <Link
                         href={`/employees/${emp.id}`}
@@ -518,19 +481,16 @@ export default function EmployeesPage() {
                         {emp.email}
                       </span>
                     </td>
-                    {/* Role */}
                     <td className="px-3 align-middle">
                       <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/60">
                         {emp.role}
                       </span>
                     </td>
-                    {/* Department */}
                     <td className="px-3 align-middle">
                       <span className="font-mono text-[9px] tracking-[0.08em] uppercase text-blue-primary/50">
                         {emp.department}
                       </span>
                     </td>
-                    {/* Status */}
                     <td className="px-3 align-middle text-center">
                       <span
                         className={`font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${
@@ -544,7 +504,6 @@ export default function EmployeesPage() {
                         {STATUS_LABEL[emp.status]}
                       </span>
                     </td>
-                    {/* Salary */}
                     <td className="px-3 align-middle text-right">
                       <span className="font-mono text-[12px] tracking-[0.03em] font-semibold text-blue-primary leading-none block">
                         {formatCurrency(emp.salary)}
@@ -553,7 +512,6 @@ export default function EmployeesPage() {
                         {formatCurrency(Math.round(emp.salary / 12))} / mo
                       </span>
                     </td>
-                    {/* Hire date */}
                     <td className="px-3 align-middle text-right">
                       <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/50 block leading-none">
                         {formatDate(emp.hireDate)}
@@ -562,7 +520,6 @@ export default function EmployeesPage() {
                         {getTenureYears(emp.hireDate)} yr{getTenureYears(emp.hireDate) !== 1 && "s"}
                       </span>
                     </td>
-                    {/* Arrow */}
                     <td className="w-10 px-3 align-middle text-center">
                       <Link
                         href={`/employees/${emp.id}`}
@@ -578,7 +535,6 @@ export default function EmployeesPage() {
           </table>
         </div>
 
-        {/* ┌── PAGINATION ──┐ */}
         <div className="flex items-center justify-between px-5 py-3 border-t border-blue-primary/8">
           <div className="flex items-center gap-3">
             <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/30">
@@ -588,55 +544,55 @@ export default function EmployeesPage() {
             <div className="w-px h-3 bg-blue-primary/10" />
             <select
               value={pageSize}
-              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+              onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}
               className="h-7 px-2 bg-transparent border border-blue-primary/10 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/50 focus:outline-none cursor-pointer appearance-none"
             >
-              {PAGE_SIZES.map((s) => (
-                <option key={s} value={s}>{s} rows</option>
+              {PAGE_SIZES.map((size) => (
+                <option key={size} value={size}>{size} rows</option>
               ))}
             </select>
           </div>
 
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
               disabled={safePage <= 1}
               className="w-7 h-7 flex items-center justify-center border border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 disabled:opacity-20 disabled:pointer-events-none transition-colors"
             >
               <ChevronLeft size={12} strokeWidth={2} />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((p) => {
+            {Array.from({ length: totalPages }, (_, pageIndex) => pageIndex + 1)
+              .filter((pageNum) => {
                 if (totalPages <= 5) return true;
-                if (p === 1 || p === totalPages) return true;
-                if (Math.abs(p - safePage) <= 1) return true;
+                if (pageNum === 1 || pageNum === totalPages) return true;
+                if (Math.abs(pageNum - safePage) <= 1) return true;
                 return false;
               })
-              .map((p, idx, arr) => {
-                const prev = arr[idx - 1];
-                const showEllipsis = prev != null && p - prev > 1;
+              .map((pageNum, position, visiblePages) => {
+                const previousPage = visiblePages[position - 1];
+                const showEllipsis = previousPage != null && pageNum - previousPage > 1;
                 return (
-                  <span key={p} className="flex items-center">
+                  <span key={pageNum} className="flex items-center">
                     {showEllipsis && (
                       <span className="w-7 h-7 flex items-center justify-center font-mono text-[9px] text-blue-primary/20">
                         ...
                       </span>
                     )}
                     <button
-                      onClick={() => setPage(p)}
+                      onClick={() => setPage(pageNum)}
                       className={`w-7 h-7 flex items-center justify-center font-mono text-[10px] tracking-[0.05em] border transition-colors ${
-                        p === safePage
+                        pageNum === safePage
                           ? "bg-blue-primary text-cream-primary border-blue-primary"
                           : "border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30"
                       }`}
                     >
-                      {p}
+                      {pageNum}
                     </button>
                   </span>
                 );
               })}
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
               disabled={safePage >= totalPages}
               className="w-7 h-7 flex items-center justify-center border border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 disabled:opacity-20 disabled:pointer-events-none transition-colors"
             >
@@ -646,7 +602,6 @@ export default function EmployeesPage() {
         </div>
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between pt-4">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">

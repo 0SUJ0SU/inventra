@@ -1,4 +1,3 @@
-// src/app/(app)/products/[id]/edit/page.tsx
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
@@ -9,11 +8,10 @@ import { ProductForm, type ProductFormData } from "@/components/app/products/pro
 export default function EditProductPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
+  const id = String(params.id);
 
-  const product = PRODUCTS.find((p) => p.id === id);
+  const product = PRODUCTS.find((product) => product.id === id);
 
-  // — Not found —
   if (!product) {
     return (
       <div className="flex flex-col items-center justify-center py-32">
@@ -31,8 +29,7 @@ export default function EditProductPage() {
     );
   }
 
-  const handleSubmit = (data: ProductFormData) => {
-    console.log("[Inventra] Product updated:", product.id, data);
+  const handleSubmit = (_data: ProductFormData) => {
     router.push(`/products/${product.id}`);
   };
 

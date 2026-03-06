@@ -1,4 +1,3 @@
-// src/app/(app)/sales/history/page.tsx
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
@@ -29,10 +28,6 @@ import {
 import { formatCurrency } from "@/lib/utils/format";
 import Link from "next/link";
 
-// ————————————————————————————————————————————————
-// TYPES
-// ————————————————————————————————————————————————
-
 type SortKey =
   | "saleNumber"
   | "date"
@@ -43,16 +38,41 @@ type SortKey =
   | "status";
 type SortDir = "asc" | "desc";
 
-// ————————————————————————————————————————————————
-// CONSTANTS
-// ————————————————————————————————————————————————
-
 const PAGE_SIZES = [10, 20, 50] as const;
 const ease = [0.16, 1, 0.3, 1] as const;
 
-// ————————————————————————————————————————————————
-// HELPERS
-// ————————————————————————————————————————————————
+const VALID_SALE_STATUSES: readonly SaleStatus[] = [
+  "completed",
+  "refunded",
+  "partial_refund",
+  "voided",
+] as const;
+
+const VALID_PAYMENT_METHODS: readonly PaymentMethod[] = [
+  "cash",
+  "card",
+  "transfer",
+] as const;
+
+function isSaleStatus(candidate: string): candidate is SaleStatus {
+  return (VALID_SALE_STATUSES as readonly string[]).includes(candidate);
+}
+
+function isPaymentMethod(candidate: string): candidate is PaymentMethod {
+  return (VALID_PAYMENT_METHODS as readonly string[]).includes(candidate);
+}
+
+function parseSaleStatusFilter(candidate: string): SaleStatus | "all" {
+  if (candidate === "all") return "all";
+  if (isSaleStatus(candidate)) return candidate;
+  return "all";
+}
+
+function parsePaymentMethodFilter(candidate: string): PaymentMethod | "all" {
+  if (candidate === "all") return "all";
+  if (isPaymentMethod(candidate)) return candidate;
+  return "all";
+}
 
 function formatSaleDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -63,13 +83,9 @@ function formatSaleDate(iso: string): string {
 }
 
 function getUniqueCustomers(sales: SaleRecord[]): string[] {
-  const set = new Set(sales.map((s) => s.customerName));
-  return Array.from(set).sort();
+  const customerNameSet = new Set(sales.map((sale) => sale.customerName));
+  return Array.from(customerNameSet).sort();
 }
-
-// ————————————————————————————————————————————————
-// SORT ICON
-// ————————————————————————————————————————————————
 
 function SortIcon({
   col,
@@ -91,12 +107,7 @@ function SortIcon({
   );
 }
 
-// ————————————————————————————————————————————————
-// PAGE
-// ————————————————————————————————————————————————
-
 export default function SalesHistoryPage() {
-  // — Filter state —
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<SaleStatus | "all">("all");
   const [paymentFilter, setPaymentFilter] = useState<PaymentMethod | "all">("all");
@@ -104,96 +115,86 @@ export default function SalesHistoryPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  // — Sort state —
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  // — Pagination —
-  const [page, setPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(10);
 
-  // — Selection —
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // — Action menu —
   const [actionMenuId, setActionMenuId] = useState<string | null>(null);
 
-  // — Local mutable state —
   const [sales, setSales] = useState<SaleRecord[]>(() => [...SALE_RECORDS]);
 
-  // — Loading skeleton on mount —
   const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 600);
-    return () => clearTimeout(t);
+    const loadingTimer = setTimeout(() => setIsLoading(false), 600);
+    return () => clearTimeout(loadingTimer);
   }, []);
 
   const uniqueCustomers = useMemo(() => getUniqueCustomers(sales), [sales]);
 
-  // ——— DERIVED DATA ———
-
   const filtered = useMemo(() => {
-    let data = [...sales];
+    let matchingSales = [...sales];
 
     if (search.trim()) {
-      const q = search.toLowerCase().trim();
-      data = data.filter(
-        (s) =>
-          s.saleNumber.toLowerCase().includes(q) ||
-          s.customerName.toLowerCase().includes(q) ||
-          s.items.some(
-            (i) =>
-              i.productName.toLowerCase().includes(q) ||
-              i.sku.toLowerCase().includes(q) ||
-              (i.serialNumber && i.serialNumber.toLowerCase().includes(q))
+      const searchTerm = search.toLowerCase().trim();
+      matchingSales = matchingSales.filter(
+        (sale) =>
+          sale.saleNumber.toLowerCase().includes(searchTerm) ||
+          sale.customerName.toLowerCase().includes(searchTerm) ||
+          sale.items.some(
+            (lineItem) =>
+              lineItem.productName.toLowerCase().includes(searchTerm) ||
+              lineItem.sku.toLowerCase().includes(searchTerm) ||
+              (lineItem.serialNumber && lineItem.serialNumber.toLowerCase().includes(searchTerm))
           )
       );
     }
 
-    if (statusFilter !== "all") data = data.filter((s) => s.status === statusFilter);
-    if (paymentFilter !== "all") data = data.filter((s) => s.paymentMethod === paymentFilter);
-    if (customerFilter !== "all") data = data.filter((s) => s.customerName === customerFilter);
-    if (dateFrom) data = data.filter((s) => s.date >= dateFrom);
-    if (dateTo) data = data.filter((s) => s.date <= dateTo);
+    if (statusFilter !== "all") matchingSales = matchingSales.filter((sale) => sale.status === statusFilter);
+    if (paymentFilter !== "all") matchingSales = matchingSales.filter((sale) => sale.paymentMethod === paymentFilter);
+    if (customerFilter !== "all") matchingSales = matchingSales.filter((sale) => sale.customerName === customerFilter);
+    if (dateFrom) matchingSales = matchingSales.filter((sale) => sale.date >= dateFrom);
+    if (dateTo) matchingSales = matchingSales.filter((sale) => sale.date <= dateTo);
 
-    return data;
+    return matchingSales;
   }, [search, statusFilter, paymentFilter, customerFilter, dateFrom, dateTo, sales]);
 
   const sorted = useMemo(() => {
-    const data = [...filtered];
-    data.sort((a, b) => {
-      let cmp = 0;
+    const sortableSales = [...filtered];
+    sortableSales.sort((left, right) => {
+      let comparison = 0;
       switch (sortKey) {
-        case "saleNumber":   cmp = a.saleNumber.localeCompare(b.saleNumber); break;
-        case "date":         cmp = a.date.localeCompare(b.date); break;
-        case "customerName": cmp = a.customerName.localeCompare(b.customerName); break;
-        case "itemCount":    cmp = a.items.length - b.items.length; break;
-        case "total":        cmp = a.total - b.total; break;
-        case "paymentMethod":cmp = a.paymentMethod.localeCompare(b.paymentMethod); break;
+        case "saleNumber":   comparison = left.saleNumber.localeCompare(right.saleNumber); break;
+        case "date":         comparison = left.date.localeCompare(right.date); break;
+        case "customerName": comparison = left.customerName.localeCompare(right.customerName); break;
+        case "itemCount":    comparison = left.items.length - right.items.length; break;
+        case "total":        comparison = left.total - right.total; break;
+        case "paymentMethod":comparison = left.paymentMethod.localeCompare(right.paymentMethod); break;
         case "status": {
-          const order: Record<SaleStatus, number> = {
+          const statusOrder: Record<SaleStatus, number> = {
             completed: 0, partial_refund: 1, refunded: 2, voided: 3,
           };
-          cmp = order[a.status] - order[b.status];
+          comparison = statusOrder[left.status] - statusOrder[right.status];
           break;
         }
       }
-      return sortDir === "asc" ? cmp : -cmp;
+      return sortDir === "asc" ? comparison : -comparison;
     });
-    return data;
+    return sortableSales;
   }, [filtered, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const safePage = Math.min(page, totalPages);
+  const safePage = Math.min(currentPage, totalPages);
   const paginated = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
 
-  const resetPage = useCallback(() => setPage(1), []);
-
-  // ——— HANDLERS ———
+  const resetPage = useCallback(() => setCurrentPage(1), []);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+      setSortDir((currentDir) => (currentDir === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
       setSortDir("asc");
@@ -217,111 +218,104 @@ export default function SalesHistoryPage() {
     resetPage();
   };
 
-  // — Void single sale —
-  const handleVoid = (id: string) => {
+  const handleVoid = (saleId: string) => {
     if (!confirm("Void this sale? This cannot be undone.")) return;
-    setSales((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, status: "voided" as SaleStatus } : s))
+    setSales((prevSales) =>
+      prevSales.map((sale) => (sale.id === saleId ? { ...sale, status: "voided" satisfies SaleStatus } : sale))
     );
     setActionMenuId(null);
   };
 
-  // — Selection handlers —
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+  const toggleSelect = (saleId: string) => {
+    setSelectedIds((prevIds) => {
+      const updatedIds = new Set(prevIds);
+      if (updatedIds.has(saleId)) updatedIds.delete(saleId);
+      else updatedIds.add(saleId);
+      return updatedIds;
     });
   };
 
   const toggleSelectAll = () => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (paginated.length > 0 && paginated.every((s) => next.has(s.id))) {
-        paginated.forEach((s) => next.delete(s.id));
+    setSelectedIds((prevIds) => {
+      const updatedIds = new Set(prevIds);
+      if (paginated.length > 0 && paginated.every((sale) => updatedIds.has(sale.id))) {
+        paginated.forEach((sale) => updatedIds.delete(sale.id));
       } else {
-        paginated.forEach((s) => next.add(s.id));
+        paginated.forEach((sale) => updatedIds.add(sale.id));
       }
-      return next;
+      return updatedIds;
     });
   };
 
   const clearSelection = () => setSelectedIds(new Set());
   const allOnPageSelected =
-    paginated.length > 0 && paginated.every((s) => selectedIds.has(s.id));
+    paginated.length > 0 && paginated.every((sale) => selectedIds.has(sale.id));
 
-  // — Bulk void —
   const handleBulkVoid = () => {
     if (!confirm(`Void ${selectedIds.size} selected sale(s)?`)) return;
-    setSales((prev) =>
-      prev.map((s) =>
-        selectedIds.has(s.id) && s.status !== "voided"
-          ? { ...s, status: "voided" as SaleStatus }
-          : s
+    setSales((prevSales) =>
+      prevSales.map((sale) =>
+        selectedIds.has(sale.id) && sale.status !== "voided"
+          ? { ...sale, status: "voided" satisfies SaleStatus }
+          : sale
       )
     );
     clearSelection();
   };
 
-  // — Export helpers —
   const buildExportRows = (rows: SaleRecord[]) =>
-    rows.map((s) => ({
-      "Sale #": s.saleNumber,
-      Date: s.date,
-      Customer: s.customerName,
-      Items: s.items.map((i) => `${i.productName} x${i.qty}`).join("; "),
-      Subtotal: s.subtotal,
-      Discount: s.discount,
-      Total: s.total,
-      "Payment Method": PAYMENT_METHOD_CONFIG[s.paymentMethod].label,
-      Status: SALE_STATUS_CONFIG[s.status].label,
-      "Handled By": s.handledBy,
-      Notes: s.notes ?? "",
+    rows.map((sale) => ({
+      "Sale #": sale.saleNumber,
+      Date: sale.date,
+      Customer: sale.customerName,
+      Items: sale.items.map((lineItem) => `${lineItem.productName} x${lineItem.qty}`).join("; "),
+      Subtotal: sale.subtotal,
+      Discount: sale.discount,
+      Total: sale.total,
+      "Payment Method": PAYMENT_METHOD_CONFIG[sale.paymentMethod].label,
+      Status: SALE_STATUS_CONFIG[sale.status].label,
+      "Handled By": sale.handledBy,
+      Notes: sale.notes ?? "",
     }));
 
   const handleExport = async () => {
     const XLSX = await import("xlsx");
-    const ws = XLSX.utils.json_to_sheet(buildExportRows(sorted));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sales History");
-    XLSX.writeFile(wb, `sales-history-${new Date().toISOString().split("T")[0]}.xlsx`);
+    const worksheet = XLSX.utils.json_to_sheet(buildExportRows(sorted));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sales History");
+    XLSX.writeFile(workbook, `sales-history-${new Date().toISOString().split("T")[0]}.xlsx`);
   };
 
   const handleExportSelected = async () => {
     const XLSX = await import("xlsx");
-    const rows = sorted.filter((s) => selectedIds.has(s.id));
-    const ws = XLSX.utils.json_to_sheet(buildExportRows(rows));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sales History");
+    const selectedRows = sorted.filter((sale) => selectedIds.has(sale.id));
+    const worksheet = XLSX.utils.json_to_sheet(buildExportRows(selectedRows));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sales History");
     XLSX.writeFile(
-      wb,
+      workbook,
       `sales-selected-${new Date().toISOString().split("T")[0]}.xlsx`
     );
     clearSelection();
   };
 
-  // ——— STATUS SUMMARY ———
-
   const statusSummary = useMemo(() => {
     const counts: Record<SaleStatus, number> = {
       completed: 0, refunded: 0, partial_refund: 0, voided: 0,
     };
-    sales.forEach((s) => { counts[s.status]++; });
+    sales.forEach((sale) => { counts[sale.status]++; });
     return counts;
   }, [sales]);
 
   const totalRevenue = useMemo(
-    () => sales.filter((s) => s.status === "completed").reduce((acc, s) => acc + s.total, 0),
+    () => sales.filter((sale) => sale.status === "completed").reduce((accumulator, sale) => accumulator + sale.total, 0),
     [sales]
   );
 
-  // ——— RENDER ———
+  const statusConfigEntries = Object.keys(SALE_STATUS_CONFIG).filter(isSaleStatus);
 
   return (
     <div className="space-y-6">
-      {/* ━━━ PAGE HEADER ━━━ */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <motion.h1
@@ -368,52 +362,46 @@ export default function SalesHistoryPage() {
         </motion.div>
       </div>
 
-      {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ━━━ STATUS SUMMARY CARDS ━━━ */}
       <motion.div
         className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.08, ease }}
       >
-        {(
-          Object.entries(SALE_STATUS_CONFIG) as [
-            SaleStatus,
-            (typeof SALE_STATUS_CONFIG)[SaleStatus]
-          ][]
-        ).map(([key, cfg]) => (
-          <button
-            key={key}
-            onClick={() => {
-              setStatusFilter(statusFilter === key ? "all" : key);
-              resetPage();
-            }}
-            className={`bg-cream-light px-2 py-4 text-center transition-colors hover:bg-blue-primary/[0.03] ${
-              statusFilter === key ? "ring-1 ring-inset ring-blue-primary/30" : ""
-            }`}
-          >
-            <span
-              className={`font-mono text-[22px] font-semibold leading-none block ${cfg.color}`}
+        {statusConfigEntries.map((statusKey) => {
+          const cfg = SALE_STATUS_CONFIG[statusKey];
+          return (
+            <button
+              key={statusKey}
+              onClick={() => {
+                setStatusFilter(statusFilter === statusKey ? "all" : statusKey);
+                resetPage();
+              }}
+              className={`bg-cream-light px-2 py-4 text-center transition-colors hover:bg-blue-primary/[0.03] ${
+                statusFilter === statusKey ? "ring-1 ring-inset ring-blue-primary/30" : ""
+              }`}
             >
-              {statusSummary[key]}
-            </span>
-            <span className="font-mono text-[8px] tracking-[0.12em] uppercase text-blue-primary/40 mt-1.5 block">
-              {cfg.label}
-            </span>
-          </button>
-        ))}
+              <span
+                className={`font-mono text-[22px] font-semibold leading-none block ${cfg.color}`}
+              >
+                {statusSummary[statusKey]}
+              </span>
+              <span className="font-mono text-[8px] tracking-[0.12em] uppercase text-blue-primary/40 mt-1.5 block">
+                {cfg.label}
+              </span>
+            </button>
+          );
+        })}
       </motion.div>
 
-      {/* ━━━ FILTERS ━━━ */}
       <motion.div
         className="space-y-2"
         initial={{ y: 20 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.12, ease }}
       >
-        {/* Row 1: Search + dropdowns */}
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="relative flex-1 max-w-md">
             <Search
@@ -425,8 +413,8 @@ export default function SalesHistoryPage() {
               type="text"
               placeholder="SEARCH SALE #, CUSTOMER, PRODUCT, SERIAL..."
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
+              onChange={(event) => {
+                setSearch(event.target.value);
                 resetPage();
               }}
               className="w-full h-9 pl-9 pr-3 bg-cream-light border border-blue-primary/10 font-mono text-[11px] tracking-[0.08em] uppercase text-blue-primary placeholder:text-blue-primary/25 focus:outline-none focus:border-blue-primary/30 transition-colors"
@@ -445,33 +433,26 @@ export default function SalesHistoryPage() {
           </div>
 
           <div className="grid grid-cols-2 lg:flex lg:flex-wrap gap-2">
-            {/* Status */}
             <select
               value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value as SaleStatus | "all");
+              onChange={(event) => {
+                setStatusFilter(parseSaleStatusFilter(event.target.value));
                 resetPage();
               }}
               className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[120px]"
             >
               <option value="all">All Status</option>
-              {(
-                Object.entries(SALE_STATUS_CONFIG) as [
-                  SaleStatus,
-                  (typeof SALE_STATUS_CONFIG)[SaleStatus]
-                ][]
-              ).map(([key, cfg]) => (
-                <option key={key} value={key}>
-                  {cfg.label}
+              {statusConfigEntries.map((statusKey) => (
+                <option key={statusKey} value={statusKey}>
+                  {SALE_STATUS_CONFIG[statusKey].label}
                 </option>
               ))}
             </select>
 
-            {/* Payment */}
             <select
               value={paymentFilter}
-              onChange={(e) => {
-                setPaymentFilter(e.target.value as PaymentMethod | "all");
+              onChange={(event) => {
+                setPaymentFilter(parsePaymentMethodFilter(event.target.value));
                 resetPage();
               }}
               className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[130px]"
@@ -482,11 +463,10 @@ export default function SalesHistoryPage() {
               <option value="transfer">Transfer</option>
             </select>
 
-            {/* Customer */}
             <select
               value={customerFilter}
-              onChange={(e) => {
-                setCustomerFilter(e.target.value);
+              onChange={(event) => {
+                setCustomerFilter(event.target.value);
                 resetPage();
               }}
               className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[140px]"
@@ -510,7 +490,6 @@ export default function SalesHistoryPage() {
           </div>
         </div>
 
-        {/* Row 2: Date range */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/30 shrink-0">
             Date range
@@ -518,8 +497,8 @@ export default function SalesHistoryPage() {
           <input
             type="date"
             value={dateFrom}
-            onChange={(e) => {
-              setDateFrom(e.target.value);
+            onChange={(event) => {
+              setDateFrom(event.target.value);
               resetPage();
             }}
             className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.05em] text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer w-36"
@@ -528,8 +507,8 @@ export default function SalesHistoryPage() {
           <input
             type="date"
             value={dateTo}
-            onChange={(e) => {
-              setDateTo(e.target.value);
+            onChange={(event) => {
+              setDateTo(event.target.value);
               resetPage();
             }}
             className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.05em] text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer w-36"
@@ -553,7 +532,6 @@ export default function SalesHistoryPage() {
           )}
         </div>
 
-        {/* Row 3: Bulk actions */}
         {selectedIds.size > 0 && (
           <motion.div
             className="bg-blue-primary text-cream-primary"
@@ -593,7 +571,6 @@ export default function SalesHistoryPage() {
         )}
       </motion.div>
 
-      {/* ━━━ TABLE ━━━ */}
       <motion.div
         className="border border-blue-primary/10 bg-cream-light overflow-hidden"
         initial={{ y: 30 }}
@@ -682,10 +659,9 @@ export default function SalesHistoryPage() {
               </tr>
             </thead>
             <tbody>
-              {/* ── LOADING SKELETON ── */}
               {isLoading ? (
-                Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i} className="border-b border-blue-primary/6 h-14">
+                Array.from({ length: 8 }).map((_, skeletonIndex) => (
+                  <tr key={skeletonIndex} className="border-b border-blue-primary/6 h-14">
                     <td className="w-12 px-4 align-middle">
                       <div className="w-3.5 h-3.5 bg-blue-primary/8 animate-pulse" />
                     </td>
@@ -714,7 +690,6 @@ export default function SalesHistoryPage() {
                   </tr>
                 ))
               ) : paginated.length === 0 ? (
-                /* ── EMPTY STATE ── */
                 <tr>
                   <td colSpan={9} className="text-center py-16">
                     <ShoppingCart
@@ -743,11 +718,10 @@ export default function SalesHistoryPage() {
                   </td>
                 </tr>
               ) : (
-                /* ── DATA ROWS ── */
                 paginated.map((sale) => {
                   const isSelected = selectedIds.has(sale.id);
-                  const sCfg = SALE_STATUS_CONFIG[sale.status];
-                  const totalItems = sale.items.reduce((acc, i) => acc + i.qty, 0);
+                  const statusCfg = SALE_STATUS_CONFIG[sale.status];
+                  const totalItems = sale.items.reduce((accumulator, lineItem) => accumulator + lineItem.qty, 0);
                   const hasDiscount = sale.discount > 0;
 
                   return (
@@ -759,7 +733,6 @@ export default function SalesHistoryPage() {
                           : "hover:bg-blue-primary/[0.02]"
                       }`}
                     >
-                      {/* Checkbox */}
                       <td className="w-12 px-4 align-middle">
                         <input
                           type="checkbox"
@@ -768,7 +741,6 @@ export default function SalesHistoryPage() {
                           className="w-3.5 h-3.5 accent-blue-primary cursor-pointer block"
                         />
                       </td>
-                      {/* Sale # */}
                       <td className="px-3 align-middle">
                         <Link
                           href={`/sales/history/${sale.id}`}
@@ -777,19 +749,16 @@ export default function SalesHistoryPage() {
                           {sale.saleNumber}
                         </Link>
                       </td>
-                      {/* Date */}
                       <td className="px-3 align-middle">
                         <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/50">
                           {formatSaleDate(sale.date)}
                         </span>
                       </td>
-                      {/* Customer */}
                       <td className="px-3 align-middle">
                         <p className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary truncate max-w-[160px] leading-none">
                           {sale.customerName}
                         </p>
                       </td>
-                      {/* Items */}
                       <td className="px-3 align-middle text-center">
                         <span className="font-mono text-[11px] tracking-[0.04em] font-semibold text-blue-primary/60 block">
                           {totalItems}
@@ -798,7 +767,6 @@ export default function SalesHistoryPage() {
                           {sale.items.length} line{sale.items.length !== 1 && "s"}
                         </span>
                       </td>
-                      {/* Total */}
                       <td className="px-3 align-middle text-right">
                         <span className="font-mono text-[12px] tracking-[0.03em] font-semibold text-blue-primary leading-none block">
                           {formatCurrency(sale.total)}
@@ -809,23 +777,20 @@ export default function SalesHistoryPage() {
                           </span>
                         )}
                       </td>
-                      {/* Payment */}
                       <td className="px-3 align-middle text-center">
                         <span className="inline-block font-mono text-[8px] tracking-[0.1em] uppercase px-2 py-1 leading-none bg-blue-primary/5 text-blue-primary/50">
                           {PAYMENT_METHOD_CONFIG[sale.paymentMethod].label}
                         </span>
                       </td>
-                      {/* Status */}
                       <td className="px-3 align-middle">
                         <div className="flex justify-center">
                           <span
-                            className={`font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${sCfg.color} ${sCfg.bg}`}
+                            className={`font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${statusCfg.color} ${statusCfg.bg}`}
                           >
-                            {sCfg.label}
+                            {statusCfg.label}
                           </span>
                         </div>
                       </td>
-                      {/* Actions */}
                       <td className="w-12 px-3 align-middle text-center relative">
                         <button
                           onClick={() =>
@@ -876,7 +841,6 @@ export default function SalesHistoryPage() {
           </table>
         </div>
 
-        {/* ━━━ PAGINATION ━━━ */}
         <div className="flex items-center justify-between px-5 py-3 border-t border-blue-primary/8">
           <div className="flex items-center gap-3">
             <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/30">
@@ -887,15 +851,15 @@ export default function SalesHistoryPage() {
             <div className="w-px h-3 bg-blue-primary/10" />
             <select
               value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
-                setPage(1);
+              onChange={(event) => {
+                setPageSize(Number(event.target.value));
+                setCurrentPage(1);
               }}
               className="h-7 px-2 bg-transparent border border-blue-primary/10 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/50 focus:outline-none cursor-pointer appearance-none"
             >
-              {PAGE_SIZES.map((s) => (
-                <option key={s} value={s}>
-                  {s} rows
+              {PAGE_SIZES.map((rowCount) => (
+                <option key={rowCount} value={rowCount}>
+                  {rowCount} rows
                 </option>
               ))}
             </select>
@@ -903,44 +867,44 @@ export default function SalesHistoryPage() {
 
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               disabled={safePage <= 1}
               className="w-7 h-7 flex items-center justify-center border border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 disabled:opacity-20 disabled:pointer-events-none transition-colors"
             >
               <ChevronLeft size={12} strokeWidth={2} />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((p) => {
+            {Array.from({ length: totalPages }, (_, pageIndex) => pageIndex + 1)
+              .filter((pageNum) => {
                 if (totalPages <= 5) return true;
-                if (p === 1 || p === totalPages) return true;
-                if (Math.abs(p - safePage) <= 1) return true;
+                if (pageNum === 1 || pageNum === totalPages) return true;
+                if (Math.abs(pageNum - safePage) <= 1) return true;
                 return false;
               })
-              .map((p, idx, arr) => {
-                const prev = arr[idx - 1];
-                const showEllipsis = prev != null && p - prev > 1;
+              .map((pageNum, position, visiblePages) => {
+                const previousPage = visiblePages[position - 1];
+                const showEllipsis = previousPage != null && pageNum - previousPage > 1;
                 return (
-                  <span key={p} className="flex items-center">
+                  <span key={pageNum} className="flex items-center">
                     {showEllipsis && (
                       <span className="w-7 h-7 flex items-center justify-center font-mono text-[9px] text-blue-primary/20">
                         ...
                       </span>
                     )}
                     <button
-                      onClick={() => setPage(p)}
+                      onClick={() => setCurrentPage(pageNum)}
                       className={`w-7 h-7 flex items-center justify-center font-mono text-[10px] tracking-[0.05em] border transition-colors ${
-                        p === safePage
+                        pageNum === safePage
                           ? "bg-blue-primary text-cream-primary border-blue-primary"
                           : "border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30"
                       }`}
                     >
-                      {p}
+                      {pageNum}
                     </button>
                   </span>
                 );
               })}
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={safePage >= totalPages}
               className="w-7 h-7 flex items-center justify-center border border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 disabled:opacity-20 disabled:pointer-events-none transition-colors"
             >
@@ -950,7 +914,6 @@ export default function SalesHistoryPage() {
         </div>
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between pt-4">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">

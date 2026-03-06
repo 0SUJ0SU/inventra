@@ -1,4 +1,3 @@
-// src/app/(app)/warranty/claims/page.tsx
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
@@ -35,10 +34,6 @@ import {
 } from "@/lib/warranty-utils";
 import Link from "next/link";
 
-// ————————————————————————————————————————————————
-// TYPES
-// ————————————————————————————————————————————————
-
 type SortKey =
   | "claimNumber"
   | "serialNumber"
@@ -52,15 +47,7 @@ type SortDir = "asc" | "desc";
 type StatusFilter = "all" | ClaimStatus;
 type TypeFilter = "all" | ClaimType;
 
-// ————————————————————————————————————————————————
-// CONSTANTS
-// ————————————————————————————————————————————————
-
 const PAGE_SIZES = [10, 20, 50] as const;
-
-// ————————————————————————————————————————————————
-// HELPERS
-// ————————————————————————————————————————————————
 
 function getCustomerSupplierLabel(claim: WarrantyClaim): string {
   if (claim.claimType === "customer_to_store") return claim.customerName ?? "\u2014";
@@ -81,10 +68,6 @@ function getUniqueSuppliers(claims: WarrantyClaim[]): string[] {
   return Array.from(set).sort();
 }
 
-// ————————————————————————————————————————————————
-// SORT ICON
-// ————————————————————————————————————————————————
-
 function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
   if (sortKey !== col)
     return <ChevronsUpDown size={12} strokeWidth={1.5} className="text-blue-primary/20" />;
@@ -95,12 +78,10 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
   );
 }
 
-// ————————————————————————————————————————————————
-// PAGE
-// ————————————————————————————————————————————————
+const VALID_STATUS_FILTERS = new Set<StatusFilter>(["all", "pending", "in_review", "in_repair", "repaired", "replaced", "rejected", "closed"]);
+const VALID_TYPE_FILTERS = new Set<TypeFilter>(["all", "customer_to_store", "store_to_supplier", "supplier_to_store"]);
 
 export default function WarrantyClaimsPage() {
-  // — Filter state —
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
@@ -109,24 +90,18 @@ export default function WarrantyClaimsPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  // — Sort state —
   const [sortKey, setSortKey] = useState<SortKey>("claimDate");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  // — Pagination —
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(10);
 
-  // — Selection —
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // — Action menu —
   const [actionMenuId, setActionMenuId] = useState<string | null>(null);
 
-  // — Local mutable state (demo) —
   const [claims, setClaims] = useState<WarrantyClaim[]>(() => [...WARRANTY_CLAIMS]);
 
-  // — Loading state (cosmetic skeleton on mount) —
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -136,8 +111,6 @@ export default function WarrantyClaimsPage() {
 
   const uniqueCustomers = useMemo(() => getUniqueCustomers(claims), [claims]);
   const uniqueSuppliers = useMemo(() => getUniqueSuppliers(claims), [claims]);
-
-  // ——— DERIVED DATA ———
 
   const filtered = useMemo(() => {
     let data = [...claims];
@@ -194,8 +167,6 @@ export default function WarrantyClaimsPage() {
 
   const resetPage = useCallback(() => setPage(1), []);
 
-  // ——— HANDLERS ———
-
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -224,7 +195,6 @@ export default function WarrantyClaimsPage() {
     resetPage();
   };
 
-  // — Status update (inline from action menu) —
   const handleStatusUpdate = (claimId: string, newStatus: ClaimStatus) => {
     const now = new Date().toISOString().split("T")[0];
     setClaims((prev) =>
@@ -244,7 +214,6 @@ export default function WarrantyClaimsPage() {
     setActionMenuId(null);
   };
 
-  // — Selection handlers —
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -270,7 +239,6 @@ export default function WarrantyClaimsPage() {
   const allOnPageSelected =
     paginated.length > 0 && paginated.every((c) => selectedIds.has(c.id));
 
-  // — Bulk close —
   const handleBulkClose = () => {
     const now = new Date().toISOString().split("T")[0];
     setClaims((prev) =>
@@ -290,7 +258,6 @@ export default function WarrantyClaimsPage() {
     clearSelection();
   };
 
-  // — Export helpers —
   const buildExportRows = (rows: WarrantyClaim[]) =>
     rows.map((claim) => ({
       "Claim #": claim.claimNumber,
@@ -324,8 +291,6 @@ export default function WarrantyClaimsPage() {
     clearSelection();
   };
 
-  // ——— STATUS SUMMARY ———
-
   const statusSummary = useMemo(() => {
     const counts: Record<string, number> = {
       pending: 0, in_review: 0, in_repair: 0, repaired: 0, replaced: 0, rejected: 0, closed: 0,
@@ -334,13 +299,10 @@ export default function WarrantyClaimsPage() {
     return counts;
   }, [claims]);
 
-  const openClaimsCount = claims.filter((c) => c.status !== "closed").length;
-
-  // ——— RENDER ———
+  const openClaimsCount = claims.filter((claim) => claim.status !== "closed").length;
 
   return (
     <div className="space-y-6">
-      {/* ━━━ PAGE HEADER ━━━ */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <motion.h1
@@ -386,10 +348,8 @@ export default function WarrantyClaimsPage() {
         </motion.div>
       </div>
 
-      {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ━━━ STATUS SUMMARY CARDS ━━━ */}
       <motion.div
         className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
@@ -414,14 +374,12 @@ export default function WarrantyClaimsPage() {
         ))}
       </motion.div>
 
-      {/* ━━━ FILTERS ━━━ */}
       <motion.div
         className="space-y-2"
         initial={{ y: 20 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.12, ease }}
       >
-        {/* Row 1: Search + dropdowns */}
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="relative flex-1 max-w-md">
             <Search size={14} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-primary/30" />
@@ -498,7 +456,6 @@ export default function WarrantyClaimsPage() {
           </div>
         </div>
 
-        {/* Row 2: Date range */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/30 shrink-0">
             Date range

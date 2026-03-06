@@ -1,4 +1,3 @@
-// src/app/(app)/products/serial-inventory/page.tsx
 "use client";
 
 import { useState, useMemo, useCallback, useSyncExternalStore } from "react";
@@ -43,10 +42,6 @@ import {
 } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils/format";
 
-// ————————————————————————————————————————————————
-// TYPES
-// ————————————————————————————————————————————————
-
 type SortKey =
   | "serialNumber"
   | "productName"
@@ -62,9 +57,8 @@ type StatusFilter = "all" | SerialStatus;
 type ConditionFilter = "all" | SerialCondition;
 type WarrantyFilter = "all" | WarrantyStatus;
 
-// ————————————————————————————————————————————————
-// CONSTANTS
-// ————————————————————————————————————————————————
+const SERIAL_STATUS_VALUES: SerialStatus[] = ["in_stock", "sold", "reserved", "defective", "in_repair", "scrapped"];
+const SERIAL_CONDITION_VALUES: SerialCondition[] = ["new", "good", "damaged", "defective"];
 
 const PAGE_SIZES = [10, 20, 50] as const;
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -105,30 +99,37 @@ const TIMELINE_ICONS: Record<string, React.ElementType> = {
   Reserved: Clock,
 };
 
-// ————————————————————————————————————————————————
-// HELPERS
-// ————————————————————————————————————————————————
+const STATUS_FILTER_VALUES: readonly string[] = SERIAL_STATUS_VALUES;
+const CONDITION_FILTER_VALUES: readonly string[] = SERIAL_CONDITION_VALUES;
+const WARRANTY_FILTER_VALUES: readonly string[] = ["active", "expiring_soon", "expired", "n/a"];
+
+function isStatusFilter(candidate: string): candidate is StatusFilter {
+  return candidate === "all" || STATUS_FILTER_VALUES.includes(candidate);
+}
+
+function isConditionFilter(candidate: string): candidate is ConditionFilter {
+  return candidate === "all" || CONDITION_FILTER_VALUES.includes(candidate);
+}
+
+function isWarrantyFilter(candidate: string): candidate is WarrantyFilter {
+  return candidate === "all" || WARRANTY_FILTER_VALUES.includes(candidate);
+}
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return "\u2014";
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const parsed = new Date(dateStr);
+  return parsed.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 function formatDateShort(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" });
+  const parsed = new Date(dateStr);
+  return parsed.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "2-digit" });
 }
 
-// Get unique products that are serial-tracked
 function getSerialTrackedProducts() {
-  const productIds = new Set(SERIALIZED_ITEMS.map((s) => s.productId));
-  return PRODUCTS.filter((p) => productIds.has(p.id));
+  const productIds = new Set(SERIALIZED_ITEMS.map((serial) => serial.productId));
+  return PRODUCTS.filter((product) => productIds.has(product.id));
 }
-
-// ————————————————————————————————————————————————
-// SORT ICON
-// ————————————————————————————————————————————————
 
 function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
   if (sortKey !== col)
@@ -140,117 +141,98 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
   );
 }
 
-// ————————————————————————————————————————————————
-// PAGE
-// ————————————————————————————————————————————————
-
 export default function SerialInventoryPage() {
-  // — Mounted (portal hydration fix) —
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
-  // — Filter state —
   const [search, setSearch] = useState("");
   const [productFilter, setProductFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [conditionFilter, setConditionFilter] = useState<ConditionFilter>("all");
   const [warrantyFilter, setWarrantyFilter] = useState<WarrantyFilter>("all");
 
-  // — Sort state —
   const [sortKey, setSortKey] = useState<SortKey>("serialNumber");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  // — Pagination —
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(10);
 
-  // — Selection —
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // — Action menu —
   const [actionMenuId, setActionMenuId] = useState<string | null>(null);
 
-  // — Detail modal —
   const [detailItem, setDetailItem] = useState<SerializedItem | null>(null);
 
-  // — Local mutable state (demo) —
   const [items, setItems] = useState<SerializedItem[]>(() => [...SERIALIZED_ITEMS]);
 
   const serialProducts = useMemo(() => getSerialTrackedProducts(), []);
 
-  // ——— DERIVED DATA ———
-
   const filtered = useMemo(() => {
-    let data = [...items];
+    let serialItems = [...items];
 
-    // Search
     if (search.trim()) {
-      const q = search.toLowerCase().trim();
-      data = data.filter(
-        (s) =>
-          s.serialNumber.toLowerCase().includes(q) ||
-          s.productName.toLowerCase().includes(q) ||
-          (s.customer && s.customer.toLowerCase().includes(q))
+      const searchLower = search.toLowerCase().trim();
+      serialItems = serialItems.filter(
+        (serial) =>
+          serial.serialNumber.toLowerCase().includes(searchLower) ||
+          serial.productName.toLowerCase().includes(searchLower) ||
+          (serial.customer && serial.customer.toLowerCase().includes(searchLower))
       );
     }
 
-    // Product
     if (productFilter !== "all") {
-      data = data.filter((s) => s.productId === productFilter);
+      serialItems = serialItems.filter((serial) => serial.productId === productFilter);
     }
 
-    // Status
     if (statusFilter !== "all") {
-      data = data.filter((s) => s.status === statusFilter);
+      serialItems = serialItems.filter((serial) => serial.status === statusFilter);
     }
 
-    // Condition
     if (conditionFilter !== "all") {
-      data = data.filter((s) => s.condition === conditionFilter);
+      serialItems = serialItems.filter((serial) => serial.condition === conditionFilter);
     }
 
-    // Warranty
     if (warrantyFilter !== "all") {
-      data = data.filter((s) => getWarrantyStatus(s) === warrantyFilter);
+      serialItems = serialItems.filter((serial) => getWarrantyStatus(serial) === warrantyFilter);
     }
 
-    return data;
+    return serialItems;
   }, [search, productFilter, statusFilter, conditionFilter, warrantyFilter, items]);
 
   const sorted = useMemo(() => {
-    const data = [...filtered];
-    data.sort((a, b) => {
+    const sortableItems = [...filtered];
+    sortableItems.sort((sortLeft, sortRight) => {
       let cmp = 0;
       switch (sortKey) {
         case "serialNumber":
-          cmp = a.serialNumber.localeCompare(b.serialNumber);
+          cmp = sortLeft.serialNumber.localeCompare(sortRight.serialNumber);
           break;
         case "productName":
-          cmp = a.productName.localeCompare(b.productName);
+          cmp = sortLeft.productName.localeCompare(sortRight.productName);
           break;
         case "status":
-          cmp = a.status.localeCompare(b.status);
+          cmp = sortLeft.status.localeCompare(sortRight.status);
           break;
         case "condition":
-          cmp = a.condition.localeCompare(b.condition);
+          cmp = sortLeft.condition.localeCompare(sortRight.condition);
           break;
         case "purchaseDate":
-          cmp = a.purchaseDate.localeCompare(b.purchaseDate);
+          cmp = sortLeft.purchaseDate.localeCompare(sortRight.purchaseDate);
           break;
         case "soldDate":
-          cmp = (a.soldDate ?? "").localeCompare(b.soldDate ?? "");
+          cmp = (sortLeft.soldDate ?? "").localeCompare(sortRight.soldDate ?? "");
           break;
         case "customer":
-          cmp = (a.customer ?? "").localeCompare(b.customer ?? "");
+          cmp = (sortLeft.customer ?? "").localeCompare(sortRight.customer ?? "");
           break;
         case "warrantyStatus": {
           const order: Record<WarrantyStatus, number> = { expired: 0, expiring_soon: 1, active: 2, "n/a": 3 };
-          cmp = order[getWarrantyStatus(a)] - order[getWarrantyStatus(b)];
+          cmp = order[getWarrantyStatus(sortLeft)] - order[getWarrantyStatus(sortRight)];
           break;
         }
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
-    return data;
+    return sortableItems;
   }, [filtered, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
@@ -259,11 +241,9 @@ export default function SerialInventoryPage() {
 
   const resetPage = useCallback(() => setPage(1), []);
 
-  // ——— HANDLERS ———
-
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+      setSortDir((currentDir) => (currentDir === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
       setSortDir("asc");
@@ -280,46 +260,46 @@ export default function SerialInventoryPage() {
   };
 
   const toggleSelectAll = () => {
-    if (paginated.every((s) => selectedIds.has(s.id))) {
+    if (paginated.every((serial) => selectedIds.has(serial.id))) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(paginated.map((s) => s.id)));
+      setSelectedIds(new Set(paginated.map((serial) => serial.id)));
     }
   };
 
   const clearSelection = () => setSelectedIds(new Set());
 
-  // — Bulk status update —
+  const scrappedStatus: SerialStatus = "scrapped";
+  const defectiveCondition: SerialCondition = "defective";
+
   const handleBulkScrap = () => {
     setItems((prev) =>
-      prev.map((s) =>
-        selectedIds.has(s.id) ? { ...s, status: "scrapped" as SerialStatus, condition: "defective" as SerialCondition } : s
+      prev.map((serial) =>
+        selectedIds.has(serial.id) ? { ...serial, status: scrappedStatus, condition: defectiveCondition } : serial
       )
     );
     clearSelection();
   };
 
-  // — Single actions —
   const handleUpdateCondition = (id: string, condition: SerialCondition) => {
     setItems((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, condition } : s))
+      prev.map((serial) => (serial.id === id ? { ...serial, condition } : serial))
     );
     setActionMenuId(null);
   };
 
   const handleMarkScrapped = (id: string) => {
     setItems((prev) =>
-      prev.map((s) =>
-        s.id === id ? { ...s, status: "scrapped" as SerialStatus, condition: "defective" as SerialCondition } : s
+      prev.map((serial) =>
+        serial.id === id ? { ...serial, status: scrappedStatus, condition: defectiveCondition } : serial
       )
     );
     setActionMenuId(null);
   };
 
   const allOnPageSelected =
-    paginated.length > 0 && paginated.every((s) => selectedIds.has(s.id));
+    paginated.length > 0 && paginated.every((serial) => selectedIds.has(serial.id));
 
-  // Active filter count
   const activeFilterCount = [
     productFilter !== "all",
     statusFilter !== "all",
@@ -336,21 +316,16 @@ export default function SerialInventoryPage() {
     resetPage();
   };
 
-  // ——— STATUS SUMMARY ———
-
   const statusSummary = useMemo(() => {
     const counts: Record<string, number> = {
       in_stock: 0, sold: 0, reserved: 0, defective: 0, in_repair: 0, scrapped: 0,
     };
-    items.forEach((s) => { counts[s.status]++; });
+    items.forEach((serial) => { counts[serial.status]++; });
     return counts;
   }, [items]);
 
-  // ——— RENDER ———
-
   return (
     <div className="space-y-6">
-      {/* ━━━ PAGE HEADER ━━━ */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <motion.h1
@@ -382,38 +357,38 @@ export default function SerialInventoryPage() {
         </motion.div>
       </div>
 
-      {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ━━━ STATUS SUMMARY CARDS ━━━ */}
       <motion.div
         className="grid grid-cols-3 lg:grid-cols-6 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.08, ease }}
       >
-        {(Object.entries(STATUS_CONFIG) as [SerialStatus, typeof STATUS_CONFIG[SerialStatus]][]).map(([key, cfg]) => (
-          <button
-            key={key}
-            onClick={() => {
-              setStatusFilter(statusFilter === key ? "all" : key);
-              resetPage();
-            }}
-            className={`bg-cream-light px-3 py-3 text-center transition-colors hover:bg-blue-primary/[0.03] ${
-              statusFilter === key ? "ring-1 ring-inset ring-blue-primary/30" : ""
-            }`}
-          >
-            <span className={`font-mono text-[16px] lg:text-[20px] font-semibold leading-none block ${cfg.color}`}>
-              {statusSummary[key]}
-            </span>
-            <span className="font-mono text-[7px] lg:text-[8px] tracking-[0.12em] uppercase text-blue-primary/40 mt-1.5 block">
-              {cfg.label}
-            </span>
-          </button>
-        ))}
+        {SERIAL_STATUS_VALUES.map((statusKey) => {
+          const statusCfg = STATUS_CONFIG[statusKey];
+          return (
+            <button
+              key={statusKey}
+              onClick={() => {
+                setStatusFilter(statusFilter === statusKey ? "all" : statusKey);
+                resetPage();
+              }}
+              className={`bg-cream-light px-3 py-3 text-center transition-colors hover:bg-blue-primary/[0.03] ${
+                statusFilter === statusKey ? "ring-1 ring-inset ring-blue-primary/30" : ""
+              }`}
+            >
+              <span className={`font-mono text-[16px] lg:text-[20px] font-semibold leading-none block ${statusCfg.color}`}>
+                {statusSummary[statusKey]}
+              </span>
+              <span className="font-mono text-[7px] lg:text-[8px] tracking-[0.12em] uppercase text-blue-primary/40 mt-1.5 block">
+                {statusCfg.label}
+              </span>
+            </button>
+          );
+        })}
       </motion.div>
 
-      {/* ━━━ FILTERS ━━━ */}
       <motion.div
         className="space-y-3"
         initial={{ y: 20 }}
@@ -421,7 +396,6 @@ export default function SerialInventoryPage() {
         transition={{ duration: 0.5, delay: 0.12, ease }}
       >
         <div className="flex flex-col lg:flex-row gap-3">
-          {/* Search */}
           <div className="relative flex-1 max-w-md">
             <Search
               size={14}
@@ -432,7 +406,7 @@ export default function SerialInventoryPage() {
               type="text"
               placeholder="SEARCH SERIAL, PRODUCT, OR CUSTOMER..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); resetPage(); }}
+              onChange={(changeEvent) => { setSearch(changeEvent.target.value); resetPage(); }}
               className="w-full h-9 pl-9 pr-3 bg-cream-light border border-blue-primary/10 font-mono text-[11px] tracking-[0.08em] uppercase text-blue-primary placeholder:text-blue-primary/25 focus:outline-none focus:border-blue-primary/30 transition-colors"
             />
             {search && (
@@ -445,24 +419,27 @@ export default function SerialInventoryPage() {
             )}
           </div>
 
-          {/* Filter pills */}
           <div className="grid grid-cols-2 lg:flex lg:flex-wrap gap-2">
-            {/* Product */}
             <select
               value={productFilter}
-              onChange={(e) => { setProductFilter(e.target.value); resetPage(); }}
+              onChange={(changeEvent) => { setProductFilter(changeEvent.target.value); resetPage(); }}
               className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[130px]"
             >
               <option value="all">All Products</option>
-              {serialProducts.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
+              {serialProducts.map((product) => (
+                <option key={product.id} value={product.id}>{product.name}</option>
               ))}
             </select>
 
-            {/* Status */}
             <select
               value={statusFilter}
-              onChange={(e) => { setStatusFilter(e.target.value as StatusFilter); resetPage(); }}
+              onChange={(changeEvent) => {
+                const selected = changeEvent.target.value;
+                if (isStatusFilter(selected)) {
+                  setStatusFilter(selected);
+                  resetPage();
+                }
+              }}
               className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[120px]"
             >
               <option value="all">All Status</option>
@@ -474,10 +451,15 @@ export default function SerialInventoryPage() {
               <option value="scrapped">Scrapped</option>
             </select>
 
-            {/* Condition */}
             <select
               value={conditionFilter}
-              onChange={(e) => { setConditionFilter(e.target.value as ConditionFilter); resetPage(); }}
+              onChange={(changeEvent) => {
+                const selected = changeEvent.target.value;
+                if (isConditionFilter(selected)) {
+                  setConditionFilter(selected);
+                  resetPage();
+                }
+              }}
               className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[120px]"
             >
               <option value="all">All Condition</option>
@@ -487,10 +469,15 @@ export default function SerialInventoryPage() {
               <option value="defective">Defective</option>
             </select>
 
-            {/* Warranty */}
             <select
               value={warrantyFilter}
-              onChange={(e) => { setWarrantyFilter(e.target.value as WarrantyFilter); resetPage(); }}
+              onChange={(changeEvent) => {
+                const selected = changeEvent.target.value;
+                if (isWarrantyFilter(selected)) {
+                  setWarrantyFilter(selected);
+                  resetPage();
+                }
+              }}
               className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[130px]"
             >
               <option value="all">All Warranty</option>
@@ -500,7 +487,6 @@ export default function SerialInventoryPage() {
               <option value="n/a">N/A</option>
             </select>
 
-            {/* Clear filters */}
             {activeFilterCount > 0 && (
               <button
                 onClick={clearFilters}
@@ -512,7 +498,6 @@ export default function SerialInventoryPage() {
           </div>
         </div>
 
-        {/* Bulk actions bar */}
         {selectedIds.size > 0 && (
           <motion.div
             className="bg-blue-primary text-cream-primary"
@@ -545,14 +530,12 @@ export default function SerialInventoryPage() {
         )}
       </motion.div>
 
-      {/* ━━━ TABLE ━━━ */}
       <motion.div
         className="border border-blue-primary/10 bg-cream-light overflow-hidden"
         initial={{ y: 30 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.15, ease }}
       >
-        {/* Table header label */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-blue-primary/8">
           <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">
             Serial Number Registry
@@ -560,7 +543,6 @@ export default function SerialInventoryPage() {
           <span className="font-mono text-[9px] tracking-[0.1em] text-blue-primary/20">/001</span>
         </div>
 
-        {/* Scrollable table */}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1100px]">
             <thead>
@@ -627,124 +609,115 @@ export default function SerialInventoryPage() {
                   </td>
                 </tr>
               ) : (
-                paginated.map((item) => {
-                  const isSelected = selectedIds.has(item.id);
-                  const ws = getWarrantyStatus(item);
-                  const wDays = getWarrantyDaysRemaining(item);
-                  const sCfg = STATUS_CONFIG[item.status];
-                  const cCfg = CONDITION_CONFIG[item.condition];
-                  const wCfg = WARRANTY_CONFIG[ws];
+                paginated.map((serialItem) => {
+                  const isSelected = selectedIds.has(serialItem.id);
+                  const warrantyStatus = getWarrantyStatus(serialItem);
+                  const warrantyDays = getWarrantyDaysRemaining(serialItem);
+                  const statusConfig = STATUS_CONFIG[serialItem.status];
+                  const conditionConfig = CONDITION_CONFIG[serialItem.condition];
+                  const warrantyConfig = WARRANTY_CONFIG[warrantyStatus];
 
                   return (
                     <tr
-                      key={item.id}
+                      key={serialItem.id}
                       className={`border-b border-blue-primary/6 transition-colors duration-150 h-14 ${
                         isSelected ? "bg-blue-primary/[0.03]" : "hover:bg-blue-primary/[0.02]"
                       }`}
                     >
-                      {/* Checkbox */}
                       <td className="w-12 px-4 align-middle">
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => toggleSelect(item.id)}
+                          onChange={() => toggleSelect(serialItem.id)}
                           className="w-3.5 h-3.5 accent-blue-primary cursor-pointer block"
                         />
                       </td>
-                      {/* Serial # */}
                       <td className="px-3 align-middle">
                         <button
-                          onClick={() => setDetailItem(item)}
+                          onClick={() => setDetailItem(serialItem)}
                           className="font-mono text-[10px] tracking-[0.06em] uppercase text-blue-primary hover:underline underline-offset-2 decoration-blue-primary/30 transition-colors text-left"
                         >
-                          {item.serialNumber}
+                          {serialItem.serialNumber}
                         </button>
                       </td>
-                      {/* Product */}
                       <td className="px-3 align-middle">
                         <p className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary truncate max-w-[200px] leading-none">
-                          {item.productName}
+                          {serialItem.productName}
                         </p>
                         <span className="font-mono text-[8px] tracking-[0.08em] uppercase text-blue-primary/25 mt-1 block leading-none">
-                          {formatCurrency(item.purchaseCost)} cost
+                          {formatCurrency(serialItem.purchaseCost)} cost
                         </span>
                       </td>
-                      {/* Status */}
                       <td className="px-3 align-middle text-center">
-                        <span className={`inline-block font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${sCfg.color} ${sCfg.bg}`}>
-                          {sCfg.label}
+                        <span className={`inline-block font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${statusConfig.color} ${statusConfig.bg}`}>
+                          {statusConfig.label}
                         </span>
                       </td>
-                      {/* Condition */}
                       <td className="px-3 align-middle text-center">
-                        <span className={`inline-block font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${cCfg.color} ${cCfg.bg}`}>
-                          {cCfg.label}
+                        <span className={`inline-block font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${conditionConfig.color} ${conditionConfig.bg}`}>
+                          {conditionConfig.label}
                         </span>
                       </td>
-                      {/* Purchase date */}
                       <td className="px-3 align-middle">
                         <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/50">
-                          {formatDate(item.purchaseDate)}
+                          {formatDate(serialItem.purchaseDate)}
                         </span>
                       </td>
-                      {/* Customer */}
                       <td className="px-3 align-middle">
                         <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/50">
-                          {item.customer ?? "\u2014"}
+                          {serialItem.customer ?? "\u2014"}
                         </span>
                       </td>
-                      {/* Warranty */}
                       <td className="px-3 align-middle text-center">
                         <div className="flex items-center justify-center gap-1.5">
-                          <span className={`inline-block font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${wCfg.color} ${wCfg.bg}`}>
-                            {wCfg.label}
+                          <span className={`inline-block font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${warrantyConfig.color} ${warrantyConfig.bg}`}>
+                            {warrantyConfig.label}
                           </span>
-                          {wDays !== null && wDays > 0 && wDays <= 30 && (
+                          {warrantyDays !== null && warrantyDays > 0 && warrantyDays <= 30 && (
                             <span className="font-mono text-[7px] tracking-[0.08em] text-amber-600 leading-none">
-                              {wDays}d
+                              {warrantyDays}d
                             </span>
                           )}
                         </div>
                       </td>
-                      {/* Actions */}
                       <td className="w-12 px-3 align-middle text-center relative">
                         <button
-                          onClick={() => setActionMenuId(actionMenuId === item.id ? null : item.id)}
+                          onClick={() => setActionMenuId(actionMenuId === serialItem.id ? null : serialItem.id)}
                           className="p-1 text-blue-primary/30 hover:text-blue-primary transition-colors"
                         >
                           <MoreHorizontal size={14} strokeWidth={1.5} />
                         </button>
-                        {actionMenuId === item.id && (
+                        {actionMenuId === serialItem.id && (
                           <>
                             <div className="fixed inset-0 z-10" onClick={() => setActionMenuId(null)} />
                             <div className="absolute right-3 top-full z-20 w-40 bg-cream-primary border border-blue-primary/10 shadow-sm py-1">
                               <button
-                                onClick={() => { setActionMenuId(null); setDetailItem(item); }}
+                                onClick={() => { setActionMenuId(null); setDetailItem(serialItem); }}
                                 className="w-full flex items-center gap-2 px-3 py-2 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/60 hover:bg-blue-primary/5 hover:text-blue-primary transition-colors"
                               >
                                 <Eye size={12} strokeWidth={1.5} /> View Details
                               </button>
-                              {item.status !== "scrapped" && (
+                              {serialItem.status !== "scrapped" && (
                                 <>
                                   <div className="h-px bg-blue-primary/8 mx-2 my-1" />
                                   <p className="px-3 pt-1.5 pb-1 font-mono text-[7px] tracking-[0.15em] uppercase text-blue-primary/30">
                                     Set Condition
                                   </p>
-                                  {(["new", "good", "damaged", "defective"] as SerialCondition[]).map((c) => {
-                                    const cc = CONDITION_CONFIG[c];
-                                    const isActive = item.condition === c;
+                                  {SERIAL_CONDITION_VALUES.map((conditionKey) => {
+                                    const conditionCfg = CONDITION_CONFIG[conditionKey];
+                                    const isActive = serialItem.condition === conditionKey;
                                     return (
                                       <button
-                                        key={c}
-                                        onClick={() => handleUpdateCondition(item.id, c)}
+                                        key={conditionKey}
+                                        onClick={() => handleUpdateCondition(serialItem.id, conditionKey)}
                                         className={`w-full flex items-center gap-2 px-3 py-1.5 font-mono text-[9px] tracking-[0.1em] uppercase transition-colors ${
                                           isActive
-                                            ? `${cc.color} ${cc.bg}`
+                                            ? `${conditionCfg.color} ${conditionCfg.bg}`
                                             : "text-blue-primary/50 hover:bg-blue-primary/5 hover:text-blue-primary"
                                         }`}
                                       >
                                         <CircleDot size={10} strokeWidth={isActive ? 2.5 : 1.5} />
-                                        {cc.label}
+                                        {conditionCfg.label}
                                         {isActive && (
                                           <span className="ml-auto font-mono text-[7px] tracking-[0.1em] opacity-50">current</span>
                                         )}
@@ -753,7 +726,7 @@ export default function SerialInventoryPage() {
                                   })}
                                   <div className="h-px bg-blue-primary/8 mx-2 my-1" />
                                   <button
-                                    onClick={() => handleMarkScrapped(item.id)}
+                                    onClick={() => handleMarkScrapped(serialItem.id)}
                                     className="w-full flex items-center gap-2 px-3 py-2 font-mono text-[9px] tracking-[0.1em] uppercase text-error/60 hover:bg-error/5 hover:text-error transition-colors"
                                   >
                                     <Trash2 size={12} strokeWidth={1.5} /> Mark Scrapped
@@ -772,7 +745,6 @@ export default function SerialInventoryPage() {
           </table>
         </div>
 
-        {/* ━━━ PAGINATION ━━━ */}
         <div className="flex items-center justify-between px-5 py-3 border-t border-blue-primary/8">
           <div className="flex items-center gap-3">
             <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/30">
@@ -781,53 +753,53 @@ export default function SerialInventoryPage() {
             <div className="w-px h-3 bg-blue-primary/10" />
             <select
               value={pageSize}
-              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+              onChange={(changeEvent) => { setPageSize(Number(changeEvent.target.value)); setPage(1); }}
               className="h-7 px-2 bg-transparent border border-blue-primary/10 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/50 focus:outline-none cursor-pointer appearance-none"
             >
-              {PAGE_SIZES.map((s) => (
-                <option key={s} value={s}>{s} rows</option>
+              {PAGE_SIZES.map((sizeOption) => (
+                <option key={sizeOption} value={sizeOption}>{sizeOption} rows</option>
               ))}
             </select>
           </div>
 
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
               disabled={safePage <= 1}
               className="w-7 h-7 flex items-center justify-center border border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 disabled:opacity-20 disabled:pointer-events-none transition-colors"
             >
               <ChevronLeft size={12} strokeWidth={2} />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((p) => {
+            {Array.from({ length: totalPages }, (_, pageIndex) => pageIndex + 1)
+              .filter((pageNum) => {
                 if (totalPages <= 5) return true;
-                if (p === 1 || p === totalPages) return true;
-                if (Math.abs(p - safePage) <= 1) return true;
+                if (pageNum === 1 || pageNum === totalPages) return true;
+                if (Math.abs(pageNum - safePage) <= 1) return true;
                 return false;
               })
-              .map((p, idx, arr) => {
-                const prev = arr[idx - 1];
-                const showEllipsis = prev != null && p - prev > 1;
+              .map((pageNum, visibleIndex, visiblePages) => {
+                const prevPage = visiblePages[visibleIndex - 1];
+                const showEllipsis = prevPage != null && pageNum - prevPage > 1;
                 return (
-                  <span key={p} className="flex items-center">
+                  <span key={pageNum} className="flex items-center">
                     {showEllipsis && (
                       <span className="w-7 h-7 flex items-center justify-center font-mono text-[9px] text-blue-primary/20">...</span>
                     )}
                     <button
-                      onClick={() => setPage(p)}
+                      onClick={() => setPage(pageNum)}
                       className={`w-7 h-7 flex items-center justify-center font-mono text-[10px] tracking-[0.05em] border transition-colors ${
-                        p === safePage
+                        pageNum === safePage
                           ? "bg-blue-primary text-cream-primary border-blue-primary"
                           : "border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30"
                       }`}
                     >
-                      {p}
+                      {pageNum}
                     </button>
                   </span>
                 );
               })}
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
               disabled={safePage >= totalPages}
               className="w-7 h-7 flex items-center justify-center border border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 disabled:opacity-20 disabled:pointer-events-none transition-colors"
             >
@@ -837,19 +809,16 @@ export default function SerialInventoryPage() {
         </div>
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between pt-4">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">[INV.SER.END]</span>
         <div className="h-px flex-1 bg-blue-primary/8" />
       </div>
 
-      {/* ━━━ DETAIL MODAL ━━━ */}
       {mounted && createPortal(
         <AnimatePresence>
           {detailItem && (
             <>
-              {/* Backdrop */}
               <motion.div
                 className="fixed inset-0 bg-blue-primary/20 z-40"
                 initial={{ opacity: 0 }}
@@ -857,7 +826,6 @@ export default function SerialInventoryPage() {
                 exit={{ opacity: 0 }}
                 onClick={() => setDetailItem(null)}
               />
-              {/* Panel */}
               <motion.div
                 className="fixed inset-0 z-50 flex items-center justify-center p-4"
                 initial={{ opacity: 0 }}
@@ -870,9 +838,8 @@ export default function SerialInventoryPage() {
                   animate={{ y: 0, scale: 1 }}
                   exit={{ y: 20, scale: 0.97 }}
                   transition={{ duration: 0.3, ease }}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(clickEvent) => clickEvent.stopPropagation()}
                 >
-                  {/* Modal header */}
                   <div className="flex items-center justify-between px-5 py-3 border-b border-blue-primary/8">
                     <div className="flex items-center gap-3 min-w-0">
                       <Barcode size={16} strokeWidth={1.5} className="text-blue-primary/40 shrink-0" />
@@ -888,9 +855,7 @@ export default function SerialInventoryPage() {
                     </button>
                   </div>
 
-                  {/* Modal body */}
                   <div className="p-5 space-y-5 overflow-y-auto flex-1">
-                    {/* Status + condition + warranty row */}
                     <div className="grid grid-cols-3 gap-px bg-blue-primary/10 border border-blue-primary/10">
                       <div className="bg-cream-light px-4 py-3 text-center">
                         <span className="font-mono text-[8px] tracking-[0.15em] uppercase text-blue-primary/40 block mb-1.5">Status</span>
@@ -907,17 +872,17 @@ export default function SerialInventoryPage() {
                       <div className="bg-cream-light px-4 py-3 text-center">
                         <span className="font-mono text-[8px] tracking-[0.15em] uppercase text-blue-primary/40 block mb-1.5">Warranty</span>
                         {(() => {
-                          const ws = getWarrantyStatus(detailItem);
-                          const wDays = getWarrantyDaysRemaining(detailItem);
-                          const wCfg = WARRANTY_CONFIG[ws];
+                          const warrantyStatus = getWarrantyStatus(detailItem);
+                          const warrantyDays = getWarrantyDaysRemaining(detailItem);
+                          const warrantyConfig = WARRANTY_CONFIG[warrantyStatus];
                           return (
                             <div>
-                              <span className={`inline-block font-mono text-[9px] tracking-[0.12em] uppercase px-2.5 py-1 ${wCfg.color} ${wCfg.bg}`}>
-                                {wCfg.label}
+                              <span className={`inline-block font-mono text-[9px] tracking-[0.12em] uppercase px-2.5 py-1 ${warrantyConfig.color} ${warrantyConfig.bg}`}>
+                                {warrantyConfig.label}
                               </span>
-                              {wDays !== null && (
-                                <span className={`font-mono text-[8px] tracking-[0.06em] block mt-1 ${wDays <= 30 ? "text-amber-600" : "text-blue-primary/30"}`}>
-                                  {wDays > 0 ? `${wDays} days remaining` : `Expired ${Math.abs(wDays)} days ago`}
+                              {warrantyDays !== null && (
+                                <span className={`font-mono text-[8px] tracking-[0.06em] block mt-1 ${warrantyDays <= 30 ? "text-amber-600" : "text-blue-primary/30"}`}>
+                                  {warrantyDays > 0 ? `${warrantyDays} days remaining` : `Expired ${Math.abs(warrantyDays)} days ago`}
                                 </span>
                               )}
                             </div>
@@ -926,32 +891,30 @@ export default function SerialInventoryPage() {
                       </div>
                     </div>
 
-                    {/* Product + Purchase info */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-3">
                         <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 pb-1 border-b border-blue-primary/8">
                           Product Info
                         </p>
-                        <DetailRow icon={Package} label="Product" value={detailItem.productName} />
-                        <DetailRow icon={Tag} label="Cost" value={formatCurrency(detailItem.purchaseCost)} />
+                        <DetailRow icon={Package} label="Product" displayText={detailItem.productName} />
+                        <DetailRow icon={Tag} label="Cost" displayText={formatCurrency(detailItem.purchaseCost)} />
                         {detailItem.soldPrice !== null && detailItem.soldPrice !== undefined && (
-                          <DetailRow icon={DollarSign} label="Sold For" value={formatCurrency(detailItem.soldPrice)} />
+                          <DetailRow icon={DollarSign} label="Sold For" displayText={formatCurrency(detailItem.soldPrice)} />
                         )}
                       </div>
                       <div className="space-y-3">
                         <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 pb-1 border-b border-blue-primary/8">
                           Transaction Info
                         </p>
-                        <DetailRow icon={Truck} label="Supplier" value={detailItem.supplier} />
-                        <DetailRow icon={CalendarDays} label="Purchased" value={formatDate(detailItem.purchaseDate)} />
-                        <DetailRow icon={User} label="Customer" value={detailItem.customer ?? "\u2014"} />
+                        <DetailRow icon={Truck} label="Supplier" displayText={detailItem.supplier} />
+                        <DetailRow icon={CalendarDays} label="Purchased" displayText={formatDate(detailItem.purchaseDate)} />
+                        <DetailRow icon={User} label="Customer" displayText={detailItem.customer ?? "\u2014"} />
                         {detailItem.soldDate && (
-                          <DetailRow icon={CalendarDays} label="Sold" value={formatDate(detailItem.soldDate)} />
+                          <DetailRow icon={CalendarDays} label="Sold" displayText={formatDate(detailItem.soldDate)} />
                         )}
                       </div>
                     </div>
 
-                    {/* Notes */}
                     {detailItem.notes && (
                       <div>
                         <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 pb-1 border-b border-blue-primary/8 mb-2">
@@ -965,18 +928,16 @@ export default function SerialInventoryPage() {
                       </div>
                     )}
 
-                    {/* Timeline */}
                     <div>
                       <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 pb-1 border-b border-blue-primary/8 mb-3">
                         Lifecycle Timeline
                       </p>
                       <div className="space-y-0">
-                        {detailItem.timeline.map((event, i) => {
+                        {detailItem.timeline.map((event, eventIndex) => {
                           const TimelineIcon = TIMELINE_ICONS[event.action] ?? CircleDot;
-                          const isLast = i === detailItem.timeline.length - 1;
+                          const isLast = eventIndex === detailItem.timeline.length - 1;
                           return (
-                            <div key={i} className="flex gap-3">
-                              {/* Line + dot */}
+                            <div key={eventIndex} className="flex gap-3">
                               <div className="flex flex-col items-center shrink-0">
                                 <div className={`w-6 h-6 flex items-center justify-center border ${
                                   isLast ? "border-blue-primary/30 bg-blue-primary/5" : "border-blue-primary/10 bg-cream-light"
@@ -985,7 +946,6 @@ export default function SerialInventoryPage() {
                                 </div>
                                 {!isLast && <div className="w-px flex-1 min-h-[16px] bg-blue-primary/10" />}
                               </div>
-                              {/* Content */}
                               <div className={`pb-3 min-w-0 ${isLast ? "" : ""}`}>
                                 <div className="flex items-center gap-2">
                                   <span className={`font-mono text-[10px] tracking-[0.05em] uppercase leading-none ${
@@ -1008,7 +968,6 @@ export default function SerialInventoryPage() {
                     </div>
                   </div>
 
-                  {/* Modal footer */}
                   <div className="flex items-center justify-end px-5 py-3 border-t border-blue-primary/8">
                     <button
                       onClick={() => setDetailItem(null)}
@@ -1028,18 +987,14 @@ export default function SerialInventoryPage() {
   );
 }
 
-// ————————————————————————————————————————————————
-// DETAIL ROW COMPONENT
-// ————————————————————————————————————————————————
-
 function DetailRow({
   icon: Icon,
   label,
-  value,
+  displayText,
 }: {
   icon: React.ElementType;
   label: string;
-  value: string;
+  displayText: string;
 }) {
   return (
     <div className="flex items-start gap-2">
@@ -1049,7 +1004,7 @@ function DetailRow({
           {label}
         </span>
         <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/70 block mt-0.5 leading-snug truncate">
-          {value}
+          {displayText}
         </span>
       </div>
     </div>

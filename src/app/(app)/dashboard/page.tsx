@@ -1,4 +1,3 @@
-// src/app/(app)/dashboard/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -26,7 +25,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* ━━━ PAGE HEADER ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <motion.h1
@@ -67,10 +65,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ━━━ KPI CARDS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div
         key={period}
         className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4"
@@ -90,28 +86,23 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* ━━━ ROW 2: Sales Trend (full width) ━━━━━━━━ */}
       <SalesTrendChart period={period} />
 
-      {/* ━━━ ROW 3: Category + Payment + Customers ━━ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <RevenueCategoryChart period={period} />
         <PaymentMethodChart period={period} />
         <TopCustomers period={period} />
       </div>
 
-      {/* ━━━ ROW 4: Top Products + Stock Levels ━━━━━ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <TopProductsChart period={period} />
         <StockLevelsChart />
       </div>
 
-      {/* ━━━ ROW 5: Low Stock + Warranty + Activity ━━ */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <LowStockAlerts />
         <WarrantyAlerts />
 
-        {/* Recent Activity */}
         <motion.div
           className="border border-blue-primary/10 bg-cream-light p-5 flex flex-col"
           initial={{ y: 30 }}
@@ -149,7 +140,6 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Footer */}
           <div className="mt-auto pt-3 shrink-0">
             <Link
               href="/sales"
@@ -161,7 +151,6 @@ export default function DashboardPage() {
         </motion.div>
       </div>
 
-      {/* ━━━ QUICK ACTIONS ━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <motion.div
         initial={{ y: 20 }}
         animate={{ y: 0 }}
@@ -188,7 +177,6 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between pt-4">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">

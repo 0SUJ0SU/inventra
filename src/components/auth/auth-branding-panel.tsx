@@ -1,4 +1,3 @@
-// src/components/auth/auth-branding-panel.tsx
 "use client";
 
 import Link from "next/link";
@@ -7,7 +6,6 @@ import { DitherEffect } from "@/components/shaders/dither-effect";
 export function AuthBrandingPanel() {
   return (
     <div className="hidden lg:block fixed top-0 left-0 w-[45%] h-screen bg-blue-primary overflow-hidden z-20">
-      {/* Halftone dithered image */}
       <DitherEffect
         src="/pictures/auth/auth-image.jpg"
         alt="Tech workspace"
@@ -25,7 +23,6 @@ export function AuthBrandingPanel() {
         waveShape="warp"
       />
 
-      {/* Logo block */}
       <div className="relative z-10 p-4">
         <Link
           href="/"

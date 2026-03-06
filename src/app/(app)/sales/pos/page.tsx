@@ -1,7 +1,6 @@
-// src/app/(app)/sales/pos/page.tsx
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -32,10 +31,6 @@ import {
 } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils/format";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────────────────────────────────────────
-
 interface CartItem {
   product: Product;
   qty: number;
@@ -58,10 +53,6 @@ interface CompletedSale {
   change: number;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CONSTANTS
-// ─────────────────────────────────────────────────────────────────────────────
-
 const ease = [0.16, 1, 0.3, 1] as const;
 const TAX_RATE = 0.08;
 
@@ -76,13 +67,9 @@ const PAYMENT_METHODS: {
 ];
 
 function generateSaleNumber(): string {
-  const n = Math.floor(Math.random() * 9000) + 1000;
-  return `SL-${new Date().getFullYear()}-${n}`;
+  const randomSuffix = Math.floor(Math.random() * 9000) + 1000;
+  return `SL-${new Date().getFullYear()}-${randomSuffix}`;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SERIAL PICKER MODAL
-// ─────────────────────────────────────────────────────────────────────────────
 
 function SerialPickerModal({
   product,
@@ -98,20 +85,20 @@ function SerialPickerModal({
   const available = useMemo(
     () =>
       SERIALIZED_ITEMS.filter(
-        (s) => s.productId === product.id && s.status === "in_stock"
+        (serial) => serial.productId === product.id && serial.status === "in_stock"
       ),
     [product.id]
   );
 
   const [selected, setSelected] = useState<Set<string>>(
-    new Set(alreadySelected.map((s) => s.id))
+    new Set(alreadySelected.map((serial) => serial.id))
   );
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
     if (!search.trim()) return available;
-    const q = search.toLowerCase();
-    return available.filter((s) => s.serialNumber.toLowerCase().includes(q));
+    const lowerQuery = search.toLowerCase();
+    return available.filter((serial) => serial.serialNumber.toLowerCase().includes(lowerQuery));
   }, [available, search]);
 
   const toggle = (id: string) => {
@@ -138,7 +125,6 @@ function SerialPickerModal({
         exit={{ y: 8, scale: 0.99 }}
         transition={{ duration: 0.22, ease }}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-blue-primary/10">
           <div>
             <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40">
@@ -156,7 +142,6 @@ function SerialPickerModal({
           </button>
         </div>
 
-        {/* Progress + search */}
         <div className="px-6 pt-4 pb-3 space-y-3">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[9px] tracking-[0.12em] uppercase text-blue-primary/40">
@@ -175,14 +160,13 @@ function SerialPickerModal({
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
               placeholder="SEARCH SERIAL NUMBER..."
               className="w-full h-9 pl-9 pr-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.08em] uppercase text-blue-primary placeholder:text-blue-primary/25 focus:outline-none focus:border-blue-primary/30 transition-colors"
             />
           </div>
         </div>
 
-        {/* Serial list */}
         <div className="px-6 max-h-60 overflow-y-auto pb-4 space-y-1">
           {filtered.length === 0 ? (
             <div className="py-8 text-center">
@@ -191,12 +175,12 @@ function SerialPickerModal({
               </p>
             </div>
           ) : (
-            filtered.map((s) => {
-              const isSelected = selected.has(s.id);
+            filtered.map((serial) => {
+              const isSelected = selected.has(serial.id);
               return (
                 <button
-                  key={s.id}
-                  onClick={() => toggle(s.id)}
+                  key={serial.id}
+                  onClick={() => toggle(serial.id)}
                   className={`w-full flex items-center justify-between px-3 h-10 border transition-colors ${
                     isSelected
                       ? "border-blue-primary bg-blue-primary/5"
@@ -204,7 +188,7 @@ function SerialPickerModal({
                   }`}
                 >
                   <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-blue-primary">
-                    {s.serialNumber}
+                    {serial.serialNumber}
                   </span>
                   <div
                     className={`w-4 h-4 border flex items-center justify-center transition-colors ${
@@ -227,7 +211,6 @@ function SerialPickerModal({
           )}
         </div>
 
-        {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-blue-primary/10 bg-cream-light">
           <button
             onClick={onClose}
@@ -237,8 +220,8 @@ function SerialPickerModal({
           </button>
           <button
             onClick={() => {
-              const items = SERIALIZED_ITEMS.filter((s) => selected.has(s.id));
-              onConfirm(items);
+              const confirmedSerials = SERIALIZED_ITEMS.filter((serial) => selected.has(serial.id));
+              onConfirm(confirmedSerials);
             }}
             disabled={!canConfirm}
             className="h-9 px-5 bg-blue-primary text-cream-primary font-mono text-[9px] tracking-[0.12em] uppercase disabled:opacity-30 disabled:cursor-not-allowed hover:bg-blue-dark transition-colors"
@@ -251,10 +234,6 @@ function SerialPickerModal({
     document.body
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PAYMENT MODAL
-// ─────────────────────────────────────────────────────────────────────────────
 
 function PaymentModal({
   subtotal,
@@ -295,7 +274,6 @@ function PaymentModal({
         exit={{ y: 8, scale: 0.99 }}
         transition={{ duration: 0.22, ease }}
       >
-        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-blue-primary/10">
           <div>
             <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40">
@@ -313,7 +291,6 @@ function PaymentModal({
           </button>
         </div>
 
-        {/* Order summary */}
         <div className="px-6 py-4 border-b border-blue-primary/10">
           {hasBreakdown && (
             <div className="space-y-1.5 mb-3">
@@ -358,7 +335,6 @@ function PaymentModal({
           </div>
         </div>
 
-        {/* Payment method */}
         <div className="px-6 pt-4 pb-3">
           <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 mb-2">
             Payment Method
@@ -383,7 +359,6 @@ function PaymentModal({
           </div>
         </div>
 
-        {/* Cash input */}
         {method === "cash" && (
           <div className="px-6 pb-4 space-y-2">
             <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40">
@@ -392,7 +367,7 @@ function PaymentModal({
             <input
               type="number"
               value={amountStr}
-              onChange={(e) => setAmountStr(e.target.value)}
+              onChange={(event) => setAmountStr(event.target.value)}
               placeholder="0.00"
               autoFocus
               className="w-full h-10 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[15px] tracking-[0.04em] text-blue-primary placeholder:text-blue-primary/20 focus:outline-none focus:border-blue-primary/30 transition-colors"
@@ -410,7 +385,6 @@ function PaymentModal({
           </div>
         )}
 
-        {/* Footer */}
         <div className="flex items-center justify-between px-6 py-4 border-t border-blue-primary/10 bg-cream-light">
           <button
             onClick={onClose}
@@ -435,10 +409,6 @@ function PaymentModal({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// RECEIPT MODAL
-// ─────────────────────────────────────────────────────────────────────────────
-
 function ReceiptModal({
   sale,
   onNewSale,
@@ -461,7 +431,6 @@ function ReceiptModal({
         animate={{ y: 0, scale: 1 }}
         transition={{ duration: 0.22, ease }}
       >
-        {/* Header */}
         <div className="px-6 py-4 border-b border-blue-primary/10 text-center shrink-0">
           <div className="flex items-center justify-center mb-2">
             <div className="w-6 h-6 bg-blue-primary flex items-center justify-center">
@@ -479,23 +448,22 @@ function ReceiptModal({
           </p>
         </div>
 
-        {/* Items */}
         <div className="overflow-y-auto flex-1 divide-y divide-blue-primary/6">
-          {sale.items.map((item) => (
-            <div key={item.product.id} className="px-6 py-3">
+          {sale.items.map((cartEntry) => (
+            <div key={cartEntry.product.id} className="px-6 py-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary truncate">
-                    {item.product.name}
+                    {cartEntry.product.name}
                   </p>
-                  {item.selectedSerials.length > 0 && (
+                  {cartEntry.selectedSerials.length > 0 && (
                     <div className="mt-1 space-y-0.5">
-                      {item.selectedSerials.map((s) => (
+                      {cartEntry.selectedSerials.map((serial) => (
                         <p
-                          key={s.id}
+                          key={serial.id}
                           className="font-mono text-[8px] tracking-[0.06em] uppercase text-blue-primary/30"
                         >
-                          ↳ {s.serialNumber}
+                          ↳ {serial.serialNumber}
                         </p>
                       ))}
                     </div>
@@ -503,10 +471,10 @@ function ReceiptModal({
                 </div>
                 <div className="text-right shrink-0">
                   <p className="font-mono text-[9px] tracking-[0.04em] text-blue-primary/50">
-                    {item.qty} × {formatCurrency(item.product.sellingPrice)}
+                    {cartEntry.qty} × {formatCurrency(cartEntry.product.sellingPrice)}
                   </p>
                   <p className="font-mono text-[11px] font-semibold text-blue-primary">
-                    {formatCurrency(item.qty * item.product.sellingPrice)}
+                    {formatCurrency(cartEntry.qty * cartEntry.product.sellingPrice)}
                   </p>
                 </div>
               </div>
@@ -514,7 +482,6 @@ function ReceiptModal({
           ))}
         </div>
 
-        {/* Totals */}
         <div className="px-6 py-3 border-t border-blue-primary/10 space-y-1.5 shrink-0">
           {(sale.discount > 0 || sale.tax > 0) && (
             <>
@@ -577,7 +544,6 @@ function ReceiptModal({
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-4 border-t border-blue-primary/10 bg-cream-light flex items-center gap-3 shrink-0">
           <button
             onClick={() => window.print()}
@@ -600,79 +566,67 @@ function ReceiptModal({
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN PAGE
-// ─────────────────────────────────────────────────────────────────────────────
-
 export default function POSPage() {
-  // ── Product browser ──
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
 
-  // ── Cart ──
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discountType, setDiscountType] = useState<DiscountType>("percent");
   const [discountValue, setDiscountValue] = useState("");
   const [taxEnabled, setTaxEnabled] = useState(false);
 
-  // ── Modals ──
   const [serialPickerFor, setSerialPickerFor] = useState<{
     product: Product;
   } | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [completedSale, setCompletedSale] = useState<CompletedSale | null>(null);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
-  // ── Filtered products ──
   const filteredProducts = useMemo(() => {
-    let data = PRODUCTS.filter((p) => p.isActive);
+    let matchingProducts = PRODUCTS.filter((product) => product.isActive);
     if (activeCategory !== "all")
-      data = data.filter((p) => p.categoryId === activeCategory);
+      matchingProducts = matchingProducts.filter((product) => product.categoryId === activeCategory);
     if (search.trim()) {
-      const q = search.toLowerCase();
-      data = data.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
+      const lowerQuery = search.toLowerCase();
+      matchingProducts = matchingProducts.filter(
+        (product) =>
+          product.name.toLowerCase().includes(lowerQuery) || product.sku.toLowerCase().includes(lowerQuery)
       );
     }
-    return data;
+    return matchingProducts;
   }, [search, activeCategory]);
 
-  // ── Calculations ──
   const subtotal = useMemo(
     () =>
-      cart.reduce((acc, item) => acc + item.qty * item.product.sellingPrice, 0),
+      cart.reduce((acc, cartEntry) => acc + cartEntry.qty * cartEntry.product.sellingPrice, 0),
     [cart]
   );
 
   const discountAmount = useMemo(() => {
-    const val = parseFloat(discountValue) || 0;
+    const parsedDiscount = parseFloat(discountValue) || 0;
     if (discountType === "percent")
-      return Math.min(subtotal, (subtotal * val) / 100);
-    return Math.min(subtotal, val);
+      return Math.min(subtotal, (subtotal * parsedDiscount) / 100);
+    return Math.min(subtotal, parsedDiscount);
   }, [subtotal, discountValue, discountType]);
 
   const taxableAmount = subtotal - discountAmount;
   const taxAmount = taxEnabled ? taxableAmount * TAX_RATE : 0;
   const total = taxableAmount + taxAmount;
-  const cartItemCount = cart.reduce((acc, i) => acc + i.qty, 0);
+  const cartItemCount = cart.reduce((acc, cartEntry) => acc + cartEntry.qty, 0);
 
-  // ── Stock helpers ──
   const getAvailableSerialCount = (productId: string) =>
     SERIALIZED_ITEMS.filter(
-      (s) => s.productId === productId && s.status === "in_stock"
+      (serial) => serial.productId === productId && serial.status === "in_stock"
     ).length;
 
   const getStockDisplay = (product: Product) => {
     if (product.isSerialTracked) {
-      const n = getAvailableSerialCount(product.id);
-      return { count: n, label: `${n} avail` };
+      const availableCount = getAvailableSerialCount(product.id);
+      return { count: availableCount, label: `${availableCount} avail` };
     }
     return { count: product.stock, label: `${product.stock} in stock` };
   };
 
-  // ── Add to cart ──
   const addToCart = (product: Product) => {
     if (product.isSerialTracked) {
       const available = getAvailableSerialCount(product.id);
@@ -681,11 +635,11 @@ export default function POSPage() {
     } else {
       if (product.stock <= 0) return;
       setCart((prev) => {
-        const existing = prev.find((i) => i.product.id === product.id);
+        const existing = prev.find((cartEntry) => cartEntry.product.id === product.id);
         if (existing) {
           if (existing.qty >= product.stock) return prev;
-          return prev.map((i) =>
-            i.product.id === product.id ? { ...i, qty: i.qty + 1 } : i
+          return prev.map((cartEntry) =>
+            cartEntry.product.id === product.id ? { ...cartEntry, qty: cartEntry.qty + 1 } : cartEntry
           );
         }
         return [...prev, { product, qty: 1, selectedSerials: [] }];
@@ -693,45 +647,43 @@ export default function POSPage() {
     }
   };
 
-  // ── Qty increase ──
   const increaseQty = (productId: string) => {
-    const item = cart.find((i) => i.product.id === productId);
-    if (!item) return;
-    if (item.product.isSerialTracked) {
+    const matchedCartEntry = cart.find((cartEntry) => cartEntry.product.id === productId);
+    if (!matchedCartEntry) return;
+    if (matchedCartEntry.product.isSerialTracked) {
       const available = getAvailableSerialCount(productId);
-      if (item.qty >= available) return;
-      setSerialPickerFor({ product: item.product });
+      if (matchedCartEntry.qty >= available) return;
+      setSerialPickerFor({ product: matchedCartEntry.product });
     } else {
-      if (item.qty >= item.product.stock) return;
+      if (matchedCartEntry.qty >= matchedCartEntry.product.stock) return;
       setCart((prev) =>
-        prev.map((i) =>
-          i.product.id === productId ? { ...i, qty: i.qty + 1 } : i
+        prev.map((cartEntry) =>
+          cartEntry.product.id === productId ? { ...cartEntry, qty: cartEntry.qty + 1 } : cartEntry
         )
       );
     }
   };
 
-  // ── Qty decrease ──
   const decreaseQty = (productId: string) => {
-    const item = cart.find((i) => i.product.id === productId);
-    if (!item) return;
-    if (item.qty === 1) {
+    const matchedCartEntry = cart.find((cartEntry) => cartEntry.product.id === productId);
+    if (!matchedCartEntry) return;
+    if (matchedCartEntry.qty === 1) {
       removeFromCart(productId);
       return;
     }
-    if (item.product.isSerialTracked) {
-      setSerialPickerFor({ product: item.product });
+    if (matchedCartEntry.product.isSerialTracked) {
+      setSerialPickerFor({ product: matchedCartEntry.product });
     } else {
       setCart((prev) =>
-        prev.map((i) =>
-          i.product.id === productId ? { ...i, qty: i.qty - 1 } : i
+        prev.map((cartEntry) =>
+          cartEntry.product.id === productId ? { ...cartEntry, qty: cartEntry.qty - 1 } : cartEntry
         )
       );
     }
   };
 
   const removeFromCart = (productId: string) =>
-    setCart((prev) => prev.filter((i) => i.product.id !== productId));
+    setCart((prev) => prev.filter((cartEntry) => cartEntry.product.id !== productId));
 
   const clearCart = () => {
     setCart([]);
@@ -739,18 +691,17 @@ export default function POSPage() {
     setTaxEnabled(false);
   };
 
-  // ── Serial confirm ──
   const handleSerialConfirm = (serials: SerializedItem[]) => {
     if (!serialPickerFor) return;
     const { product } = serialPickerFor;
     const qty = serials.length;
     setCart((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
+      const existing = prev.find((cartEntry) => cartEntry.product.id === product.id);
       if (existing) {
-        return prev.map((i) =>
-          i.product.id === product.id
-            ? { ...i, qty, selectedSerials: serials }
-            : i
+        return prev.map((cartEntry) =>
+          cartEntry.product.id === product.id
+            ? { ...cartEntry, qty, selectedSerials: serials }
+            : cartEntry
         );
       }
       return [...prev, { product, qty, selectedSerials: serials }];
@@ -758,7 +709,6 @@ export default function POSPage() {
     setSerialPickerFor(null);
   };
 
-  // ── Complete sale ──
   const handleCompleteSale = (
     method: PaymentMethod,
     amountPaid: number,
@@ -791,20 +741,16 @@ export default function POSPage() {
   };
 
   const cartHasMissingSerials = cart.some(
-    (i) => i.product.isSerialTracked && i.selectedSerials.length !== i.qty
+    (cartEntry) => cartEntry.product.isSerialTracked && cartEntry.selectedSerials.length !== cartEntry.qty
   );
 
   const allCategories = [{ id: "all", name: "All" }, ...CATEGORIES];
 
-  // ── RENDER ──────────────────────────────────────────────────────────────
-
   return (
     <div className="h-[calc(100vh-57px)] -m-6 flex overflow-hidden">
 
-      {/* ── LEFT PANEL: Product Browser ─────────────────────────────────── */}
       <div className="flex flex-col w-[60%] border-r border-blue-primary/10 overflow-hidden">
 
-        {/* Panel header */}
         <div className="flex items-center justify-between px-4 h-12 border-b border-blue-primary/10 shrink-0">
           <span className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40">
             Product Browser
@@ -814,7 +760,6 @@ export default function POSPage() {
           </span>
         </div>
 
-        {/* Search + category tabs */}
         <div className="px-4 pt-3 shrink-0">
           <div className="relative mb-3">
             <Search
@@ -826,7 +771,7 @@ export default function POSPage() {
               type="text"
               placeholder="SEARCH PRODUCT OR SKU..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
               className="w-full h-9 pl-9 pr-9 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.08em] uppercase text-blue-primary placeholder:text-blue-primary/25 focus:outline-none focus:border-blue-primary/30 transition-colors"
             />
             {search && (
@@ -840,23 +785,22 @@ export default function POSPage() {
           </div>
 
           <div className="flex items-center border-b border-blue-primary/10 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {allCategories.map((cat) => (
+            {allCategories.map((category) => (
               <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
+                key={category.id}
+                onClick={() => setActiveCategory(category.id)}
                 className={`px-3 h-8 font-mono text-[9px] tracking-[0.12em] uppercase whitespace-nowrap border-b-2 -mb-px transition-colors ${
-                  activeCategory === cat.id
+                  activeCategory === category.id
                     ? "border-blue-primary text-blue-primary"
                     : "border-transparent text-blue-primary/35 hover:text-blue-primary/60"
                 }`}
               >
-                {cat.name}
+                {category.name}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Product grid */}
         <div className="flex-1 overflow-y-auto p-4">
           {filteredProducts.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-3">
@@ -869,7 +813,7 @@ export default function POSPage() {
             <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
               {filteredProducts.map((product) => {
                 const { count, label } = getStockDisplay(product);
-                const cartItem = cart.find((i) => i.product.id === product.id);
+                const matchedCartEntry = cart.find((cartEntry) => cartEntry.product.id === product.id);
                 const outOfStock = count <= 0;
 
                 return (
@@ -880,12 +824,11 @@ export default function POSPage() {
                     className={`relative text-left p-3 border h-[108px] flex flex-col justify-between transition-all duration-150 ${
                       outOfStock
                         ? "border-blue-primary/6 opacity-35 cursor-not-allowed"
-                        : cartItem
+                        : matchedCartEntry
                         ? "border-blue-primary/30 bg-blue-primary/[0.03] hover:border-blue-primary/50"
                         : "border-blue-primary/10 bg-cream-light hover:border-blue-primary/22 hover:bg-blue-primary/[0.015]"
                     }`}
                   >
-                    {/* Top row */}
                     <div className="flex items-start justify-between h-5">
                       {product.isSerialTracked ? (
                         <span className="flex items-center gap-1 font-mono text-[7px] tracking-[0.1em] uppercase px-1.5 py-0.5 bg-blue-primary/8 text-blue-primary/45">
@@ -895,14 +838,13 @@ export default function POSPage() {
                       ) : (
                         <span />
                       )}
-                      {cartItem && (
+                      {matchedCartEntry && (
                         <span className="w-5 h-5 bg-blue-primary text-cream-primary font-mono text-[9px] font-bold flex items-center justify-center leading-none">
-                          {cartItem.qty}
+                          {matchedCartEntry.qty}
                         </span>
                       )}
                     </div>
 
-                    {/* Name + SKU */}
                     <div>
                       <p className="font-sans text-[11px] font-semibold text-blue-primary leading-tight line-clamp-2">
                         {product.name}
@@ -912,7 +854,6 @@ export default function POSPage() {
                       </p>
                     </div>
 
-                    {/* Price + stock */}
                     <div className="flex items-end justify-between">
                       <span className="font-mono text-[12px] font-semibold text-blue-primary leading-none">
                         {formatCurrency(product.sellingPrice)}
@@ -935,10 +876,8 @@ export default function POSPage() {
         </div>
       </div>
 
-      {/* ── RIGHT PANEL: Cart ────────────────────────────────────────────── */}
       <div className="flex flex-col w-[40%] overflow-hidden">
 
-        {/* Panel header */}
         <div className="flex items-center justify-between px-4 h-12 border-b border-blue-primary/10 shrink-0">
           <div className="flex items-center gap-2">
             <ShoppingCart size={13} strokeWidth={1.5} className="text-blue-primary/40" />
@@ -962,7 +901,6 @@ export default function POSPage() {
           )}
         </div>
 
-        {/* Cart items */}
         <div className="flex-1 overflow-y-auto">
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-2">
@@ -976,66 +914,61 @@ export default function POSPage() {
             </div>
           ) : (
             <div className="divide-y divide-blue-primary/6">
-              {cart.map((item) => (
-                <div key={item.product.id} className="px-4 py-3">
+              {cart.map((cartEntry) => (
+                <div key={cartEntry.product.id} className="px-4 py-3">
                   <div className="flex items-start gap-3">
-                    {/* Product info */}
                     <div className="flex-1 min-w-0">
                       <p className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary leading-none truncate">
-                        {item.product.name}
+                        {cartEntry.product.name}
                       </p>
                       <p className="font-mono text-[8px] tracking-[0.08em] uppercase text-blue-primary/30 mt-0.5">
-                        {item.product.sku}
+                        {cartEntry.product.sku}
                       </p>
-                      {item.selectedSerials.length > 0 && (
+                      {cartEntry.selectedSerials.length > 0 && (
                         <div className="mt-1 space-y-0.5">
-                          {item.selectedSerials.map((s) => (
+                          {cartEntry.selectedSerials.map((serial) => (
                             <p
-                              key={s.id}
+                              key={serial.id}
                               className="font-mono text-[7.5px] tracking-[0.06em] uppercase text-blue-primary/30"
                             >
-                              ↳ {s.serialNumber}
+                              ↳ {serial.serialNumber}
                             </p>
                           ))}
                         </div>
                       )}
                     </div>
 
-                    {/* Controls */}
                     <div className="flex flex-col items-end gap-2 shrink-0">
-                      {/* Line total + remove */}
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-[11px] font-semibold text-blue-primary">
-                          {formatCurrency(item.qty * item.product.sellingPrice)}
+                          {formatCurrency(cartEntry.qty * cartEntry.product.sellingPrice)}
                         </span>
                         <button
-                          onClick={() => removeFromCart(item.product.id)}
+                          onClick={() => removeFromCart(cartEntry.product.id)}
                           className="p-0.5 text-blue-primary/20 hover:text-error transition-colors"
                         >
                           <Trash2 size={11} strokeWidth={1.5} />
                         </button>
                       </div>
-                      {/* Qty controls */}
                       <div className="flex items-center">
                         <button
-                          onClick={() => decreaseQty(item.product.id)}
+                          onClick={() => decreaseQty(cartEntry.product.id)}
                           className="w-7 h-7 border border-blue-primary/10 flex items-center justify-center text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/25 transition-colors"
                         >
                           <Minus size={10} strokeWidth={2} />
                         </button>
                         <span className="w-8 h-7 border-t border-b border-blue-primary/10 flex items-center justify-center font-mono text-[10px] font-semibold text-blue-primary">
-                          {item.qty}
+                          {cartEntry.qty}
                         </span>
                         <button
-                          onClick={() => increaseQty(item.product.id)}
+                          onClick={() => increaseQty(cartEntry.product.id)}
                           className="w-7 h-7 border border-blue-primary/10 flex items-center justify-center text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/25 transition-colors"
                         >
                           <Plus size={10} strokeWidth={2} />
                         </button>
                       </div>
-                      {/* Unit price */}
                       <span className="font-mono text-[8px] tracking-[0.06em] uppercase text-blue-primary/25">
-                        @ {formatCurrency(item.product.sellingPrice)}
+                        @ {formatCurrency(cartEntry.product.sellingPrice)}
                       </span>
                     </div>
                   </div>
@@ -1045,11 +978,9 @@ export default function POSPage() {
           )}
         </div>
 
-        {/* ── Bottom: discount / tax / totals / checkout ── */}
         {cart.length > 0 && (
           <div className="border-t border-blue-primary/10 shrink-0">
 
-            {/* Discount */}
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-blue-primary/6">
               <Tag size={11} strokeWidth={1.5} className="text-blue-primary/30 shrink-0" />
               <span className="font-mono text-[9px] tracking-[0.12em] uppercase text-blue-primary/40 shrink-0">
@@ -1058,7 +989,7 @@ export default function POSPage() {
               <div className="flex items-center gap-1 flex-1 min-w-0">
                 <button
                   onClick={() =>
-                    setDiscountType((t) => (t === "percent" ? "fixed" : "percent"))
+                    setDiscountType((currentType) => (currentType === "percent" ? "fixed" : "percent"))
                   }
                   className="h-7 w-7 border border-blue-primary/10 font-mono text-[9px] font-semibold text-blue-primary/50 hover:border-blue-primary/25 hover:text-blue-primary transition-colors shrink-0 flex items-center justify-center"
                 >
@@ -1067,7 +998,7 @@ export default function POSPage() {
                 <input
                   type="number"
                   value={discountValue}
-                  onChange={(e) => setDiscountValue(e.target.value)}
+                  onChange={(event) => setDiscountValue(event.target.value)}
                   placeholder="0"
                   className="flex-1 h-7 px-2 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.04em] text-blue-primary placeholder:text-blue-primary/20 focus:outline-none focus:border-blue-primary/25 transition-colors min-w-0"
                 />
@@ -1079,13 +1010,12 @@ export default function POSPage() {
               )}
             </div>
 
-            {/* Tax toggle */}
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-blue-primary/6">
               <span className="font-mono text-[9px] tracking-[0.12em] uppercase text-blue-primary/40">
                 Tax (8%)
               </span>
               <button
-                onClick={() => setTaxEnabled((v) => !v)}
+                onClick={() => setTaxEnabled((enabled) => !enabled)}
                 className={`relative w-9 h-[18px] border transition-colors ${
                   taxEnabled
                     ? "bg-blue-primary border-blue-primary"
@@ -1100,7 +1030,6 @@ export default function POSPage() {
               </button>
             </div>
 
-            {/* Totals breakdown */}
             <div className="px-4 py-2.5 space-y-1.5 border-b border-blue-primary/6">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[9px] tracking-[0.12em] uppercase text-blue-primary/40">
@@ -1132,7 +1061,6 @@ export default function POSPage() {
               )}
             </div>
 
-            {/* Grand total */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-blue-primary/8">
               <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary font-semibold">
                 Total
@@ -1142,7 +1070,6 @@ export default function POSPage() {
               </span>
             </div>
 
-            {/* Checkout */}
             <div className="p-4">
               {cartHasMissingSerials && (
                 <div className="flex items-center gap-2 mb-3 px-3 py-2 border border-warning/20 bg-warning/[0.06]">
@@ -1165,7 +1092,6 @@ export default function POSPage() {
         )}
       </div>
 
-      {/* ── MODALS ──────────────────────────────────────────────────────── */}
       {mounted && (
         <AnimatePresence>
           {serialPickerFor && (
@@ -1173,7 +1099,7 @@ export default function POSPage() {
               key="serial-picker"
               product={serialPickerFor.product}
               alreadySelected={
-                cart.find((i) => i.product.id === serialPickerFor.product.id)
+                cart.find((cartEntry) => cartEntry.product.id === serialPickerFor.product.id)
                   ?.selectedSerials ?? []
               }
               onConfirm={handleSerialConfirm}

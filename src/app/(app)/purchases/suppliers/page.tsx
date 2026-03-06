@@ -1,4 +1,3 @@
-// src/app/(app)/purchases/suppliers/page.tsx
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -18,10 +17,6 @@ import { PURCHASE_ORDERS, type PurchaseOrder } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils/format";
 import Link from "next/link";
 
-// ——————————————————————————————————————————————————
-// TYPES
-// ——————————————————————————————————————————————————
-
 interface SupplierSummary {
   id: string;
   name: string;
@@ -38,16 +33,8 @@ interface SupplierSummary {
 type SortKey = "name" | "totalOrders" | "activeOrders" | "totalSpend" | "lastOrderDate";
 type SortDir = "asc" | "desc";
 
-// ——————————————————————————————————————————————————
-// CONSTANTS
-// ——————————————————————————————————————————————————
-
 const PAGE_SIZES = [10, 20, 50] as const;
 const ease = [0.16, 1, 0.3, 1] as const;
-
-// ——————————————————————————————————————————————————
-// HELPERS
-// ——————————————————————————————————————————————————
 
 export function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -62,12 +49,12 @@ function formatDate(iso: string): string {
 }
 
 function deriveSuppliers(orders: PurchaseOrder[]): SupplierSummary[] {
-  const map = new Map<string, SupplierSummary>();
+  const suppliersBySlug = new Map<string, SupplierSummary>();
   for (const order of orders) {
-    const id = slugify(order.supplierName);
-    if (!map.has(id)) {
-      map.set(id, {
-        id,
+    const slug = slugify(order.supplierName);
+    if (!suppliersBySlug.has(slug)) {
+      suppliersBySlug.set(slug, {
+        id: slug,
         name: order.supplierName,
         contact: order.supplierContact,
         totalOrders: 0,
@@ -79,21 +66,17 @@ function deriveSuppliers(orders: PurchaseOrder[]): SupplierSummary[] {
         cancelledOrders: 0,
       });
     }
-    const s = map.get(id)!;
-    s.totalOrders++;
-    s.allSpend += order.total;
-    if (["draft", "sent", "partial"].includes(order.status)) s.activeOrders++;
-    if (["received", "partial"].includes(order.status)) s.totalSpend += order.total;
-    if (order.status === "received") s.receivedOrders++;
-    if (order.status === "cancelled") s.cancelledOrders++;
-    if (order.date > s.lastOrderDate) s.lastOrderDate = order.date;
+    const supplier = suppliersBySlug.get(slug)!;
+    supplier.totalOrders++;
+    supplier.allSpend += order.total;
+    if (["draft", "sent", "partial"].includes(order.status)) supplier.activeOrders++;
+    if (["received", "partial"].includes(order.status)) supplier.totalSpend += order.total;
+    if (order.status === "received") supplier.receivedOrders++;
+    if (order.status === "cancelled") supplier.cancelledOrders++;
+    if (order.date > supplier.lastOrderDate) supplier.lastOrderDate = order.date;
   }
-  return Array.from(map.values());
+  return Array.from(suppliersBySlug.values());
 }
-
-// ——————————————————————————————————————————————————
-// SORT ICON
-// ——————————————————————————————————————————————————
 
 function SortIcon({
   col,
@@ -113,10 +96,6 @@ function SortIcon({
   );
 }
 
-// ——————————————————————————————————————————————————
-// PAGE
-// ——————————————————————————————————————————————————
-
 export default function SuppliersPage() {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("totalSpend");
@@ -126,46 +105,43 @@ export default function SuppliersPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 600);
-    return () => clearTimeout(t);
+    const loadingTimer = setTimeout(() => setIsLoading(false), 600);
+    return () => clearTimeout(loadingTimer);
   }, []);
 
   const allSuppliers = useMemo(() => deriveSuppliers(PURCHASE_ORDERS), []);
 
-  // ——— Page-level KPIs ———
   const totalSuppliers = allSuppliers.length;
-  const totalSpend = allSuppliers.reduce((acc, s) => acc + s.totalSpend, 0);
-  const totalActiveOrders = allSuppliers.reduce((acc, s) => acc + s.activeOrders, 0);
+  const totalSpend = allSuppliers.reduce((acc, supplier) => acc + supplier.totalSpend, 0);
+  const totalActiveOrders = allSuppliers.reduce((acc, supplier) => acc + supplier.activeOrders, 0);
   const avgOrderValue =
     PURCHASE_ORDERS.length > 0
-      ? PURCHASE_ORDERS.reduce((acc, o) => acc + o.total, 0) / PURCHASE_ORDERS.length
+      ? PURCHASE_ORDERS.reduce((acc, order) => acc + order.total, 0) / PURCHASE_ORDERS.length
       : 0;
 
-  // ——— Filter ———
   const filtered = useMemo(() => {
     if (!search.trim()) return allSuppliers;
-    const q = search.toLowerCase().trim();
+    const searchLower = search.toLowerCase().trim();
     return allSuppliers.filter(
-      (s) =>
-        s.name.toLowerCase().includes(q) || s.contact.toLowerCase().includes(q)
+      (supplier) =>
+        supplier.name.toLowerCase().includes(searchLower) || supplier.contact.toLowerCase().includes(searchLower)
     );
   }, [allSuppliers, search]);
 
-  // ——— Sort ———
   const sorted = useMemo(() => {
-    const data = [...filtered];
-    data.sort((a, b) => {
+    const cloned = [...filtered];
+    cloned.sort((left, right) => {
       let cmp = 0;
       switch (sortKey) {
-        case "name":          cmp = a.name.localeCompare(b.name); break;
-        case "totalOrders":   cmp = a.totalOrders - b.totalOrders; break;
-        case "activeOrders":  cmp = a.activeOrders - b.activeOrders; break;
-        case "totalSpend":    cmp = a.totalSpend - b.totalSpend; break;
-        case "lastOrderDate": cmp = a.lastOrderDate.localeCompare(b.lastOrderDate); break;
+        case "name":          cmp = left.name.localeCompare(right.name); break;
+        case "totalOrders":   cmp = left.totalOrders - right.totalOrders; break;
+        case "activeOrders":  cmp = left.activeOrders - right.activeOrders; break;
+        case "totalSpend":    cmp = left.totalSpend - right.totalSpend; break;
+        case "lastOrderDate": cmp = left.lastOrderDate.localeCompare(right.lastOrderDate); break;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
-    return data;
+    return cloned;
   }, [filtered, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
@@ -173,18 +149,13 @@ export default function SuppliersPage() {
   const paginated = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const handleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    if (sortKey === key) setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
   };
-
-  // ——————————————————————————————————————————————————
-  // RENDER
-  // ——————————————————————————————————————————————————
 
   return (
     <div className="space-y-6">
 
-      {/* ┌── PAGE HEADER ──┐ */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <motion.h1
@@ -215,10 +186,8 @@ export default function SuppliersPage() {
         </motion.span>
       </div>
 
-      {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ┌── KPI CARDS ──┐ */}
       <motion.div
         className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
@@ -261,7 +230,6 @@ export default function SuppliersPage() {
         ))}
       </motion.div>
 
-      {/* ┌── SEARCH ──┐ */}
       <motion.div
         initial={{ y: 20 }}
         animate={{ y: 0 }}
@@ -277,7 +245,7 @@ export default function SuppliersPage() {
             type="text"
             placeholder="SEARCH SUPPLIERS OR CONTACT..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(event) => { setSearch(event.target.value); setPage(1); }}
             className="w-full h-9 pl-9 pr-3 bg-cream-light border border-blue-primary/10 font-mono text-[11px] tracking-[0.08em] uppercase text-blue-primary placeholder:text-blue-primary/25 focus:outline-none focus:border-blue-primary/30 transition-colors"
           />
           {search && (
@@ -291,7 +259,6 @@ export default function SuppliersPage() {
         </div>
       </motion.div>
 
-      {/* ┌── TABLE ──┐ */}
       <motion.div
         className="border border-blue-primary/10 bg-cream-light overflow-hidden"
         initial={{ y: 30 }}
@@ -358,10 +325,9 @@ export default function SuppliersPage() {
               </tr>
             </thead>
             <tbody>
-              {/* ── LOADING SKELETON ── */}
               {isLoading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-blue-primary/6 h-16">
+                Array.from({ length: 5 }).map((_, skeletonIndex) => (
+                  <tr key={skeletonIndex} className="border-b border-blue-primary/6 h-16">
                     <td className="px-5 align-middle">
                       <div className="h-2.5 w-40 bg-blue-primary/8 animate-pulse mb-1.5" />
                       <div className="h-2 w-24 bg-blue-primary/5 animate-pulse" />
@@ -385,7 +351,6 @@ export default function SuppliersPage() {
                   </tr>
                 ))
               ) : paginated.length === 0 ? (
-                /* ── EMPTY STATE ── */
                 <tr>
                   <td colSpan={7} className="text-center py-16">
                     <Building2
@@ -412,7 +377,6 @@ export default function SuppliersPage() {
                   </td>
                 </tr>
               ) : (
-                /* ── DATA ROWS ── */
                 paginated.map((supplier) => {
                   const fulfilmentRate =
                     supplier.totalOrders > 0
@@ -423,7 +387,6 @@ export default function SuppliersPage() {
                       key={supplier.id}
                       className="border-b border-blue-primary/6 hover:bg-blue-primary/[0.02] transition-colors duration-150 h-16"
                     >
-                      {/* Supplier name + fulfilment */}
                       <td className="px-5 align-middle">
                         <Link
                           href={`/purchases/suppliers/${supplier.id}`}
@@ -435,13 +398,11 @@ export default function SuppliersPage() {
                           {fulfilmentRate}% fulfilment
                         </span>
                       </td>
-                      {/* Contact */}
                       <td className="px-3 align-middle">
                         <span className="font-mono text-[10px] tracking-[0.02em] text-blue-primary/50">
                           {supplier.contact}
                         </span>
                       </td>
-                      {/* Total orders */}
                       <td className="px-3 align-middle text-center">
                         <span className="font-mono text-[13px] font-semibold text-blue-primary/70 leading-none block">
                           {supplier.totalOrders}
@@ -452,7 +413,6 @@ export default function SuppliersPage() {
                           </span>
                         )}
                       </td>
-                      {/* Active */}
                       <td className="px-3 align-middle text-center">
                         {supplier.activeOrders > 0 ? (
                           <span className="font-mono text-[12px] font-semibold text-blue-primary">
@@ -462,7 +422,6 @@ export default function SuppliersPage() {
                           <span className="font-mono text-[11px] text-blue-primary/20">—</span>
                         )}
                       </td>
-                      {/* Total spend */}
                       <td className="px-3 align-middle text-right">
                         <span className="font-mono text-[12px] tracking-[0.03em] font-semibold text-blue-primary leading-none block">
                           {formatCurrency(supplier.totalSpend)}
@@ -473,13 +432,11 @@ export default function SuppliersPage() {
                           </span>
                         )}
                       </td>
-                      {/* Last order */}
                       <td className="px-3 align-middle text-right">
                         <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/50">
                           {formatDate(supplier.lastOrderDate)}
                         </span>
                       </td>
-                      {/* Arrow link */}
                       <td className="w-10 px-3 align-middle text-center">
                         <Link
                           href={`/purchases/suppliers/${supplier.id}`}
@@ -496,7 +453,6 @@ export default function SuppliersPage() {
           </table>
         </div>
 
-        {/* ┌── PAGINATION ──┐ */}
         <div className="flex items-center justify-between px-5 py-3 border-t border-blue-primary/8">
           <div className="flex items-center gap-3">
             <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/30">
@@ -506,55 +462,55 @@ export default function SuppliersPage() {
             <div className="w-px h-3 bg-blue-primary/10" />
             <select
               value={pageSize}
-              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+              onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}
               className="h-7 px-2 bg-transparent border border-blue-primary/10 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/50 focus:outline-none cursor-pointer appearance-none"
             >
-              {PAGE_SIZES.map((s) => (
-                <option key={s} value={s}>{s} rows</option>
+              {PAGE_SIZES.map((size) => (
+                <option key={size} value={size}>{size} rows</option>
               ))}
             </select>
           </div>
 
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
               disabled={safePage <= 1}
               className="w-7 h-7 flex items-center justify-center border border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 disabled:opacity-20 disabled:pointer-events-none transition-colors"
             >
               <ChevronLeft size={12} strokeWidth={2} />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((p) => {
+            {Array.from({ length: totalPages }, (_, pageIndex) => pageIndex + 1)
+              .filter((pageNum) => {
                 if (totalPages <= 5) return true;
-                if (p === 1 || p === totalPages) return true;
-                if (Math.abs(p - safePage) <= 1) return true;
+                if (pageNum === 1 || pageNum === totalPages) return true;
+                if (Math.abs(pageNum - safePage) <= 1) return true;
                 return false;
               })
-              .map((p, idx, arr) => {
-                const prev = arr[idx - 1];
-                const showEllipsis = prev != null && p - prev > 1;
+              .map((pageNum, position, visiblePages) => {
+                const prevPage = visiblePages[position - 1];
+                const showEllipsis = prevPage != null && pageNum - prevPage > 1;
                 return (
-                  <span key={p} className="flex items-center">
+                  <span key={pageNum} className="flex items-center">
                     {showEllipsis && (
                       <span className="w-7 h-7 flex items-center justify-center font-mono text-[9px] text-blue-primary/20">
                         ...
                       </span>
                     )}
                     <button
-                      onClick={() => setPage(p)}
+                      onClick={() => setPage(pageNum)}
                       className={`w-7 h-7 flex items-center justify-center font-mono text-[10px] tracking-[0.05em] border transition-colors ${
-                        p === safePage
+                        pageNum === safePage
                           ? "bg-blue-primary text-cream-primary border-blue-primary"
                           : "border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30"
                       }`}
                     >
-                      {p}
+                      {pageNum}
                     </button>
                   </span>
                 );
               })}
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
               disabled={safePage >= totalPages}
               className="w-7 h-7 flex items-center justify-center border border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 disabled:opacity-20 disabled:pointer-events-none transition-colors"
             >
@@ -564,7 +520,6 @@ export default function SuppliersPage() {
         </div>
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between pt-4">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">

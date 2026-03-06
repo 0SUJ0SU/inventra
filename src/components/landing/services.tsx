@@ -5,13 +5,10 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { Plus, ArrowRight } from "lucide-react";
-import { DitherEffect } from "@/components/shaders";
+import { DitherEffect } from "@/components/shaders/dither-effect";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* ────────────────────────────────────────────────────────
-   Service data
-──────────────────────────────────────────────────────── */
 const services = [
   {
     id: "01",
@@ -57,9 +54,6 @@ const services = [
   },
 ];
 
-/* ────────────────────────────────────────────────────────
-   Accordion Item
-──────────────────────────────────────────────────────── */
 function AccordionItem({
   service,
   isOpen,
@@ -98,7 +92,6 @@ function AccordionItem({
 
   return (
     <div className="border-b border-blue-primary/15">
-      {/* Accordion trigger */}
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between py-5 md:py-6 group cursor-pointer text-left"
@@ -120,7 +113,6 @@ function AccordionItem({
         </div>
       </button>
 
-      {/* Accordion content */}
       <div ref={contentRef} className="h-0 overflow-hidden">
         <div ref={innerRef} className="pb-6 md:pb-8 pl-8 md:pl-[calc(theme(spacing.6)+theme(fontSize.sm))]">
           <p className="font-mono text-[11px] md:text-xs uppercase tracking-[0.08em] leading-relaxed text-blue-primary/60 max-w-xl mb-4">
@@ -143,9 +135,6 @@ function AccordionItem({
   );
 }
 
-/* ────────────────────────────────────────────────────────
-   Services Section
-──────────────────────────────────────────────────────── */
 export function Services() {
   const sectionRef = useRef<HTMLElement>(null);
   const headlineLeftRef = useRef<HTMLDivElement>(null);
@@ -155,18 +144,16 @@ export function Services() {
   const [openIndex, setOpenIndex] = useState<number>(0);
   const [isVisible, setIsVisible] = useState(false);
 
-  // Pause shader when offscreen
   useEffect(() => {
     if (!sectionRef.current) return;
     const observer = new IntersectionObserver(
-      ([entry]) => setIsVisible(entry.isIntersecting),
+      ([intersectionEntry]) => setIsVisible(intersectionEntry.isIntersecting),
       { threshold: 0.05 }
     );
     observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
 
-  /* ── Scroll animations ── */
   useGSAP(
     () => {
       if (!sectionRef.current) return;
@@ -232,22 +219,18 @@ export function Services() {
       className="relative bg-cream-primary overflow-hidden"
     >
       <div className="relative z-10 px-6">
-        {/* ── Section labels ── */}
         <div className="flex justify-between items-center pt-8 md:pt-12 pb-6 md:pb-8">
           <span className="label-mono text-blue-primary/50">SERVICES</span>
           <span className="section-marker text-blue-primary/50">[INV.3]</span>
         </div>
 
-        {/* ── Section headline ── */}
         <div ref={headlineLeftRef} className="mb-12 md:mb-16 lg:mb-20">
           <h2 className="font-sans font-bold text-blue-primary text-[clamp(56px,10vw,140px)] leading-[0.95] tracking-tight pb-3">
             Built for every step
           </h2>
         </div>
 
-        {/* ── Content: Image + Accordion ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-0">
-          {/* Left: Single persistent DitherEffect — fixed height, never resizes */}
           <div ref={imageRef} className="relative lg:pr-8">
             <div className="relative h-100 md:h-125 lg:h-full overflow-hidden">
               <DitherEffect
@@ -269,7 +252,6 @@ export function Services() {
             </div>
           </div>
 
-          {/* Right: Accordion list */}
           <div ref={accordionRef} className="lg:pl-8">
             <div className="border-t border-blue-primary/15" />
             {services.map((service, i) => (
@@ -283,7 +265,6 @@ export function Services() {
           </div>
         </div>
 
-        {/* ── CTA Button ── */}
         <div ref={ctaRef} className="mt-12 md:mt-16 pb-16 md:pb-20">
           <a
             href="#"

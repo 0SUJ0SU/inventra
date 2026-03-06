@@ -1,22 +1,21 @@
-// src/lib/utils/format.ts
-// Locale-safe number formatting to avoid hydration mismatches
+// Locale-safe formatting avoids hydration mismatches between server/client
 
-export function formatNumber(value: number): string {
-  return new Intl.NumberFormat("en-US").format(value);
+export function formatNumber(amount: number): string {
+  return new Intl.NumberFormat("en-US").format(amount);
 }
 
-export function formatCurrency(value: number): string {
-  return `$${new Intl.NumberFormat("en-US").format(value)}`;
+export function formatCurrency(amount: number): string {
+  return `$${new Intl.NumberFormat("en-US").format(amount)}`;
 }
 
-export function formatCompact(value: number): string {
-  if (value >= 1000000) {
-    const m = value / 1000000;
-    return m % 1 === 0 ? `${m}M` : `${m.toFixed(1)}M`;
+export function formatCompact(amount: number): string {
+  if (amount >= 1000000) {
+    const millions = amount / 1000000;
+    return millions % 1 === 0 ? `${millions}M` : `${millions.toFixed(1)}M`;
   }
-  if (value >= 1000) {
-    const k = value / 1000;
-    return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`;
+  if (amount >= 1000) {
+    const thousands = amount / 1000;
+    return thousands % 1 === 0 ? `${thousands}K` : `${thousands.toFixed(1)}K`;
   }
-  return value.toString();
+  return amount.toString();
 }

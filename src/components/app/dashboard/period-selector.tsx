@@ -1,4 +1,3 @@
-// src/components/app/dashboard/period-selector.tsx
 "use client";
 
 import { motion } from "framer-motion";

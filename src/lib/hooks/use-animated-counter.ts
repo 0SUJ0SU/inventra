@@ -1,22 +1,19 @@
-// src/lib/hooks/use-animated-counter.ts
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
-interface UseAnimatedCounterOptions {
-  end: number;
-  duration?: number; // ms
-  delay?: number; // ms
-  startOnMount?: boolean;
-}
 
 export function useAnimatedCounter({
   end,
   duration = 1800,
   delay = 0,
   startOnMount = true,
-}: UseAnimatedCounterOptions) {
-  const [value, setValue] = useState(0);
+}: {
+  end: number;
+  duration?: number;
+  delay?: number;
+  startOnMount?: boolean;
+}) {
+  const [currentCount, setCurrentCount] = useState(0);
   const rafRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
@@ -31,9 +28,9 @@ export function useAnimatedCounter({
         const elapsed = timestamp - startTimeRef.current;
         const progress = Math.min(elapsed / duration, 1);
 
-        // Ease-out cubic for a satisfying deceleration
+        // Ease-out cubic — linear progress looks jarring on counters
         const eased = 1 - Math.pow(1 - progress, 3);
-        setValue(Math.round(eased * end));
+        setCurrentCount(Math.round(eased * end));
 
         if (progress < 1) {
           rafRef.current = requestAnimationFrame(animate);
@@ -49,5 +46,5 @@ export function useAnimatedCounter({
     };
   }, [end, duration, delay, startOnMount]);
 
-  return value;
+  return currentCount;
 }

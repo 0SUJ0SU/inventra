@@ -1,4 +1,3 @@
-// src/app/(auth)/login/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, type Variants } from "framer-motion";
 
-// ── Validation ──
 interface FormErrors {
   email?: string;
   password?: string;
@@ -28,11 +26,9 @@ function validateLogin(email: string, password: string): FormErrors {
   return errors;
 }
 
-// ── Demo credentials ──
 const DEMO_EMAIL = "admin@inventra.com";
 const DEMO_PASSWORD = "inventra123";
 
-// ── Animation ──
 const slideIn: Variants = {
   hidden: { x: 80, opacity: 0 },
   visible: (i: number) => ({
@@ -65,8 +61,8 @@ export default function LoginPage() {
     }
   }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(formEvent: React.FormEvent) {
+    formEvent.preventDefault();
     setErrors({});
 
     const validationErrors = validateLogin(email, password);
@@ -76,7 +72,7 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
     let registeredUsers: { email: string; password: string; name?: string }[] = [];
     try {
@@ -88,8 +84,8 @@ export default function LoginPage() {
     }
     const isDemo = email === DEMO_EMAIL && password === DEMO_PASSWORD;
     const isRegistered = registeredUsers.find(
-      (u: { email: string; password: string }) =>
-        u.email === email && u.password === password
+      (user: { email: string; password: string }) =>
+        user.email === email && user.password === password
     );
 
     if (!isDemo && !isRegistered) {
@@ -121,7 +117,6 @@ export default function LoginPage() {
 
   return (
     <div className="w-full max-w-lg mx-auto lg:mx-0">
-      {/* ── Header ── */}
       <motion.div
         className="flex items-center justify-between mb-6"
         variants={slideIn}
@@ -137,7 +132,6 @@ export default function LoginPage() {
         </span>
       </motion.div>
 
-      {/* ── Demo credentials — positioned prominently near top ── */}
       <motion.div
         className="mb-10 py-3 px-4 border border-blue-primary/15 bg-blue-primary/[0.03]"
         variants={slideIn}
@@ -156,7 +150,6 @@ export default function LoginPage() {
         </p>
       </motion.div>
 
-      {/* ── Headline ── */}
       <motion.h1
         className="font-sans font-bold text-blue-primary leading-[0.9] tracking-tight mb-3"
         style={{ fontSize: "clamp(48px, 7vw, 80px)" }}
@@ -178,7 +171,6 @@ export default function LoginPage() {
         Access your inventory management system.
       </motion.p>
 
-      {/* ── General error ── */}
       {errors.general && (
         <motion.div
           className="mb-6 py-3 px-4 border border-blue-primary bg-blue-primary/[0.04]"
@@ -192,9 +184,7 @@ export default function LoginPage() {
         </motion.div>
       )}
 
-      {/* ── Form ── */}
       <form onSubmit={handleSubmit}>
-        {/* 01 EMAIL */}
         <motion.div
           className="mb-8"
           variants={slideIn}
@@ -217,9 +207,9 @@ export default function LoginPage() {
             id="email"
             type="email"
             value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (errors.email) setErrors((p) => ({ ...p, email: undefined }));
+            onChange={(event) => {
+              setEmail(event.target.value);
+              if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
             }}
             placeholder="name@company.com"
             autoComplete="email"
@@ -232,7 +222,6 @@ export default function LoginPage() {
           )}
         </motion.div>
 
-        {/* 02 PASSWORD */}
         <motion.div
           className="mb-8"
           variants={slideIn}
@@ -256,10 +245,10 @@ export default function LoginPage() {
               id="password"
               type={showPassword ? "text" : "password"}
               value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
+              onChange={(event) => {
+                setPassword(event.target.value);
                 if (errors.password)
-                  setErrors((p) => ({ ...p, password: undefined }));
+                  setErrors((prev) => ({ ...prev, password: undefined }));
               }}
               placeholder="••••••••••"
               autoComplete="current-password"
@@ -280,7 +269,6 @@ export default function LoginPage() {
           )}
         </motion.div>
 
-        {/* Options row */}
         <motion.div
           className="flex items-center justify-between mb-10"
           variants={slideIn}
@@ -310,7 +298,7 @@ export default function LoginPage() {
             <input
               type="checkbox"
               checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
+              onChange={(event) => setRememberMe(event.target.checked)}
               className="sr-only"
             />
             <span className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary opacity-50 group-hover:opacity-80 transition-opacity">
@@ -327,7 +315,6 @@ export default function LoginPage() {
           </button>
         </motion.div>
 
-        {/* Submit */}
         <motion.button
           type="submit"
           disabled={isLoading}
@@ -351,7 +338,6 @@ export default function LoginPage() {
         </motion.button>
       </form>
 
-      {/* Register link */}
       <motion.div
         className="mt-6 flex items-center gap-2"
         variants={slideIn}

@@ -1,4 +1,3 @@
-// src/components/app/dashboard/top-customers.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -20,7 +19,6 @@ export function TopCustomers({ period }: TopCustomersProps) {
       animate={{ y: 0 }}
       transition={{ duration: 0.5, delay: 0.44, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-4 shrink-0">
         <div className="flex items-center gap-3">
           <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">
@@ -35,7 +33,6 @@ export function TopCustomers({ period }: TopCustomersProps) {
         </span>
       </div>
 
-      {/* Table header */}
       <div className="grid grid-cols-[1fr_56px_72px] gap-x-2 pb-2 border-b border-blue-primary/10 shrink-0">
         <span className="font-mono text-[8px] tracking-[0.15em] uppercase text-blue-primary/25">
           Customer
@@ -48,7 +45,6 @@ export function TopCustomers({ period }: TopCustomersProps) {
         </span>
       </div>
 
-      {/* Rows */}
       <div className="divide-y divide-blue-primary/6 border-b border-blue-primary/6">
         {data.map((customer) => (
           <div
@@ -73,7 +69,6 @@ export function TopCustomers({ period }: TopCustomersProps) {
         ))}
       </div>
 
-      {/* Footer */}
       <div className="mt-auto pt-3 shrink-0">
         <Link
           href="/customers"

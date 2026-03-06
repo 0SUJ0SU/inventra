@@ -1,4 +1,3 @@
-// src/components/app/dashboard/revenue-category-chart.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -19,7 +18,7 @@ interface RevenueCategoryChartProps {
 
 export function RevenueCategoryChart({ period }: RevenueCategoryChartProps) {
   const data = getRevenueByCategory(period);
-  const total = data.reduce((sum, c) => sum + c.value, 0);
+  const total = data.reduce((sum, category) => sum + category.value, 0);
 
   let cumulative = 0;
   const gradientStops = total === 0
@@ -32,10 +31,10 @@ export function RevenueCategoryChart({ period }: RevenueCategoryChartProps) {
         })
         .join(", ");
 
-  const formatTotal = (v: number) => {
-    if (v >= 1000000) return `$${(v / 1000000).toFixed(1)}M`;
-    if (v >= 1000) return `$${(v / 1000).toFixed(1)}K`;
-    return `$${v}`;
+  const formatTotal = (amount: number) => {
+    if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
+    if (amount >= 1000) return `$${(amount / 1000).toFixed(1)}K`;
+    return `$${amount}`;
   };
 
   return (
@@ -45,7 +44,6 @@ export function RevenueCategoryChart({ period }: RevenueCategoryChartProps) {
       animate={{ y: 0 }}
       transition={{ duration: 0.5, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-5 shrink-0">
         <div className="flex items-center gap-3">
           <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">
@@ -60,7 +58,6 @@ export function RevenueCategoryChart({ period }: RevenueCategoryChartProps) {
         </span>
       </div>
 
-      {/* Donut */}
       <div className="flex justify-center mb-5">
         <div className="relative w-36 h-36">
           <div
@@ -78,7 +75,6 @@ export function RevenueCategoryChart({ period }: RevenueCategoryChartProps) {
         </div>
       </div>
 
-      {/* Legend */}
       <div className="space-y-2">
         {data.map((cat, i) => (
           <div key={cat.name} className="flex items-center justify-between">

@@ -1,10 +1,4 @@
-// src/lib/demo-data.ts
-// Centralized demo data for the Inventra dashboard.
 // All numbers are fictional — portfolio showcase only.
-
-// ————————————————————————————————————————————————
-// KPI STATS
-// ————————————————————————————————————————————————
 
 export const KPI_STATS = [
   {
@@ -45,10 +39,6 @@ export const KPI_STATS = [
   },
 ] as const;
 
-// ————————————————————————————————————————————————
-// SALES TREND (30 days)
-// ————————————————————————————————————————————————
-
 export const SALES_TREND_30D = [
   { day: "01", revenue: 680, orders: 42 },
   { day: "02", revenue: 720, orders: 45 },
@@ -84,22 +74,18 @@ export const SALES_TREND_30D = [
 
 export const SALES_TREND_7D = SALES_TREND_30D.slice(-7);
 export const SALES_TREND_90D = [
-  ...SALES_TREND_30D.map((d) => ({ ...d, day: `M1-${d.day}` })),
-  ...SALES_TREND_30D.map((d) => ({
-    day: `M2-${d.day}`,
-    revenue: Math.round(d.revenue * 0.85),
-    orders: Math.round(d.orders * 0.85),
+  ...SALES_TREND_30D.map((trendEntry) => ({ ...trendEntry, day: `M1-${trendEntry.day}` })),
+  ...SALES_TREND_30D.map((trendEntry) => ({
+    day: `M2-${trendEntry.day}`,
+    revenue: Math.round(trendEntry.revenue * 0.85),
+    orders: Math.round(trendEntry.orders * 0.85),
   })),
-  ...SALES_TREND_30D.map((d) => ({
-    day: `M3-${d.day}`,
-    revenue: Math.round(d.revenue * 0.7),
-    orders: Math.round(d.orders * 0.7),
+  ...SALES_TREND_30D.map((trendEntry) => ({
+    day: `M3-${trendEntry.day}`,
+    revenue: Math.round(trendEntry.revenue * 0.7),
+    orders: Math.round(trendEntry.orders * 0.7),
   })),
 ];
-
-// ————————————————————————————————————————————————
-// REVENUE BY CATEGORY
-// ————————————————————————————————————————————————
 
 export const REVENUE_BY_CATEGORY = [
   { name: "Smartphones", value: 9200, percentage: 37 },
@@ -109,10 +95,6 @@ export const REVENUE_BY_CATEGORY = [
   { name: "Wearables", value: 1900, percentage: 7 },
 ];
 
-// ————————————————————————————————————————————————
-// TOP SELLING PRODUCTS
-// ————————————————————————————————————————————————
-
 export const TOP_PRODUCTS = [
   { name: "iPhone 15 Pro", units: 284, revenue: 4260 },
   { name: "Galaxy S24 Ultra", units: 196, revenue: 2940 },
@@ -120,10 +102,6 @@ export const TOP_PRODUCTS = [
   { name: "AirPods Pro 2", units: 318, revenue: 1590 },
   { name: "iPad Air", units: 127, revenue: 1905 },
 ];
-
-// ————————————————————————————————————————————————
-// STOCK LEVELS
-// ————————————————————————————————————————————————
 
 export const STOCK_LEVELS = [
   { category: "Smartphones", inStock: 342, lowStock: 8, outOfStock: 2 },
@@ -133,10 +111,6 @@ export const STOCK_LEVELS = [
   { category: "Wearables", inStock: 215, lowStock: 6, outOfStock: 1 },
 ];
 
-// ————————————————————————————————————————————————
-// LOW STOCK ALERTS
-// ————————————————————————————————————————————————
-
 export const LOW_STOCK_ALERTS = [
   { sku: "IP15P-256-BK", name: "iPhone 15 Pro 256GB Black", current: 3, minimum: 10, category: "Smartphones" },
   { sku: "GS24U-512-GR", name: "Galaxy S24 Ultra 512GB", current: 2, minimum: 8, category: "Smartphones" },
@@ -145,10 +119,6 @@ export const LOW_STOCK_ALERTS = [
   { sku: "IPD-AIR-64", name: "iPad Air 64GB WiFi", current: 1, minimum: 5, category: "Tablets" },
   { sku: "GW6-44-BK", name: "Galaxy Watch 6 44mm", current: 3, minimum: 8, category: "Wearables" },
 ];
-
-// ————————————————————————————————————————————————
-// WARRANTY ALERTS
-// ————————————————————————————————————————————————
 
 export const WARRANTY_ALERTS = {
   expiringIn30Days: 18,
@@ -162,10 +132,6 @@ export const WARRANTY_ALERTS = {
   ],
 };
 
-// ————————————————————————————————————————————————
-// RECENT ACTIVITY
-// ————————————————————————————————————————————————
-
 export const RECENT_ACTIVITY = [
   { action: "Sale completed #1847", time: "2m ago", type: "sale" as const },
   { action: "Stock in — 24 units (iPhone 15 Pro)", time: "15m ago", type: "stock" as const },
@@ -177,19 +143,11 @@ export const RECENT_ACTIVITY = [
   { action: "Warranty claim #WC-0041 resolved", time: "5h ago", type: "warranty" as const },
 ];
 
-// ————————————————————————————————————————————————
-// SALES BY PAYMENT METHOD
-// ————————————————————————————————————————————————
-
 export const PAYMENT_METHODS = [
   { method: "Cash", value: 8920, percentage: 36, transactions: 672 },
   { method: "Card", value: 11160, percentage: 45, transactions: 841 },
   { method: "Transfer", value: 4720, percentage: 19, transactions: 334 },
 ];
-
-// ————————————————————————————————————————————————
-// TOP CUSTOMERS
-// ————————————————————————————————————————————————
 
 export const TOP_CUSTOMERS = [
   { name: "Tech Haven", transactions: 84, spent: 4280, lastVisit: "2d ago" },
@@ -198,10 +156,6 @@ export const TOP_CUSTOMERS = [
   { name: "Gadget Zone", transactions: 41, spent: 2240, lastVisit: "3d ago" },
   { name: "Nex Mobile", transactions: 38, spent: 1960, lastVisit: "1d ago" },
 ];
-
-// ————————————————————————————————————————————————
-// DASHBOARD PERIOD SYSTEM
-// ————————————————————————————————————————————————
 
 export type DashboardPeriod = "today" | "7d" | "30d" | "this-month" | "this-year";
 
@@ -215,8 +169,6 @@ export const PERIOD_CONFIG: Record<
   "this-month": { label: "This Month", shortLabel: "MTD", scale: 0.85 },
   "this-year": { label: "This Year", shortLabel: "YTD", scale: 11.5 },
 };
-
-// — KPI data per period —
 
 const KPI_CHANGES: Record<
   DashboardPeriod,
@@ -262,20 +214,18 @@ const KPI_BASE = [
 ];
 
 export function getKpiStats(period: DashboardPeriod) {
-  const s = PERIOD_CONFIG[period].scale;
+  const periodScale = PERIOD_CONFIG[period].scale;
   const changes = KPI_CHANGES[period];
-  return KPI_BASE.map((kpi, i) => ({
+  return KPI_BASE.map((kpi, idx) => ({
     label: kpi.label,
-    value: kpi.label === "Low Stock Alerts" ? kpi.base : Math.round(kpi.base * s),
+    value: kpi.label === "Low Stock Alerts" ? kpi.base : Math.round(kpi.base * periodScale),
     prefix: kpi.prefix,
     suffix: kpi.suffix,
     format: kpi.format,
-    change: changes[i].change,
-    positive: changes[i].positive,
+    change: changes[idx].change,
+    positive: changes[idx].positive,
   }));
 }
-
-// — Sales trend data per period —
 
 const SALES_TREND_TODAY = [
   { day: "8AM", revenue: 45, orders: 3 },
@@ -337,52 +287,40 @@ export function getSalesTrendInterval(period: DashboardPeriod): number {
   }
 }
 
-// — Revenue by category per period —
-
 export function getRevenueByCategory(period: DashboardPeriod) {
-  const s = PERIOD_CONFIG[period].scale;
-  return REVENUE_BY_CATEGORY.map((cat) => ({
-    ...cat,
-    value: Math.round(cat.value * s),
+  const periodScale = PERIOD_CONFIG[period].scale;
+  return REVENUE_BY_CATEGORY.map((category) => ({
+    ...category,
+    value: Math.round(category.value * periodScale),
   }));
 }
-
-// — Payment methods per period —
 
 export function getPaymentMethods(period: DashboardPeriod) {
-  const s = PERIOD_CONFIG[period].scale;
-  return PAYMENT_METHODS.map((m) => ({
-    ...m,
-    value: Math.round(m.value * s),
-    transactions: Math.round(m.transactions * s),
+  const periodScale = PERIOD_CONFIG[period].scale;
+  return PAYMENT_METHODS.map((method) => ({
+    ...method,
+    value: Math.round(method.value * periodScale),
+    transactions: Math.round(method.transactions * periodScale),
   }));
 }
-
-// — Top products per period —
 
 export function getTopProducts(period: DashboardPeriod) {
-  const s = PERIOD_CONFIG[period].scale;
-  return TOP_PRODUCTS.map((p) => ({
-    ...p,
-    units: Math.round(p.units * s),
-    revenue: Math.round(p.revenue * s),
+  const periodScale = PERIOD_CONFIG[period].scale;
+  return TOP_PRODUCTS.map((product) => ({
+    ...product,
+    units: Math.round(product.units * periodScale),
+    revenue: Math.round(product.revenue * periodScale),
   }));
 }
-
-// — Top customers per period —
 
 export function getTopCustomers(period: DashboardPeriod) {
-  const s = PERIOD_CONFIG[period].scale;
-  return TOP_CUSTOMERS.map((c) => ({
-    ...c,
-    transactions: Math.round(c.transactions * s),
-    spent: Math.round(c.spent * s),
+  const periodScale = PERIOD_CONFIG[period].scale;
+  return TOP_CUSTOMERS.map((customer) => ({
+    ...customer,
+    transactions: Math.round(customer.transactions * periodScale),
+    spent: Math.round(customer.spent * periodScale),
   }));
 }
-
-// ————————————————————————————————————————————————
-// PRODUCT CATEGORIES
-// ————————————————————————————————————————————————
 
 export interface Category {
   id: string;
@@ -398,10 +336,6 @@ export const CATEGORIES: Category[] = [
   { id: "cat-tablets", name: "Tablets", description: "Tablet devices and e-readers" },
   { id: "cat-wearables", name: "Wearables", description: "Smartwatches and fitness trackers" },
 ];
-
-// ————————————————————————————————————————————————
-// PRODUCTS
-// ————————————————————————————————————————————————
 
 export type ProductStatus = "active" | "inactive";
 
@@ -843,19 +777,16 @@ export const PRODUCTS: Product[] = [
   },
 ];
 
-// Hydrate category product counts
-CATEGORIES.forEach((cat) => {
-  cat.productCount = PRODUCTS.filter((p) => p.categoryId === cat.id).length;
+CATEGORIES.forEach((category) => {
+  category.productCount = PRODUCTS.filter((product) => product.categoryId === category.id).length;
 });
-
-// — Helper functions —
 
 export function getProducts() {
   return PRODUCTS;
 }
 
 export function getProductById(id: string) {
-  return PRODUCTS.find((p) => p.id === id) ?? null;
+  return PRODUCTS.find((product) => product.id === id) ?? null;
 }
 
 export function getCategories() {
@@ -863,12 +794,8 @@ export function getCategories() {
 }
 
 export function getCategoryById(id: string) {
-  return CATEGORIES.find((c) => c.id === id) ?? null;
+  return CATEGORIES.find((category) => category.id === id) ?? null;
 }
-
-// ————————————————————————————————————————————————
-// SERIALIZED ITEMS
-// ————————————————————————————————————————————————
 
 export type SerialStatus = "in_stock" | "sold" | "reserved" | "defective" | "in_repair" | "scrapped";
 export type SerialCondition = "new" | "good" | "damaged" | "defective";
@@ -1884,18 +1811,16 @@ export const SERIALIZED_ITEMS: SerializedItem[] = [
   },
 ];
 
-// — Serial Inventory Helper Functions —
-
 export function getSerializedItems() {
   return SERIALIZED_ITEMS;
 }
 
 export function getSerializedItemById(id: string) {
-  return SERIALIZED_ITEMS.find((s) => s.id === id) ?? null;
+  return SERIALIZED_ITEMS.find((serial) => serial.id === id) ?? null;
 }
 
 export function getSerializedItemsByProduct(productId: string) {
-  return SERIALIZED_ITEMS.filter((s) => s.productId === productId);
+  return SERIALIZED_ITEMS.filter((serial) => serial.productId === productId);
 }
 
 export function getWarrantyStatus(item: SerializedItem): WarrantyStatus {
@@ -1916,10 +1841,6 @@ export function getWarrantyDaysRemaining(item: SerializedItem): number | null {
   const diffMs = expiry.getTime() - now.getTime();
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 }
-
-// ————————————————————————————————————————————————
-// WARRANTY CLAIMS
-// ————————————————————————————————————————————————
 
 export type ClaimType = "customer_to_store" | "store_to_supplier" | "supplier_to_store";
 export type ClaimStatus = "pending" | "in_review" | "in_repair" | "repaired" | "replaced" | "rejected" | "closed";
@@ -2361,30 +2282,28 @@ export const WARRANTY_CLAIMS: WarrantyClaim[] = [
   },
 ];
 
-// — Warranty Claim Helper Functions —
-
 export function getWarrantyClaims() {
   return WARRANTY_CLAIMS;
 }
 
 export function getWarrantyClaimById(id: string) {
-  return WARRANTY_CLAIMS.find((c) => c.id === id) ?? null;
+  return WARRANTY_CLAIMS.find((claim) => claim.id === id) ?? null;
 }
 
 export function getWarrantyClaimByNumber(claimNumber: string) {
-  return WARRANTY_CLAIMS.find((c) => c.claimNumber === claimNumber) ?? null;
+  return WARRANTY_CLAIMS.find((claim) => claim.claimNumber === claimNumber) ?? null;
 }
 
 export function getWarrantyClaimsBySerial(serializedItemId: string) {
-  return WARRANTY_CLAIMS.filter((c) => c.serializedItemId === serializedItemId);
+  return WARRANTY_CLAIMS.filter((claim) => claim.serializedItemId === serializedItemId);
 }
 
 export function getWarrantyClaimsByCustomer(customerName: string) {
-  return WARRANTY_CLAIMS.filter((c) => c.customerName === customerName);
+  return WARRANTY_CLAIMS.filter((claim) => claim.customerName === customerName);
 }
 
 export function getWarrantyClaimsBySupplier(supplierName: string) {
-  return WARRANTY_CLAIMS.filter((c) => c.supplierName === supplierName);
+  return WARRANTY_CLAIMS.filter((claim) => claim.supplierName === supplierName);
 }
 
 // Valid status transitions per the workflow diagram
@@ -2417,10 +2336,6 @@ export const CLAIM_STATUS_CONFIG: Record<ClaimStatus, { label: string; color: st
   rejected: { label: "Rejected", color: "text-error", bg: "bg-error/10" },
   closed: { label: "Closed", color: "text-blue-primary/40", bg: "bg-blue-primary/5" },
 };
-
-// ————————————————————————————————————————————————
-// SALES HISTORY
-// ————————————————————————————————————————————————
 
 export type PaymentMethod = "cash" | "card" | "transfer";
 export type SaleStatus = "completed" | "refunded" | "partial_refund" | "voided";
@@ -2785,10 +2700,6 @@ export const SALE_RECORDS: SaleRecord[] = [
     handledBy: "Admin",
   },
 ];
-
-// ————————————————————————————————————————————————
-// PURCHASE ORDERS
-// ————————————————————————————————————————————————
 
 export type PurchaseStatus =
   | "draft"

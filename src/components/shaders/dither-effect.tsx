@@ -51,8 +51,8 @@ export function DitherEffect({
     if (!containerRef.current) return;
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsInView(entry.isIntersecting);
+      ([intersectionEntry]) => {
+        setIsInView(intersectionEntry.isIntersecting);
       },
       { rootMargin: "200px" }
     );

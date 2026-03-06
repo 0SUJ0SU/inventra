@@ -1,4 +1,3 @@
-// src/app/(app)/products/new/page.tsx
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -7,15 +6,11 @@ import { ProductForm, type ProductFormData } from "@/components/app/products/pro
 export default function AddProductPage() {
   const router = useRouter();
 
-  const handleSubmit = (data: ProductFormData) => {
-    // Demo: just log and redirect
-    console.log("[Inventra] Product created:", data);
+  const handleSubmit = (_data: ProductFormData) => {
     router.push("/products");
   };
 
-  const handleSubmitAndNew = (data: ProductFormData) => {
-    console.log("[Inventra] Product created:", data);
-    // Client-side navigation instead of full page reload
+  const handleSubmitAndNew = (_data: ProductFormData) => {
     router.push("/products/new");
   };
 

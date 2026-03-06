@@ -1,4 +1,3 @@
-// src/app/(app)/products/categories/page.tsx
 "use client";
 
 import { useState, useMemo, useSyncExternalStore } from "react";
@@ -19,10 +18,6 @@ import {
 } from "lucide-react";
 import { CATEGORIES, PRODUCTS, type Category } from "@/lib/demo-data";
 
-// ————————————————————————————————————————————————
-// TYPES
-// ————————————————————————————————————————————————
-
 type SortKey = "name" | "productCount";
 type SortDir = "asc" | "desc";
 
@@ -37,15 +32,7 @@ interface DeleteState {
   category: Category | null;
 }
 
-// ————————————————————————————————————————————————
-// CONSTANTS
-// ————————————————————————————————————————————————
-
 const ease = [0.16, 1, 0.3, 1] as const;
-
-// ————————————————————————————————————————————————
-// VALIDATION
-// ————————————————————————————————————————————————
 
 function validateCategory(
   name: string,
@@ -60,8 +47,8 @@ function validateCategory(
     errors.name = "Min 2 characters";
   } else if (
     existing.some(
-      (c) =>
-        c.name.toLowerCase() === name.trim().toLowerCase() && c.id !== editId
+      (category) =>
+        category.name.toLowerCase() === name.trim().toLowerCase() && category.id !== editId
     )
   ) {
     errors.name = "Already exists";
@@ -71,10 +58,6 @@ function validateCategory(
   }
   return errors;
 }
-
-// ————————————————————————————————————————————————
-// SORT ICON
-// ————————————————————————————————————————————————
 
 function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
   if (sortKey !== col)
@@ -92,30 +75,21 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
   );
 }
 
-// ————————————————————————————————————————————————
-// PAGE
-// ————————————————————————————————————————————————
-
 export default function CategoriesPage() {
-  // — Mounted (portal hydration fix) —
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
 
-  // — Data —
   const [categories, setCategories] = useState<Category[]>(() =>
-    CATEGORIES.map((c) => ({
-      ...c,
-      productCount: PRODUCTS.filter((p) => p.categoryId === c.id).length,
+    CATEGORIES.map((category) => ({
+      ...category,
+      productCount: PRODUCTS.filter((product) => product.categoryId === category.id).length,
     }))
   );
 
-  // — Search —
   const [search, setSearch] = useState("");
 
-  // — Sort —
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
 
-  // — Modal —
   const [modal, setModal] = useState<ModalState>({
     open: false,
     mode: "add",
@@ -125,49 +99,44 @@ export default function CategoriesPage() {
   const [modalDesc, setModalDesc] = useState("");
   const [modalErrors, setModalErrors] = useState<Record<string, string>>({});
 
-  // — Delete dialog —
   const [deleteDialog, setDeleteDialog] = useState<DeleteState>({
     open: false,
     category: null,
   });
 
-  // ——— DERIVED DATA ———
-
   const filtered = useMemo(() => {
-    let data = [...categories];
+    let matchingCategories = [...categories];
     if (search.trim()) {
-      const q = search.toLowerCase().trim();
-      data = data.filter(
-        (c) =>
-          c.name.toLowerCase().includes(q) ||
-          c.description.toLowerCase().includes(q)
+      const searchTerm = search.toLowerCase().trim();
+      matchingCategories = matchingCategories.filter(
+        (category) =>
+          category.name.toLowerCase().includes(searchTerm) ||
+          category.description.toLowerCase().includes(searchTerm)
       );
     }
-    return data;
+    return matchingCategories;
   }, [categories, search]);
 
   const sorted = useMemo(() => {
-    const data = [...filtered];
-    data.sort((a, b) => {
+    const sortableCategories = [...filtered];
+    sortableCategories.sort((left, right) => {
       let cmp = 0;
       switch (sortKey) {
         case "name":
-          cmp = a.name.localeCompare(b.name);
+          cmp = left.name.localeCompare(right.name);
           break;
         case "productCount":
-          cmp = (a.productCount ?? 0) - (b.productCount ?? 0);
+          cmp = (left.productCount ?? 0) - (right.productCount ?? 0);
           break;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
-    return data;
+    return sortableCategories;
   }, [filtered, sortKey, sortDir]);
-
-  // ——— HANDLERS ———
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+      setSortDir((currentDir) => (currentDir === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
       setSortDir("asc");
@@ -195,9 +164,9 @@ export default function CategoriesPage() {
 
   const handleModalSubmit = () => {
     const editId = modal.mode === "edit" ? modal.category?.id ?? null : null;
-    const errs = validateCategory(modalName, modalDesc, categories, editId);
-    if (Object.keys(errs).length > 0) {
-      setModalErrors(errs);
+    const validationErrors = validateCategory(modalName, modalDesc, categories, editId);
+    if (Object.keys(validationErrors).length > 0) {
+      setModalErrors(validationErrors);
       return;
     }
 
@@ -210,11 +179,12 @@ export default function CategoriesPage() {
       };
       setCategories((prev) => [...prev, newCat]);
     } else if (modal.category) {
+      const editingCategoryId = modal.category.id;
       setCategories((prev) =>
-        prev.map((c) =>
-          c.id === modal.category!.id
-            ? { ...c, name: modalName.trim(), description: modalDesc.trim() }
-            : c
+        prev.map((category) =>
+          category.id === editingCategoryId
+            ? { ...category, name: modalName.trim(), description: modalDesc.trim() }
+            : category
         )
       );
     }
@@ -231,18 +201,16 @@ export default function CategoriesPage() {
 
   const handleDelete = () => {
     if (deleteDialog.category) {
+      const deletingCategoryId = deleteDialog.category.id;
       setCategories((prev) =>
-        prev.filter((c) => c.id !== deleteDialog.category!.id)
+        prev.filter((category) => category.id !== deletingCategoryId)
       );
     }
     closeDeleteDialog();
   };
 
-  // ——— RENDER ———
-
   return (
     <div className="space-y-6">
-      {/* ━━━ PAGE HEADER ━━━ */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <motion.h1
@@ -282,10 +250,8 @@ export default function CategoriesPage() {
         </motion.div>
       </div>
 
-      {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ━━━ SEARCH ━━━ */}
       <motion.div
         initial={{ y: 20 }}
         animate={{ y: 0 }}
@@ -301,7 +267,7 @@ export default function CategoriesPage() {
             type="text"
             placeholder="SEARCH CATEGORIES..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(changeEvent) => setSearch(changeEvent.target.value)}
             className="w-full h-9 pl-9 pr-3 bg-cream-light border border-blue-primary/10 font-mono text-[11px] tracking-[0.08em] uppercase text-blue-primary placeholder:text-blue-primary/25 focus:outline-none focus:border-blue-primary/30 transition-colors"
           />
           {search && (
@@ -315,14 +281,12 @@ export default function CategoriesPage() {
         </div>
       </motion.div>
 
-      {/* ━━━ TABLE ━━━ */}
       <motion.div
         className="border border-blue-primary/10 bg-cream-light overflow-hidden"
         initial={{ y: 30 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.15, ease }}
       >
-        {/* Table header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-blue-primary/8">
           <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">
             Category List
@@ -332,7 +296,6 @@ export default function CategoriesPage() {
           </span>
         </div>
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px]">
             <thead>
@@ -386,7 +349,6 @@ export default function CategoriesPage() {
                     key={cat.id}
                     className="border-b border-blue-primary/6 transition-colors duration-150 h-14 hover:bg-blue-primary/[0.02]"
                   >
-                    {/* Name */}
                     <td className="px-5 align-middle">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 shrink-0 border border-blue-primary/10 bg-cream-primary flex items-center justify-center">
@@ -400,20 +362,17 @@ export default function CategoriesPage() {
                           <p className="font-mono text-[11px] tracking-[0.04em] uppercase text-blue-primary truncate leading-none">
                             {cat.name}
                           </p>
-                          {/* Show description on mobile under name */}
                           <p className="font-mono text-[8px] tracking-[0.06em] uppercase text-blue-primary/30 mt-1 sm:hidden truncate leading-none">
                             {cat.description || "No description"}
                           </p>
                         </div>
                       </div>
                     </td>
-                    {/* Description (hidden on mobile) */}
                     <td className="px-5 align-middle hidden sm:table-cell">
                       <p className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/50 truncate max-w-xs">
                         {cat.description || "—"}
                       </p>
                     </td>
-                    {/* Product count */}
                     <td className="px-5 align-middle text-right">
                       <span className="font-mono text-[12px] tracking-[0.05em] font-semibold text-blue-primary">
                         {cat.productCount ?? 0}
@@ -422,7 +381,6 @@ export default function CategoriesPage() {
                         items
                       </span>
                     </td>
-                    {/* Actions */}
                     <td className="w-24 px-5 align-middle">
                       <div className="flex items-center justify-end gap-1">
                         <button
@@ -448,20 +406,18 @@ export default function CategoriesPage() {
           </table>
         </div>
 
-        {/* Footer info */}
         <div className="flex items-center justify-between px-5 py-3 border-t border-blue-primary/8">
           <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/50">
             {sorted.length} of {categories.length} categor
             {categories.length !== 1 ? "ies" : "y"}
           </span>
           <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/40">
-            {categories.reduce((sum, c) => sum + (c.productCount ?? 0), 0)}{" "}
+            {categories.reduce((sum, category) => sum + (category.productCount ?? 0), 0)}{" "}
             total products
           </span>
         </div>
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between pt-4">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">
@@ -470,12 +426,10 @@ export default function CategoriesPage() {
         <div className="h-px flex-1 bg-blue-primary/8" />
       </div>
 
-      {/* ━━━ ADD/EDIT MODAL ━━━ */}
       {mounted && createPortal(
       <AnimatePresence>
         {modal.open && (
           <>
-            {/* Backdrop */}
             <motion.div
               className="fixed inset-0 bg-blue-primary/20 z-40"
               initial={{ opacity: 0 }}
@@ -483,7 +437,6 @@ export default function CategoriesPage() {
               exit={{ opacity: 0 }}
               onClick={closeModal}
             />
-            {/* Panel */}
             <motion.div
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
               initial={{ opacity: 0 }}
@@ -496,9 +449,8 @@ export default function CategoriesPage() {
                 animate={{ y: 0, scale: 1 }}
                 exit={{ y: 20, scale: 0.97 }}
                 transition={{ duration: 0.3, ease }}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(clickEvent) => clickEvent.stopPropagation()}
               >
-                {/* Modal header */}
                 <div className="flex items-center justify-between px-5 py-3 border-b border-blue-primary/8">
                   <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/50">
                     {modal.mode === "add" ? "New Category" : "Edit Category"}
@@ -511,9 +463,7 @@ export default function CategoriesPage() {
                   </button>
                 </div>
 
-                {/* Modal body */}
                 <div className="p-5 space-y-4">
-                  {/* Name */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50">
@@ -529,12 +479,12 @@ export default function CategoriesPage() {
                     <input
                       type="text"
                       value={modalName}
-                      onChange={(e) => {
-                        setModalName(e.target.value);
+                      onChange={(changeEvent) => {
+                        setModalName(changeEvent.target.value);
                         setModalErrors((prev) => {
-                          const n = { ...prev };
-                          delete n.name;
-                          return n;
+                          const withoutName = { ...prev };
+                          delete withoutName.name;
+                          return withoutName;
                         });
                       }}
                       placeholder="e.g. Smartphones"
@@ -547,7 +497,6 @@ export default function CategoriesPage() {
                     />
                   </div>
 
-                  {/* Description */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <label className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50">
@@ -561,12 +510,12 @@ export default function CategoriesPage() {
                     </div>
                     <textarea
                       value={modalDesc}
-                      onChange={(e) => {
-                        setModalDesc(e.target.value);
+                      onChange={(changeEvent) => {
+                        setModalDesc(changeEvent.target.value);
                         setModalErrors((prev) => {
-                          const n = { ...prev };
-                          delete n.description;
-                          return n;
+                          const withoutDescription = { ...prev };
+                          delete withoutDescription.description;
+                          return withoutDescription;
                         });
                       }}
                       placeholder="Brief description of this category..."
@@ -583,7 +532,6 @@ export default function CategoriesPage() {
                   </div>
                 </div>
 
-                {/* Modal actions */}
                 <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-blue-primary/8">
                   <button
                     onClick={closeModal}
@@ -616,7 +564,6 @@ export default function CategoriesPage() {
       document.body
       )}
 
-      {/* ━━━ DELETE CONFIRMATION ━━━ */}
       {mounted && createPortal(
       <AnimatePresence>
         {deleteDialog.open && deleteDialog.category && (
@@ -640,9 +587,8 @@ export default function CategoriesPage() {
                 animate={{ y: 0, scale: 1 }}
                 exit={{ y: 20, scale: 0.97 }}
                 transition={{ duration: 0.3, ease }}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(clickEvent) => clickEvent.stopPropagation()}
               >
-                {/* Header */}
                 <div className="flex items-center justify-between px-5 py-3 border-b border-blue-primary/8">
                   <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-error/70">
                     Delete Category
@@ -655,7 +601,6 @@ export default function CategoriesPage() {
                   </button>
                 </div>
 
-                {/* Body */}
                 <div className="p-5 space-y-3">
                   <p className="font-mono text-[11px] tracking-[0.04em] uppercase text-blue-primary leading-relaxed">
                     Are you sure you want to delete{" "}
@@ -683,7 +628,6 @@ export default function CategoriesPage() {
                   )}
                 </div>
 
-                {/* Actions */}
                 <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-blue-primary/8">
                   <button
                     onClick={closeDeleteDialog}

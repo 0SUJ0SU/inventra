@@ -1,4 +1,3 @@
-// src/components/app/dashboard/sales-trend-chart.tsx
 "use client";
 
 import { useId } from "react";
@@ -57,7 +56,6 @@ export function SalesTrendChart({ period }: SalesTrendChartProps) {
       animate={{ y: 0 }}
       transition={{ duration: 0.5, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-3 shrink-0">
         <div className="flex items-center gap-3">
           <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">
@@ -72,7 +70,6 @@ export function SalesTrendChart({ period }: SalesTrendChartProps) {
         </span>
       </div>
 
-      {/* Chart */}
       <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
@@ -112,7 +109,7 @@ export function SalesTrendChart({ period }: SalesTrendChartProps) {
               }}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(v: number) => `${v}`}
+              tickFormatter={(tickValue: number) => `${tickValue}`}
             />
             <Tooltip
               content={<CustomTooltip />}

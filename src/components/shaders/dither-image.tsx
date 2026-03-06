@@ -122,7 +122,6 @@ const MAIN_FS = `
   }
 `;
 
-// ─── Types ───
 interface DitherImageProps {
   src: string;
   alt?: string;
@@ -310,7 +309,6 @@ export function DitherImage({
     const w = gl.canvas.width;
     const h = gl.canvas.height;
 
-    // Clean up old
     if (trailFBRef.current) {
       gl.deleteFramebuffer(trailFBRef.current[0]);
       gl.deleteFramebuffer(trailFBRef.current[1]);
@@ -320,7 +318,6 @@ export function DitherImage({
       gl.deleteTexture(trailTexRef.current[1]);
     }
 
-    // Create ping-pong textures + framebuffers
     const texA = createTrailTexture(gl, w, h);
     const texB = createTrailTexture(gl, w, h);
     if (!texA || !texB) return;

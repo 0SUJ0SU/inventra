@@ -4,10 +4,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Check, Download, RotateCcw, AlertTriangle } from "lucide-react";
 
-// ──────────────────────────────────────────────────────────────────────────────
-// TYPES
-// ──────────────────────────────────────────────────────────────────────────────
-
 interface AppSettings {
   storeName: string;
   address: string;
@@ -56,10 +52,6 @@ const DEFAULT_SETTINGS: AppSettings = {
 
 const ease = [0.16, 1, 0.3, 1] as const;
 const STORAGE_KEY = "inventra_settings";
-
-// ──────────────────────────────────────────────────────────────────────────────
-// SUB-COMPONENTS
-// ──────────────────────────────────────────────────────────────────────────────
 
 function SectionHeader({ num, label, marker }: { num: string; label: string; marker: string }) {
   return (
@@ -183,10 +175,6 @@ function FeatureRow({
   );
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// PAGE
-// ──────────────────────────────────────────────────────────────────────────────
-
 export default function SettingsPage() {
   const [settings, setSettings]       = useState<AppSettings>(DEFAULT_SETTINGS);
   const [saveStatus, setSaveStatus]   = useState<"idle" | "saving" | "saved">("idle");
@@ -230,12 +218,9 @@ export default function SettingsPage() {
     URL.revokeObjectURL(url);
   }
 
-  // ── RENDER ──────────────────────────────────────────────────────────────────
-
   return (
     <div className="space-y-0">
 
-      {/* ── PAGE HEADER ──────────────────────────────────────────────────── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between pb-6">
         <div>
           <motion.h1
@@ -290,9 +275,6 @@ export default function SettingsPage() {
 
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* SECTION 01 — STORE INFORMATION                                    */}
-      {/* ══════════════════════════════════════════════════════════════════ */}
       <section className="py-8 space-y-5">
         <SectionHeader num="/01" label="Store Information" marker="[INV.SET.01]" />
 
@@ -302,7 +284,6 @@ export default function SettingsPage() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.08, ease }}
         >
-          {/* Business details */}
           <div className="bg-cream-light">
             <div className="flex items-center justify-between px-5 py-3 border-b border-blue-primary/8">
               <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">Business Details</p>
@@ -325,7 +306,6 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Contact */}
           <div className="bg-cream-light">
             <div className="flex items-center justify-between px-5 py-3 border-b border-blue-primary/8">
               <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">Contact Details</p>
@@ -353,9 +333,6 @@ export default function SettingsPage() {
 
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ══════════════════════════════════════════════════════════════════ */}
-      {/* SECTION 02 — PREFERENCES                                          */}
-      {/* ══════════════════════════════════════════════════════════════════ */}
       <section className="py-8 space-y-5">
         <SectionHeader num="/02" label="Preferences" marker="[INV.SET.02]" />
 
@@ -365,7 +342,6 @@ export default function SettingsPage() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.14, ease }}
         >
-          {/* Financial */}
           <div className="bg-cream-light">
             <div className="flex items-center justify-between px-5 py-3 border-b border-blue-primary/8">
               <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">Financial</p>
@@ -407,7 +383,6 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* General */}
           <div className="bg-cream-light">
             <div className="flex items-center justify-between px-5 py-3 border-b border-blue-primary/8">
               <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">General</p>
@@ -441,7 +416,6 @@ export default function SettingsPage() {
           </div>
         </motion.div>
 
-        {/* Theme selector */}
         <motion.div
           className="border border-blue-primary/10 bg-cream-light overflow-hidden"
           initial={{ y: 20, opacity: 0 }}

@@ -1,4 +1,3 @@
-// src/app/(app)/warranty/claims/new/page.tsx
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
@@ -40,10 +39,6 @@ import {
   formatClaimDate as formatDate,
 } from "@/lib/warranty-utils";
 
-// ————————————————————————————————————————————————
-// TYPES
-// ————————————————————————————————————————————————
-
 interface ClaimFormData {
   serializedItemId: string;
   claimType: ClaimType;
@@ -54,19 +49,11 @@ interface FormErrors {
   [key: string]: string;
 }
 
-// ————————————————————————————————————————————————
-// CONSTANTS
-// ————————————————————————————————————————————————
-
 const CLAIM_TYPE_ICONS: Record<ClaimType, React.ElementType> = {
   customer_to_store: User,
   store_to_supplier: Truck,
   supplier_to_store: Package,
 };
-
-// ————————————————————————————————————————————————
-// HELPERS
-// ————————————————————————————————————————————————
 
 function generateClaimNumber(): string {
   const year = new Date().getFullYear();
@@ -155,10 +142,6 @@ function validateForm(
   return errors;
 }
 
-// ————————————————————————————————————————————————
-// FIELD COMPONENTS (matching ProductForm exactly)
-// ————————————————————————————————————————————————
-
 function FieldLabel({
   label,
   required = false,
@@ -245,14 +228,9 @@ function InfoRow({
   );
 }
 
-// ————————————————————————————————————————————————
-// PAGE
-// ————————————————————————————————————————————————
-
 export default function NewWarrantyClaimPage() {
   const router = useRouter();
 
-  // — Form state —
   const [form, setForm] = useState<ClaimFormData>({
     serializedItemId: "",
     claimType: "customer_to_store",
@@ -262,7 +240,6 @@ export default function NewWarrantyClaimPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  // — Serial search —
   const [serialSearch, setSerialSearch] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedItem, setSelectedItem] = useState<SerializedItem | null>(
@@ -294,7 +271,6 @@ export default function NewWarrantyClaimPage() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Filter serials by search
   const searchResults = useMemo(() => {
     if (!serialSearch.trim()) return [];
     const q = serialSearch.toLowerCase().trim();
@@ -306,8 +282,7 @@ export default function NewWarrantyClaimPage() {
     ).slice(0, 8);
   }, [serialSearch]);
 
-  // — Update helpers —
-  const update = useCallback(
+  const updateField = useCallback(
     (key: keyof ClaimFormData, value: string) => {
       setForm((prev) => ({ ...prev, [key]: value }));
       setErrors((prev) => {
@@ -323,16 +298,15 @@ export default function NewWarrantyClaimPage() {
     setSelectedItem(item);
     setSerialSearch(item.serialNumber);
     setShowDropdown(false);
-    update("serializedItemId", item.id);
+    updateField("serializedItemId", item.id);
 
     // Auto-select best claim type based on context
     if (item.customer) {
-      update("claimType", "customer_to_store");
+      updateField("claimType", "customer_to_store");
     } else if (item.supplier) {
-      update("claimType", "store_to_supplier");
+      updateField("claimType", "store_to_supplier");
     }
 
-    // Clear serial error
     setErrors((prev) => {
       const next = { ...prev };
       delete next.serializedItemId;
@@ -343,7 +317,7 @@ export default function NewWarrantyClaimPage() {
   const handleClearSerial = () => {
     setSelectedItem(null);
     setSerialSearch("");
-    update("serializedItemId", "");
+    updateField("serializedItemId", "");
   };
 
   const handleSubmit = () => {
@@ -363,7 +337,6 @@ export default function NewWarrantyClaimPage() {
 
     setIsSubmitting(true);
 
-    // Simulate save delay
     submitTimerRef.current = setTimeout(() => {
       const claimNumber = generateClaimNumber();
       const now = new Date().toISOString().split("T")[0];
@@ -416,14 +389,12 @@ export default function NewWarrantyClaimPage() {
       setSubmitted(true);
       setIsSubmitting(false);
 
-      // Redirect after brief success flash
       redirectTimerRef.current = setTimeout(() => {
         router.push("/warranty/claims");
       }, 800);
     }, 500);
   };
 
-  // — Warranty info for selected item —
   const warrantyInfo = selectedItem
     ? getWarrantyLabel(selectedItem)
     : null;
@@ -431,7 +402,6 @@ export default function NewWarrantyClaimPage() {
     ? getWarrantyStatus(selectedItem) === "expired"
     : false;
 
-  // — Existing claims for this serial —
   const existingClaims = selectedItem
     ? WARRANTY_CLAIMS.filter(
         (c) => c.serializedItemId === selectedItem.id
@@ -440,7 +410,6 @@ export default function NewWarrantyClaimPage() {
 
   return (
     <div className="space-y-4">
-      {/* ━━━ BACK + HEADER ━━━ */}
       <div className="flex flex-col gap-3">
         <motion.div
           initial={{ x: -20 }}
@@ -478,14 +447,12 @@ export default function NewWarrantyClaimPage() {
 
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ━━━ FORM ━━━ */}
       <motion.div
         className="space-y-4"
         initial={{ y: 25 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.1, ease }}
       >
-        {/* Row 1: Claim Type Selection (3 toggle cards) */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {(
             Object.entries(CLAIM_TYPE_CONFIG) as [
@@ -509,7 +476,7 @@ export default function NewWarrantyClaimPage() {
                 type="button"
                 onClick={() => {
                   if (!isDisabled) {
-                    update("claimType", key);
+                    updateField("claimType", key);
                   }
                 }}
                 disabled={isDisabled}
@@ -919,7 +886,7 @@ export default function NewWarrantyClaimPage() {
                   <textarea
                     value={form.issueDescription}
                     onChange={(e) =>
-                      update("issueDescription", e.target.value)
+                      updateField("issueDescription", e.target.value)
                     }
                     placeholder="Describe the issue in detail. What is the problem? When did it start? Has the customer tried any troubleshooting?"
                     rows={6}

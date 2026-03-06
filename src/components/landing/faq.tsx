@@ -7,9 +7,6 @@ import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* ────────────────────────────────────────────────────────────────
-   FAQ data
-──────────────────────────────────────────────────────────────── */
 const categories = ["GENERAL", "FEATURES", "PRICING"] as const;
 type Category = (typeof categories)[number];
 
@@ -86,9 +83,6 @@ const faqItems: FaqItem[] = [
   },
 ];
 
-/* ────────────────────────────────────────────────────────────────
-   Accordion Item
-──────────────────────────────────────────────────────────────── */
 function AccordionItem({
   item,
   displayIndex,
@@ -108,14 +102,12 @@ function AccordionItem({
   useEffect(() => {
     if (!contentRef.current || !measureRef.current || !iconRef.current) return;
 
-    // Skip initial render
     if (prevOpen.current === isOpen && !isOpen) {
       prevOpen.current = isOpen;
       return;
     }
 
     if (isOpen && !prevOpen.current) {
-      // Opening
       const height = measureRef.current.scrollHeight;
       gsap.killTweensOf(contentRef.current);
       gsap.fromTo(
@@ -128,21 +120,18 @@ function AccordionItem({
         { y: 15 },
         { y: 0, duration: 0.5, ease: "power3.out", delay: 0.05 }
       );
-      // Icon: rotate to 135deg (plus becomes X)
       gsap.to(iconRef.current, {
         rotation: 135,
         duration: 0.4,
         ease: "power3.out",
       });
     } else if (!isOpen && prevOpen.current) {
-      // Closing
       gsap.killTweensOf(contentRef.current);
       gsap.to(contentRef.current, {
         height: 0,
         duration: 0.4,
         ease: "power3.inOut",
       });
-      // Icon: rotate back
       gsap.to(iconRef.current, {
         rotation: 0,
         duration: 0.4,
@@ -158,12 +147,10 @@ function AccordionItem({
       className="faq-item"
       style={{ borderBottom: "1px solid rgba(25, 37, 170, 0.12)" }}
     >
-      {/* Question row */}
       <button
         onClick={onToggle}
         className="w-full flex items-center gap-4 md:gap-6 py-5 md:py-6 text-left group cursor-pointer"
       >
-        {/* Number */}
         <span
           className="font-mono text-[13px] tracking-[0.1em] flex-shrink-0 w-8 transition-all duration-500"
           style={{
@@ -173,7 +160,6 @@ function AccordionItem({
           {String(displayIndex + 1).padStart(2, "0")}
         </span>
 
-        {/* Question text */}
         <span
           className="font-sans font-medium leading-[1.25] tracking-tight flex-1 transition-colors duration-500"
           style={{
@@ -184,7 +170,6 @@ function AccordionItem({
           {item.question}
         </span>
 
-        {/* Toggle icon — single Plus that rotates to X */}
         <div
           ref={iconRef}
           className="flex items-center justify-center w-8 h-8 flex-shrink-0 transition-colors duration-500"
@@ -207,7 +192,6 @@ function AccordionItem({
         </div>
       </button>
 
-      {/* Answer — height animated via GSAP */}
       <div ref={contentRef} className="overflow-hidden" style={{ height: 0 }}>
         <div ref={measureRef} className="pb-6 md:pb-8 pl-12 md:pl-14 pr-8 md:pr-14">
           <p
@@ -222,9 +206,6 @@ function AccordionItem({
   );
 }
 
-/* ────────────────────────────────────────────────────────────────
-   FAQ Section
-──────────────────────────────────────────────────────────────── */
 export function FAQ() {
   const sectionRef = useRef<HTMLElement>(null);
   const leftRef = useRef<HTMLDivElement>(null);
@@ -241,7 +222,6 @@ export function FAQ() {
     setOpenId((prev) => (prev === id ? prev : id));
   }, []);
 
-  /* Category switch animation */
   const handleCategorySwitch = useCallback(
     (cat: Category) => {
       if (cat === activeCategory) return;
@@ -254,7 +234,6 @@ export function FAQ() {
 
       const items = listRef.current.querySelectorAll(".faq-item");
 
-      // Slide items out
       gsap.to(items, {
         x: -30,
         opacity: 0,
@@ -266,7 +245,6 @@ export function FAQ() {
           const firstInCat = faqItems.find((item) => item.category === cat);
           setOpenId(firstInCat ? firstInCat.id : faqItems[0].id);
 
-          // Wait for React to render new items, then slide them in
           requestAnimationFrame(() => {
             if (!listRef.current) return;
             const newItems = listRef.current.querySelectorAll(".faq-item");
@@ -288,12 +266,10 @@ export function FAQ() {
     [activeCategory]
   );
 
-  /* Entrance animations */
   useGSAP(
     () => {
       if (!sectionRef.current) return;
 
-      // Left panel slides from left
       if (leftRef.current) {
         gsap.fromTo(
           leftRef.current,
@@ -308,7 +284,6 @@ export function FAQ() {
         );
       }
 
-      // Right panel filters
       if (rightRef.current) {
         const filters = rightRef.current.querySelector(".faq-filters");
         if (filters) {
@@ -329,7 +304,6 @@ export function FAQ() {
         }
       }
 
-      // FAQ items stagger in
       if (listRef.current) {
         const items = listRef.current.querySelectorAll(".faq-item");
         gsap.fromTo(
@@ -357,7 +331,6 @@ export function FAQ() {
     >
 
       <div className="relative z-10 px-6">
-        {/* Section labels — FAQ left, [INV.7] right */}
         <div
           className="flex items-baseline justify-between pt-6 pb-4"
           style={{ borderTop: "1px solid rgba(25, 37, 170, 0.12)" }}
@@ -376,9 +349,7 @@ export function FAQ() {
           </span>
         </div>
 
-        {/* ── Split layout: left panel + right panel ── */}
         <div className="flex flex-col lg:flex-row min-h-[650px]">
-          {/* ── Left panel: headline + CTA ── */}
           <div
             ref={leftRef}
             className="lg:w-[33.333%] flex flex-col justify-between py-8 lg:py-16 lg:pr-12 lg:sticky lg:top-24 lg:self-start"
@@ -386,7 +357,6 @@ export function FAQ() {
               borderRight: "1px solid rgba(25, 37, 170, 0.1)",
             }}
           >
-            {/* Headline */}
             <div>
               <h2
                 className="font-sans font-bold leading-[0.95] tracking-tight"
@@ -401,7 +371,6 @@ export function FAQ() {
               </h2>
             </div>
 
-            {/* CTA */}
             <div className="mt-10 lg:mt-[calc(7vh-7px)]">
               <a
                 href="#contact"
@@ -413,9 +382,7 @@ export function FAQ() {
             </div>
           </div>
 
-          {/* ── Right panel: filters + accordion ── */}
           <div ref={rightRef} className="lg:flex-1 lg:pl-12 py-8 lg:py-16">
-            {/* Category filters */}
             <div className="faq-filters flex items-center gap-6 md:gap-8 mb-10 md:mb-14 flex-wrap">
               {categories.map((cat) => (
                 <button
@@ -438,9 +405,7 @@ export function FAQ() {
               ))}
             </div>
 
-            {/* Accordion items */}
             <div ref={listRef} className="h-[480px] sm:h-[450px] lg:h-[420px] overflow-hidden">
-              {/* Top border */}
               <div
                 style={{
                   borderTop: "1px solid rgba(25, 37, 170, 0.12)",

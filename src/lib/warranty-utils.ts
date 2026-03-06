@@ -1,6 +1,3 @@
-// src/lib/warranty-utils.ts
-// Shared constants and helpers for warranty claim pages
-
 import {
   Clock,
   Eye,

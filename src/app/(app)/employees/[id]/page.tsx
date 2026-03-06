@@ -1,4 +1,3 @@
-// src/app/(app)/employees/[id]/page.tsx
 "use client";
 
 import { useMemo, useEffect, useState } from "react";
@@ -16,15 +15,7 @@ import Link from "next/link";
 import { EMPLOYEES, STATUS_LABEL } from "../page";
 import { formatCurrency } from "@/lib/utils/format";
 
-// ——————————————————————————————————————————————————
-// CONSTANTS
-// ——————————————————————————————————————————————————
-
 const ease = [0.16, 1, 0.3, 1] as const;
-
-// ——————————————————————————————————————————————————
-// HELPERS
-// ——————————————————————————————————————————————————
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -35,8 +26,8 @@ function formatDate(iso: string): string {
 }
 
 function getTenureYears(hireDate: string): number {
-  const ms = Date.now() - new Date(hireDate).getTime();
-  return Math.floor(ms / (1000 * 60 * 60 * 24 * 365.25));
+  const elapsedMs = Date.now() - new Date(hireDate).getTime();
+  return Math.floor(elapsedMs / (1000 * 60 * 60 * 24 * 365.25));
 }
 
 function getTenureDetailed(hireDate: string): string {
@@ -50,21 +41,17 @@ function getTenureDetailed(hireDate: string): string {
   return `${years} yr${years !== 1 ? "s" : ""} ${months} mo`;
 }
 
-// ——————————————————————————————————————————————————
-// PAGE
-// ——————————————————————————————————————————————————
-
 export default function EmployeeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(t);
+    const loadingTimer = setTimeout(() => setIsLoading(false), 500);
+    return () => clearTimeout(loadingTimer);
   }, []);
 
   const employee = useMemo(
-    () => EMPLOYEES.find((e) => e.id === id) ?? null,
+    () => EMPLOYEES.find((emp) => emp.id === id) ?? null,
     [id]
   );
 
@@ -72,7 +59,7 @@ export default function EmployeeDetailPage() {
     () =>
       employee
         ? EMPLOYEES.filter(
-            (e) => e.department === employee.department && e.id !== employee.id
+            (emp) => emp.department === employee.department && emp.id !== employee.id
           )
         : [],
     [employee]
@@ -81,7 +68,7 @@ export default function EmployeeDetailPage() {
   const deptEmployees = useMemo(
     () =>
       employee
-        ? EMPLOYEES.filter((e) => e.department === employee.department)
+        ? EMPLOYEES.filter((emp) => emp.department === employee.department)
         : [],
     [employee]
   );
@@ -89,12 +76,11 @@ export default function EmployeeDetailPage() {
   const deptPayroll = useMemo(
     () =>
       deptEmployees
-        .filter((e) => e.status !== "inactive")
-        .reduce((acc, e) => acc + e.salary, 0),
+        .filter((emp) => emp.status !== "inactive")
+        .reduce((acc, emp) => acc + emp.salary, 0),
     [deptEmployees]
   );
 
-  // ——— Not found ———
   if (!isLoading && !employee) {
     return (
       <div className="space-y-6">
@@ -118,14 +104,9 @@ export default function EmployeeDetailPage() {
     );
   }
 
-  // ——————————————————————————————————————————————————
-  // RENDER
-  // ——————————————————————————————————————————————————
-
   return (
     <div className="space-y-6">
 
-      {/* ┌── BACK LINK ──┐ */}
       <Link
         href="/employees"
         className="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.12em] uppercase text-blue-primary/40 hover:text-blue-primary transition-colors"
@@ -134,7 +115,6 @@ export default function EmployeeDetailPage() {
         Back to Employees
       </Link>
 
-      {/* ┌── PAGE HEADER ──┐ */}
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           {isLoading ? (
@@ -173,10 +153,8 @@ export default function EmployeeDetailPage() {
         </motion.span>
       </div>
 
-      {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ┌── KPI STRIP ──┐ */}
       <motion.div
         className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
@@ -187,25 +165,25 @@ export default function EmployeeDetailPage() {
           {
             icon: Briefcase,
             label: "Role",
-            value: isLoading ? "—" : employee!.role,
+            display: isLoading ? "—" : employee!.role,
             sub: isLoading ? "" : employee!.department,
           },
           {
             icon: DollarSign,
             label: "Annual Salary",
-            value: isLoading ? "—" : formatCurrency(employee!.salary),
+            display: isLoading ? "—" : formatCurrency(employee!.salary),
             sub: isLoading ? "" : `${formatCurrency(Math.round(employee!.salary / 12))} / month`,
           },
           {
             icon: CalendarDays,
             label: "Hire Date",
-            value: isLoading ? "—" : formatDate(employee!.hireDate),
+            display: isLoading ? "—" : formatDate(employee!.hireDate),
             sub: isLoading ? "" : getTenureDetailed(employee!.hireDate),
           },
           {
             icon: Building2,
             label: "Dept Payroll",
-            value: isLoading ? "—" : formatCurrency(deptPayroll),
+            display: isLoading ? "—" : formatCurrency(deptPayroll),
             sub: isLoading ? "" : `${deptEmployees.length} member${deptEmployees.length !== 1 ? "s" : ""} · annual`,
           },
         ].map((kpi) => (
@@ -218,7 +196,7 @@ export default function EmployeeDetailPage() {
             </div>
             <div>
               <span className="font-sans text-xl font-bold text-blue-primary leading-none block">
-                {kpi.value}
+                {kpi.display}
               </span>
               <span className="font-mono text-[8px] tracking-[0.1em] uppercase text-blue-primary/25 mt-1.5 block">
                 {kpi.sub}
@@ -228,45 +206,42 @@ export default function EmployeeDetailPage() {
         ))}
       </motion.div>
 
-      {/* ┌── TWO-COLUMN MIDDLE ROW ──┐ */}
       <motion.div
         className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.11, ease }}
       >
-        {/* Contact + details — 1/3 */}
         <div className="bg-cream-light p-5 flex flex-col gap-4">
           <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/30">
             Employee Record
           </p>
           {[
-            { label: "Full Name",   value: employee?.name ?? "" },
-            { label: "Email",       value: employee?.email ?? "" },
-            { label: "Phone",       value: employee?.phone ?? "" },
-            { label: "Department",  value: employee?.department ?? "" },
-            { label: "Role",        value: employee?.role ?? "" },
-            { label: "Status",      value: employee ? STATUS_LABEL[employee.status] : "" },
-            { label: "Hired",       value: employee ? formatDate(employee.hireDate) : "" },
-            { label: "Tenure",      value: employee ? getTenureDetailed(employee.hireDate) : "" },
-            { label: "Annual Salary", value: employee ? formatCurrency(employee.salary) : "" },
-          ].map((row) => (
-            <div key={row.label} className="flex flex-col gap-0.5">
+            { label: "Full Name",   display: employee?.name ?? "" },
+            { label: "Email",       display: employee?.email ?? "" },
+            { label: "Phone",       display: employee?.phone ?? "" },
+            { label: "Department",  display: employee?.department ?? "" },
+            { label: "Role",        display: employee?.role ?? "" },
+            { label: "Status",      display: employee ? STATUS_LABEL[employee.status] : "" },
+            { label: "Hired",       display: employee ? formatDate(employee.hireDate) : "" },
+            { label: "Tenure",      display: employee ? getTenureDetailed(employee.hireDate) : "" },
+            { label: "Annual Salary", display: employee ? formatCurrency(employee.salary) : "" },
+          ].map((field) => (
+            <div key={field.label} className="flex flex-col gap-0.5">
               <span className="font-mono text-[8px] tracking-[0.12em] uppercase text-blue-primary/25">
-                {row.label}
+                {field.label}
               </span>
               {isLoading ? (
                 <span className="inline-block h-2.5 w-32 bg-blue-primary/8 animate-pulse" />
               ) : (
                 <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary">
-                  {row.value}
+                  {field.display}
                 </span>
               )}
             </div>
           ))}
         </div>
 
-        {/* Department colleagues — 2/3 */}
         <div className="lg:col-span-2 bg-cream-light p-5">
           <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/30 mb-5">
             {employee?.department} Department
@@ -274,8 +249,8 @@ export default function EmployeeDetailPage() {
 
           {isLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-10 bg-blue-primary/5 animate-pulse" />
+              {Array.from({ length: 3 }).map((_, skeletonIndex) => (
+                <div key={skeletonIndex} className="h-10 bg-blue-primary/5 animate-pulse" />
               ))}
             </div>
           ) : colleagues.length === 0 ? (
@@ -284,36 +259,36 @@ export default function EmployeeDetailPage() {
             </p>
           ) : (
             <div className="border border-blue-primary/10 divide-y divide-blue-primary/8">
-              {colleagues.map((c) => (
+              {colleagues.map((colleague) => (
                 <div
-                  key={c.id}
+                  key={colleague.id}
                   className="flex items-center justify-between px-4 py-3 hover:bg-blue-primary/[0.02] transition-colors"
                 >
                   <div>
                     <Link
-                      href={`/employees/${c.id}`}
+                      href={`/employees/${colleague.id}`}
                       className="font-mono text-[10px] tracking-[0.06em] uppercase text-blue-primary hover:underline underline-offset-2 decoration-blue-primary/30 transition-colors block leading-none"
                     >
-                      {c.name}
+                      {colleague.name}
                     </Link>
                     <span className="font-mono text-[8px] tracking-[0.06em] uppercase text-blue-primary/35 mt-0.5 block leading-none">
-                      {c.role}
+                      {colleague.role}
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="font-mono text-[10px] tracking-[0.03em] font-semibold text-blue-primary/50">
-                      {formatCurrency(c.salary)}
+                      {formatCurrency(colleague.salary)}
                     </span>
                     <span
                       className={`font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${
-                        c.status === "active"
+                        colleague.status === "active"
                           ? "text-blue-primary bg-blue-primary/10"
-                          : c.status === "on_leave"
+                          : colleague.status === "on_leave"
                           ? "text-blue-primary/60 bg-blue-primary/5"
                           : "text-blue-primary/30 bg-blue-primary/[0.03]"
                       }`}
                     >
-                      {STATUS_LABEL[c.status]}
+                      {STATUS_LABEL[colleague.status]}
                     </span>
                   </div>
                 </div>
@@ -321,7 +296,6 @@ export default function EmployeeDetailPage() {
             </div>
           )}
 
-          {/* Dept headcount + payroll summary */}
           {!isLoading && deptEmployees.length > 0 && (
             <div className="mt-6 pt-5 border-t border-blue-primary/8">
               <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/30 mb-3">
@@ -329,16 +303,16 @@ export default function EmployeeDetailPage() {
               </p>
               <div className="grid grid-cols-3 gap-px bg-blue-primary/10 border border-blue-primary/10">
                 {[
-                  { label: "Active",         value: deptEmployees.filter((e) => e.status === "active").length.toString() },
-                  { label: "On Leave",       value: deptEmployees.filter((e) => e.status === "on_leave").length.toString() },
-                  { label: "Dept Payroll",   value: formatCurrency(deptPayroll) },
-                ].map((s) => (
-                  <div key={s.label} className="bg-cream-light px-3 py-4 text-center">
+                  { label: "Active",         display: deptEmployees.filter((emp) => emp.status === "active").length.toString() },
+                  { label: "On Leave",       display: deptEmployees.filter((emp) => emp.status === "on_leave").length.toString() },
+                  { label: "Dept Payroll",   display: formatCurrency(deptPayroll) },
+                ].map((stat) => (
+                  <div key={stat.label} className="bg-cream-light px-3 py-4 text-center">
                     <span className="font-mono text-[16px] font-semibold leading-none block text-blue-primary">
-                      {s.value}
+                      {stat.display}
                     </span>
                     <span className="font-mono text-[7px] tracking-[0.1em] uppercase text-blue-primary/40 mt-1.5 block">
-                      {s.label}
+                      {stat.label}
                     </span>
                   </div>
                 ))}
@@ -348,7 +322,6 @@ export default function EmployeeDetailPage() {
         </div>
       </motion.div>
 
-      {/* ┌── COMPANY OVERVIEW ──┐ */}
       <motion.div
         className="border border-blue-primary/10 bg-cream-light overflow-hidden"
         initial={{ y: 30 }}
@@ -361,27 +334,27 @@ export default function EmployeeDetailPage() {
           </p>
           <span className="font-mono text-[9px] tracking-[0.1em] text-blue-primary/20">
             {formatCurrency(
-              EMPLOYEES.filter((e) => e.status !== "inactive").reduce((acc, e) => acc + e.salary, 0)
+              EMPLOYEES.filter((emp) => emp.status !== "inactive").reduce((acc, emp) => acc + emp.salary, 0)
             )} / year total
           </span>
         </div>
 
         <div className="p-5 space-y-3">
           {isLoading ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-8 bg-blue-primary/5 animate-pulse" />
+            Array.from({ length: 4 }).map((_, skeletonIndex) => (
+              <div key={skeletonIndex} className="h-8 bg-blue-primary/5 animate-pulse" />
             ))
           ) : (
             (() => {
-              const deptMap = new Map<string, number>();
-              for (const e of EMPLOYEES) {
-                if (e.status === "inactive") continue;
-                deptMap.set(e.department, (deptMap.get(e.department) ?? 0) + e.salary);
+              const payrollByDept = new Map<string, number>();
+              for (const emp of EMPLOYEES) {
+                if (emp.status === "inactive") continue;
+                payrollByDept.set(emp.department, (payrollByDept.get(emp.department) ?? 0) + emp.salary);
               }
-              const depts = Array.from(deptMap.entries()).sort((a, b) => b[1] - a[1]);
-              const max = depts[0]?.[1] ?? 1;
-              return depts.map(([dept, payroll]) => {
-                const pct = (payroll / max) * 100;
+              const sortedDepts = Array.from(payrollByDept.entries()).sort((left, right) => right[1] - left[1]);
+              const maxPayroll = sortedDepts[0]?.[1] ?? 1;
+              return sortedDepts.map(([dept, payroll]) => {
+                const pct = (payroll / maxPayroll) * 100;
                 const isCurrent = dept === employee?.department;
                 return (
                   <div key={dept}>
@@ -419,7 +392,7 @@ export default function EmployeeDetailPage() {
 
         <div className="flex items-center justify-between px-5 py-3 border-t border-blue-primary/8">
           <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/30">
-            {new Set(EMPLOYEES.map((e) => e.department)).size} departments &middot; {EMPLOYEES.length} employees
+            {new Set(EMPLOYEES.map((emp) => emp.department)).size} departments &middot; {EMPLOYEES.length} employees
           </span>
           <Link
             href="/employees"
@@ -431,7 +404,6 @@ export default function EmployeeDetailPage() {
         </div>
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between pt-4">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
-import { DitherEffect } from "@/components/shaders";
+import { DitherEffect } from "@/components/shaders/dither-effect";
 
 export function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -16,7 +16,6 @@ export function Hero() {
       // Wait for loading screen to finish (roughly 2.5s based on M3)
       const delay = 2.6;
 
-      // Headline slides up from below
       gsap.fromTo(
         headlineRef.current,
         { yPercent: 100 },
@@ -28,7 +27,6 @@ export function Hero() {
         }
       );
 
-      // Description slides in from left
       gsap.fromTo(
         taglineRef.current,
         { x: -40, clipPath: "inset(0 100% 0 0)" },
@@ -41,7 +39,6 @@ export function Hero() {
         }
       );
 
-      // CTAs slide in from right
       if (ctaRef.current) {
         const links = ctaRef.current.querySelectorAll("a");
         gsap.fromTo(
@@ -58,7 +55,6 @@ export function Hero() {
         );
       }
 
-      // Section marker slides in
       gsap.fromTo(
         markerRef.current,
         { x: 20, clipPath: "inset(0 0 0 100%)" },
@@ -81,7 +77,6 @@ export function Hero() {
       id="hero"
       className="relative min-h-screen w-full bg-blue-primary overflow-hidden"
     >
-      {/* ─── Dithering shader background ─── */}
       <DitherEffect
         src="/pictures/hero/hero-background.jpg"
         alt="Modern architecture"
@@ -101,9 +96,7 @@ export function Hero() {
       {/* ─── Gradient overlay for text legibility ─── */}
       <div className="pointer-events-none absolute inset-0 z-5 bg-linear-to-t from-blue-primary/60 via-blue-primary/20 to-blue-primary/30" />
 
-      {/* ─── Content layer ─── */}
       <div className="pointer-events-none relative z-10 flex min-h-screen flex-col">
-        {/* ─── Section marker — aligned with navbar right edge ─── */}
         <span
           ref={markerRef}
           className="absolute right-6 top-20 hidden font-mono text-xs tracking-[0.15em] text-cream-primary md:block"
@@ -111,9 +104,7 @@ export function Hero() {
           [INV.1]
         </span>
 
-        {/* ─── Middle: Description + CTAs ─── */}
         <div className="flex flex-1 flex-col justify-end px-6 pb-8 pt-20 md:flex-row md:items-end md:pb-12">
-          {/* Left side — description */}
           <div ref={taglineRef} className="mb-8 max-w-md md:mb-0 md:mr-auto">
             <p className="mb-4 font-mono text-xs uppercase tracking-[0.2em] text-cream-primary">
               Inventory + Extra
@@ -123,7 +114,6 @@ export function Hero() {
             </p>
           </div>
 
-          {/* Right side — CTAs stacked */}
           <div ref={ctaRef} className="pointer-events-auto flex flex-col gap-3 md:items-end">
             <a
               href="/register"
@@ -140,7 +130,6 @@ export function Hero() {
           </div>
         </div>
 
-        {/* ─── Bottom: Massive headline ─── */}
         <div className="overflow-hidden px-6 pb-8 md:pb-10">
           <h1
             ref={headlineRef}

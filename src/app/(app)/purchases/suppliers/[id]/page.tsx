@@ -1,4 +1,3 @@
-// src/app/(app)/purchases/suppliers/[id]/page.tsx
 "use client";
 
 import { useMemo, useEffect, useState } from "react";
@@ -24,22 +23,14 @@ import {
 import { formatCurrency } from "@/lib/utils/format";
 import Link from "next/link";
 
-// ——————————————————————————————————————————————————
-// TYPES
-// ——————————————————————————————————————————————————
-
 type SortKey = "poNumber" | "date" | "itemCount" | "total" | "status";
 type SortDir = "asc" | "desc";
 
-// ——————————————————————————————————————————————————
-// CONSTANTS
-// ——————————————————————————————————————————————————
-
 const ease = [0.16, 1, 0.3, 1] as const;
 
-// ——————————————————————————————————————————————————
-// HELPERS
-// ——————————————————————————————————————————————————
+const PURCHASE_STATUSES: PurchaseStatus[] = [
+  "draft", "sent", "partial", "received", "cancelled",
+];
 
 function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -52,10 +43,6 @@ function formatDate(iso: string): string {
     year: "numeric",
   });
 }
-
-// ——————————————————————————————————————————————————
-// SORT ICON
-// ——————————————————————————————————————————————————
 
 function SortIcon({
   col,
@@ -75,10 +62,6 @@ function SortIcon({
   );
 }
 
-// ——————————————————————————————————————————————————
-// PAGE
-// ——————————————————————————————————————————————————
-
 export default function SupplierDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [sortKey, setSortKey] = useState<SortKey>("date");
@@ -86,13 +69,12 @@ export default function SupplierDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(t);
+    const loadingTimer = setTimeout(() => setIsLoading(false), 500);
+    return () => clearTimeout(loadingTimer);
   }, []);
 
-  // ——— Derive supplier data from POs ———
   const { supplierName, supplierContact, orders } = useMemo(() => {
-    const matched = PURCHASE_ORDERS.filter((o) => slugify(o.supplierName) === id);
+    const matched = PURCHASE_ORDERS.filter((po) => slugify(po.supplierName) === id);
     return {
       supplierName: matched[0]?.supplierName ?? "Unknown Supplier",
       supplierContact: matched[0]?.supplierContact ?? "",
@@ -100,62 +82,58 @@ export default function SupplierDetailPage() {
     };
   }, [id]);
 
-  // ——— KPIs ———
   const totalOrders = orders.length;
   const totalSpend = orders
-    .filter((o) => o.status === "received" || o.status === "partial")
-    .reduce((acc, o) => acc + o.total, 0);
-  const allCommitted = orders.reduce((acc, o) => acc + o.total, 0);
-  const receivedOrders = orders.filter((o) => o.status === "received").length;
-  const activeOrders = orders.filter((o) =>
-    ["draft", "sent", "partial"].includes(o.status)
+    .filter((po) => po.status === "received" || po.status === "partial")
+    .reduce((acc, po) => acc + po.total, 0);
+  const allCommitted = orders.reduce((acc, po) => acc + po.total, 0);
+  const receivedOrders = orders.filter((po) => po.status === "received").length;
+  const activeOrders = orders.filter((po) =>
+    ["draft", "sent", "partial"].includes(po.status)
   ).length;
   const avgOrderValue = totalOrders > 0 ? allCommitted / totalOrders : 0;
   const fulfilmentRate =
     totalOrders > 0 ? Math.round((receivedOrders / totalOrders) * 100) : 0;
   const totalUnits = orders.reduce(
-    (acc, o) => acc + o.items.reduce((s, i) => s + i.qty, 0),
+    (acc, po) => acc + po.items.reduce((subtotal, lineItem) => subtotal + lineItem.qty, 0),
     0
   );
 
-  // ——— Status breakdown ———
   const statusCounts = useMemo(() => {
     const counts: Record<PurchaseStatus, number> = {
       draft: 0, sent: 0, partial: 0, received: 0, cancelled: 0,
     };
-    orders.forEach((o) => { counts[o.status]++; });
+    orders.forEach((po) => { counts[po.status]++; });
     return counts;
   }, [orders]);
 
-  // ——— Sort orders ———
-  const sorted = useMemo(() => {
-    const data = [...orders];
-    data.sort((a, b) => {
+  const sortedOrders = useMemo(() => {
+    const ordersCopy = [...orders];
+    ordersCopy.sort((left, right) => {
       let cmp = 0;
       switch (sortKey) {
-        case "poNumber":   cmp = a.poNumber.localeCompare(b.poNumber); break;
-        case "date":       cmp = a.date.localeCompare(b.date); break;
-        case "itemCount":  cmp = a.items.length - b.items.length; break;
-        case "total":      cmp = a.total - b.total; break;
+        case "poNumber":   cmp = left.poNumber.localeCompare(right.poNumber); break;
+        case "date":       cmp = left.date.localeCompare(right.date); break;
+        case "itemCount":  cmp = left.items.length - right.items.length; break;
+        case "total":      cmp = left.total - right.total; break;
         case "status": {
-          const order: Record<PurchaseStatus, number> = {
+          const statusPriority: Record<PurchaseStatus, number> = {
             draft: 0, sent: 1, partial: 2, received: 3, cancelled: 4,
           };
-          cmp = order[a.status] - order[b.status];
+          cmp = statusPriority[left.status] - statusPriority[right.status];
           break;
         }
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
-    return data;
+    return ordersCopy;
   }, [orders, sortKey, sortDir]);
 
   const handleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    if (sortKey === key) setSortDir((prevDir) => (prevDir === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
   };
 
-  // ——— Not found ———
   if (!isLoading && orders.length === 0) {
     return (
       <div className="space-y-6">
@@ -181,14 +159,9 @@ export default function SupplierDetailPage() {
     );
   }
 
-  // ——————————————————————————————————————————————————
-  // RENDER
-  // ——————————————————————————————————————————————————
-
   return (
     <div className="space-y-6">
 
-      {/* ┌── BACK LINK ──┐ */}
       <Link
         href="/purchases/suppliers"
         className="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.12em] uppercase text-blue-primary/40 hover:text-blue-primary transition-colors"
@@ -197,7 +170,6 @@ export default function SupplierDetailPage() {
         Back to Suppliers
       </Link>
 
-      {/* ┌── PAGE HEADER ──┐ */}
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           {isLoading ? (
@@ -236,10 +208,8 @@ export default function SupplierDetailPage() {
         </motion.span>
       </div>
 
-      {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ┌── KPI STRIP ──┐ */}
       <motion.div
         className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
@@ -250,25 +220,25 @@ export default function SupplierDetailPage() {
           {
             icon: Package,
             label: "Total Orders",
-            value: isLoading ? "—" : totalOrders.toString(),
+            metric: isLoading ? "—" : totalOrders.toString(),
             sub: isLoading ? "" : `${activeOrders} active`,
           },
           {
             icon: TrendingUp,
             label: "Total Spend",
-            value: isLoading ? "—" : formatCurrency(totalSpend),
+            metric: isLoading ? "—" : formatCurrency(totalSpend),
             sub: isLoading ? "" : `${formatCurrency(allCommitted)} committed`,
           },
           {
             icon: CheckCircle2,
             label: "Fulfilment Rate",
-            value: isLoading ? "—" : `${fulfilmentRate}%`,
+            metric: isLoading ? "—" : `${fulfilmentRate}%`,
             sub: isLoading ? "" : `${receivedOrders} of ${totalOrders} received`,
           },
           {
             icon: Building2,
             label: "Avg Order Value",
-            value: isLoading ? "—" : formatCurrency(avgOrderValue),
+            metric: isLoading ? "—" : formatCurrency(avgOrderValue),
             sub: isLoading ? "" : `${totalUnits} units total`,
           },
         ].map((kpi) => (
@@ -281,7 +251,7 @@ export default function SupplierDetailPage() {
             </div>
             <div>
               <span className="font-sans text-2xl font-bold text-blue-primary leading-none block">
-                {kpi.value}
+                {kpi.metric}
               </span>
               <span className="font-mono text-[8px] tracking-[0.1em] uppercase text-blue-primary/25 mt-1.5 block">
                 {kpi.sub}
@@ -291,58 +261,55 @@ export default function SupplierDetailPage() {
         ))}
       </motion.div>
 
-      {/* ┌── TWO-COLUMN MIDDLE ROW ──┐ */}
       <motion.div
         className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.11, ease }}
       >
-        {/* Contact info — 1/3 */}
         <div className="bg-cream-light p-5 flex flex-col gap-4">
           <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/30">
             Supplier Info
           </p>
           {[
-            { label: "Company", value: supplierName },
-            { label: "Contact Email", value: supplierContact },
-            { label: "Since", value: orders.length > 0
-                ? formatDate([...orders].sort((a, b) => a.date.localeCompare(b.date))[0].date)
+            { label: "Company", detail: supplierName },
+            { label: "Contact Email", detail: supplierContact },
+            { label: "Since", detail: orders.length > 0
+                ? formatDate([...orders].sort((left, right) => left.date.localeCompare(right.date))[0].date)
                 : "—"
             },
-          ].map((row) => (
-            <div key={row.label} className="flex flex-col gap-0.5">
+          ].map((field) => (
+            <div key={field.label} className="flex flex-col gap-0.5">
               <span className="font-mono text-[8px] tracking-[0.12em] uppercase text-blue-primary/25">
-                {row.label}
+                {field.label}
               </span>
               <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary">
-                {isLoading ? <span className="inline-block h-2.5 w-32 bg-blue-primary/8 animate-pulse" /> : row.value}
+                {isLoading ? <span className="inline-block h-2.5 w-32 bg-blue-primary/8 animate-pulse" /> : field.detail}
               </span>
             </div>
           ))}
         </div>
 
-        {/* Status breakdown — 2/3 */}
         <div className="lg:col-span-2 bg-cream-light p-5">
           <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/30 mb-5">
             Order Breakdown
           </p>
           <div className="grid grid-cols-5 gap-px bg-blue-primary/10 border border-blue-primary/10">
-            {(Object.entries(PURCHASE_STATUS_CONFIG) as [PurchaseStatus, typeof PURCHASE_STATUS_CONFIG[PurchaseStatus]][]).map(
-              ([key, cfg]) => (
-                <div key={key} className="bg-cream-light px-2 py-4 text-center">
-                  <span className={`font-mono text-[20px] font-semibold leading-none block ${cfg.color}`}>
-                    {isLoading ? "—" : statusCounts[key]}
+            {PURCHASE_STATUSES.map((status) => {
+              const statusConfig = PURCHASE_STATUS_CONFIG[status];
+              return (
+                <div key={status} className="bg-cream-light px-2 py-4 text-center">
+                  <span className={`font-mono text-[20px] font-semibold leading-none block ${statusConfig.color}`}>
+                    {isLoading ? "—" : statusCounts[status]}
                   </span>
                   <span className="font-mono text-[7px] tracking-[0.1em] uppercase text-blue-primary/40 mt-1.5 block">
-                    {cfg.label}
+                    {statusConfig.label}
                   </span>
                 </div>
-              )
-            )}
+              );
+            })}
           </div>
 
-          {/* Spend bar */}
           {!isLoading && allCommitted > 0 && (
             <div className="mt-5">
               <div className="flex items-center justify-between mb-1.5">
@@ -364,7 +331,6 @@ export default function SupplierDetailPage() {
         </div>
       </motion.div>
 
-      {/* ┌── ORDER HISTORY TABLE ──┐ */}
       <motion.div
         className="border border-blue-primary/10 bg-cream-light overflow-hidden"
         initial={{ y: 30 }}
@@ -376,7 +342,7 @@ export default function SupplierDetailPage() {
             Order History
           </p>
           <span className="font-mono text-[9px] tracking-[0.1em] text-blue-primary/20">
-            {sorted.length} order{sorted.length !== 1 && "s"}
+            {sortedOrders.length} order{sortedOrders.length !== 1 && "s"}
           </span>
         </div>
 
@@ -434,8 +400,8 @@ export default function SupplierDetailPage() {
             </thead>
             <tbody>
               {isLoading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i} className="border-b border-blue-primary/6 h-14">
+                Array.from({ length: 4 }).map((_, skeletonIndex) => (
+                  <tr key={skeletonIndex} className="border-b border-blue-primary/6 h-14">
                     <td className="px-5 align-middle">
                       <div className="h-2.5 w-20 bg-blue-primary/8 animate-pulse" />
                     </td>
@@ -457,7 +423,7 @@ export default function SupplierDetailPage() {
                     <td className="px-3 align-middle" />
                   </tr>
                 ))
-              ) : sorted.length === 0 ? (
+              ) : sortedOrders.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-12">
                     <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-blue-primary/25">
@@ -466,72 +432,65 @@ export default function SupplierDetailPage() {
                   </td>
                 </tr>
               ) : (
-                sorted.map((order) => {
-                  const sCfg = PURCHASE_STATUS_CONFIG[order.status];
-                  const totalQty = order.items.reduce((acc, i) => acc + i.qty, 0);
-                  const totalReceived = order.items.reduce((acc, i) => acc + i.qtyReceived, 0);
-                  const productNames = order.items.map((i) => i.productName).join(", ");
+                sortedOrders.map((purchaseOrder) => {
+                  const statusStyle = PURCHASE_STATUS_CONFIG[purchaseOrder.status];
+                  const totalQty = purchaseOrder.items.reduce((acc, lineItem) => acc + lineItem.qty, 0);
+                  const totalReceived = purchaseOrder.items.reduce((acc, lineItem) => acc + lineItem.qtyReceived, 0);
+                  const productNames = purchaseOrder.items.map((lineItem) => lineItem.productName).join(", ");
 
                   return (
                     <tr
-                      key={order.id}
+                      key={purchaseOrder.id}
                       className="border-b border-blue-primary/6 hover:bg-blue-primary/[0.02] transition-colors duration-150 h-14"
                     >
-                      {/* PO # */}
                       <td className="px-5 align-middle">
                         <Link
-                          href={`/purchases/${order.id}`}
+                          href={`/purchases/${purchaseOrder.id}`}
                           className="font-mono text-[10px] tracking-[0.06em] uppercase text-blue-primary hover:underline underline-offset-2 decoration-blue-primary/30 transition-colors"
                         >
-                          {order.poNumber}
+                          {purchaseOrder.poNumber}
                         </Link>
                       </td>
-                      {/* Date */}
                       <td className="px-3 align-middle">
                         <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/50">
-                          {formatDate(order.date)}
+                          {formatDate(purchaseOrder.date)}
                         </span>
                       </td>
-                      {/* Product names */}
                       <td className="px-3 align-middle max-w-[220px]">
                         <p className="font-mono text-[9px] tracking-[0.04em] uppercase text-blue-primary/50 truncate">
                           {productNames}
                         </p>
                       </td>
-                      {/* Lines */}
                       <td className="px-3 align-middle text-center">
                         <span className="font-mono text-[11px] font-semibold text-blue-primary/60">
-                          {order.items.length}
+                          {purchaseOrder.items.length}
                         </span>
                         <span className="font-mono text-[8px] tracking-[0.08em] uppercase text-blue-primary/25 block leading-none mt-0.5">
                           {totalQty} units
                         </span>
                       </td>
-                      {/* Total */}
                       <td className="px-3 align-middle text-right">
                         <span className="font-mono text-[12px] tracking-[0.03em] font-semibold text-blue-primary">
-                          {formatCurrency(order.total)}
+                          {formatCurrency(purchaseOrder.total)}
                         </span>
                       </td>
-                      {/* Status */}
                       <td className="px-3 align-middle">
                         <div className="flex flex-col items-center gap-1">
                           <span
-                            className={`font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${sCfg.color} ${sCfg.bg}`}
+                            className={`font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${statusStyle.color} ${statusStyle.bg}`}
                           >
-                            {sCfg.label}
+                            {statusStyle.label}
                           </span>
-                          {(order.status === "partial" || order.status === "received") && (
+                          {(purchaseOrder.status === "partial" || purchaseOrder.status === "received") && (
                             <span className="font-mono text-[7px] tracking-[0.08em] uppercase text-blue-primary/30 leading-none">
                               {totalReceived}/{totalQty} recv
                             </span>
                           )}
                         </div>
                       </td>
-                      {/* View link */}
                       <td className="w-10 px-3 align-middle text-center">
                         <Link
-                          href={`/purchases/${order.id}`}
+                          href={`/purchases/${purchaseOrder.id}`}
                           className="p-1 text-blue-primary/20 hover:text-blue-primary transition-colors inline-flex items-center justify-center"
                         >
                           <Eye size={13} strokeWidth={1.5} />
@@ -545,11 +504,10 @@ export default function SupplierDetailPage() {
           </table>
         </div>
 
-        {/* Table footer */}
-        {!isLoading && sorted.length > 0 && (
+        {!isLoading && sortedOrders.length > 0 && (
           <div className="flex items-center justify-between px-5 py-3 border-t border-blue-primary/8">
             <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/30">
-              {sorted.length} order{sorted.length !== 1 && "s"} &middot; {formatCurrency(allCommitted)} committed
+              {sortedOrders.length} order{sortedOrders.length !== 1 && "s"} &middot; {formatCurrency(allCommitted)} committed
             </span>
             <Link
               href="/purchases"
@@ -562,7 +520,6 @@ export default function SupplierDetailPage() {
         )}
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between pt-4">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">

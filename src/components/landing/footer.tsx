@@ -42,9 +42,9 @@ export default function Footer() {
   useGSAP(
     () => {
       if (!sectionRef.current) return;
-      const s = sectionRef.current;
+      const section = sectionRef.current;
 
-      const dividers = s.querySelectorAll(".line-extend");
+      const dividers = section.querySelectorAll(".line-extend");
       gsap.fromTo(
         dividers,
         { scaleX: 0 },
@@ -53,11 +53,11 @@ export default function Footer() {
           duration: 0.9,
           ease: "power3.out",
           stagger: 0.12,
-          scrollTrigger: { trigger: s, start: "top 75%" },
+          scrollTrigger: { trigger: section, start: "top 75%" },
         }
       );
 
-      const cols = s.querySelectorAll(".nav-col");
+      const cols = section.querySelectorAll(".nav-col");
       gsap.fromTo(
         cols,
         { y: 30, clipPath: "inset(100% 0 0 0)" },
@@ -67,11 +67,11 @@ export default function Footer() {
           duration: 0.6,
           ease: "power3.out",
           stagger: 0.1,
-          scrollTrigger: { trigger: s, start: "top 65%" },
+          scrollTrigger: { trigger: section, start: "top 65%" },
         }
       );
 
-      const bottom = s.querySelector(".footer-bottom");
+      const bottom = section.querySelector(".footer-bottom");
       if (bottom) {
         gsap.fromTo(
           bottom,
@@ -81,7 +81,7 @@ export default function Footer() {
             clipPath: "inset(0% 0 0 0)",
             duration: 0.6,
             ease: "power3.out",
-            scrollTrigger: { trigger: s, start: "top 55%" },
+            scrollTrigger: { trigger: section, start: "top 55%" },
           }
         );
       }
@@ -95,7 +95,6 @@ export default function Footer() {
       ref={sectionRef}
       className="relative bg-blue-primary overflow-hidden"
     >
-      {/* ── Blueprint grid lines ── */}
       <div className="pointer-events-none absolute inset-0 z-2">
         <div
           className="absolute top-0 h-full w-px"
@@ -107,9 +106,7 @@ export default function Footer() {
         />
       </div>
 
-      {/* ═══════════════════ Content ═══════════════════ */}
       <div className="relative z-10 px-6">
-        {/* ── Navigation columns ── */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 sm:gap-0 py-12 md:py-16">
           {navColumns.map((col, i) => (
             <div
@@ -147,13 +144,11 @@ export default function Footer() {
           ))}
         </div>
 
-        {/* ── Divider ── */}
         <div
           className="line-extend h-px w-full origin-center"
           style={{ backgroundColor: "rgba(232,228,221,0.08)" }}
         />
 
-        {/* ── Bottom strip ── */}
         <div className="footer-bottom flex flex-col md:flex-row items-start md:items-baseline justify-between gap-3 py-6">
           <span
             className="font-mono text-[9px] md:text-[10px] uppercase tracking-[0.15em]"

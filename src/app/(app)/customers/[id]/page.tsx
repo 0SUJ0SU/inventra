@@ -1,4 +1,3 @@
-// src/app/(app)/customers/[id]/page.tsx
 "use client";
 
 import { useMemo, useEffect, useState } from "react";
@@ -23,16 +22,8 @@ import {
 import { formatCurrency } from "@/lib/utils/format";
 import Link from "next/link";
 
-// ——————————————————————————————————————————————————
-// TYPES
-// ——————————————————————————————————————————————————
-
 type SortKey = "serial" | "product" | "soldDate" | "soldPrice";
 type SortDir = "asc" | "desc";
-
-// ——————————————————————————————————————————————————
-// CONSTANTS
-// ——————————————————————————————————————————————————
 
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -43,10 +34,6 @@ const CUSTOMER_CONTACTS: Record<string, { email: string; phone: string }> = {
   "gadget-zone":  { email: "stock@gadgetzone.net",   phone: "+1 (646) 338-7721" },
   "nex-mobile":   { email: "supply@nexmobile.com",   phone: "+1 (512) 991-2267" },
 };
-
-// ——————————————————————————————————————————————————
-// HELPERS
-// ——————————————————————————————————————————————————
 
 function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -59,10 +46,6 @@ function formatDate(iso: string): string {
     year: "numeric",
   });
 }
-
-// ——————————————————————————————————————————————————
-// SORT ICON
-// ——————————————————————————————————————————————————
 
 function SortIcon({
   col,
@@ -82,10 +65,6 @@ function SortIcon({
   );
 }
 
-// ——————————————————————————————————————————————————
-// PAGE
-// ——————————————————————————————————————————————————
-
 export default function CustomerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [sortKey, setSortKey] = useState<SortKey>("soldDate");
@@ -93,18 +72,17 @@ export default function CustomerDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 500);
-    return () => clearTimeout(t);
+    const loadingTimer = setTimeout(() => setIsLoading(false), 500);
+    return () => clearTimeout(loadingTimer);
   }, []);
 
-  // ——— Derive customer data ———
   const { customerName, contact, purchases, claims } = useMemo(() => {
     const matched = SERIALIZED_ITEMS.filter(
-      (item) => item.customer && slugify(item.customer) === id && item.soldDate && item.soldPrice
+      (serial) => serial.customer && slugify(serial.customer) === id && serial.soldDate && serial.soldPrice
     );
     const name = matched[0]?.customer ?? "Unknown Customer";
     const matchedClaims = WARRANTY_CLAIMS.filter(
-      (c) => c.customerName && slugify(c.customerName) === id
+      (claim) => claim.customerName && slugify(claim.customerName) === id
     );
     return {
       customerName: name,
@@ -114,69 +92,64 @@ export default function CustomerDetailPage() {
     };
   }, [id]);
 
-  // ——— KPIs ———
   const totalUnits = purchases.length;
-  const totalSpend = purchases.reduce((acc, p) => acc + (p.soldPrice ?? 0), 0);
+  const totalSpend = purchases.reduce((acc, purchase) => acc + (purchase.soldPrice ?? 0), 0);
   const avgUnitValue = totalUnits > 0 ? totalSpend / totalUnits : 0;
   const totalClaims = claims.length;
-  const openClaims = claims.filter((c) =>
-    ["pending", "in_review", "in_repair"].includes(c.status)
+  const openClaims = claims.filter((claim) =>
+    ["pending", "in_review", "in_repair"].includes(claim.status)
   ).length;
   const firstPurchase = purchases.length > 0
-    ? [...purchases].sort((a, b) => (a.soldDate ?? "").localeCompare(b.soldDate ?? ""))[0].soldDate
+    ? [...purchases].sort((left, right) => (left.soldDate ?? "").localeCompare(right.soldDate ?? ""))[0].soldDate
     : null;
   const lastPurchase = purchases.length > 0
-    ? [...purchases].sort((a, b) => (b.soldDate ?? "").localeCompare(a.soldDate ?? ""))[0].soldDate
+    ? [...purchases].sort((left, right) => (right.soldDate ?? "").localeCompare(left.soldDate ?? ""))[0].soldDate
     : null;
 
-  // ——— Product breakdown ———
   const productBreakdown = useMemo(() => {
-    const map = new Map<string, { count: number; spend: number }>();
-    for (const p of purchases) {
-      const key = p.productName;
-      if (!map.has(key)) map.set(key, { count: 0, spend: 0 });
-      const entry = map.get(key)!;
-      entry.count++;
-      entry.spend += p.soldPrice ?? 0;
+    const productMap = new Map<string, { count: number; spend: number }>();
+    for (const purchase of purchases) {
+      const productKey = purchase.productName;
+      if (!productMap.has(productKey)) productMap.set(productKey, { count: 0, spend: 0 });
+      const totals = productMap.get(productKey)!;
+      totals.count++;
+      totals.spend += purchase.soldPrice ?? 0;
     }
-    return Array.from(map.entries())
-      .map(([name, data]) => ({ name, ...data }))
-      .sort((a, b) => b.spend - a.spend);
+    return Array.from(productMap.entries())
+      .map(([name, totals]) => ({ name, ...totals }))
+      .sort((left, right) => right.spend - left.spend);
   }, [purchases]);
 
-  // ——— Claim status breakdown ———
   const claimStatusCounts = useMemo(() => {
     const counts = { open: 0, resolved: 0, rejected: 0 };
-    for (const c of claims) {
-      if (["pending", "in_review", "in_repair"].includes(c.status)) counts.open++;
-      else if (["repaired", "replaced", "closed"].includes(c.status)) counts.resolved++;
-      else if (c.status === "rejected") counts.rejected++;
+    for (const claim of claims) {
+      if (["pending", "in_review", "in_repair"].includes(claim.status)) counts.open++;
+      else if (["repaired", "replaced", "closed"].includes(claim.status)) counts.resolved++;
+      else if (claim.status === "rejected") counts.rejected++;
     }
     return counts;
   }, [claims]);
 
-  // ——— Sort purchases ———
-  const sorted = useMemo(() => {
-    const data = [...purchases];
-    data.sort((a, b) => {
+  const sortedPurchases = useMemo(() => {
+    const purchasesCopy = [...purchases];
+    purchasesCopy.sort((left, right) => {
       let cmp = 0;
       switch (sortKey) {
-        case "serial":    cmp = a.serialNumber.localeCompare(b.serialNumber); break;
-        case "product":   cmp = a.productName.localeCompare(b.productName); break;
-        case "soldDate":  cmp = (a.soldDate ?? "").localeCompare(b.soldDate ?? ""); break;
-        case "soldPrice": cmp = (a.soldPrice ?? 0) - (b.soldPrice ?? 0); break;
+        case "serial":    cmp = left.serialNumber.localeCompare(right.serialNumber); break;
+        case "product":   cmp = left.productName.localeCompare(right.productName); break;
+        case "soldDate":  cmp = (left.soldDate ?? "").localeCompare(right.soldDate ?? ""); break;
+        case "soldPrice": cmp = (left.soldPrice ?? 0) - (right.soldPrice ?? 0); break;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
-    return data;
+    return purchasesCopy;
   }, [purchases, sortKey, sortDir]);
 
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortKey(key); setSortDir("asc"); }
+  const handleSort = (selectedKey: SortKey) => {
+    if (sortKey === selectedKey) setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
+    else { setSortKey(selectedKey); setSortDir("asc"); }
   };
 
-  // ——— Not found ———
   if (!isLoading && purchases.length === 0) {
     return (
       <div className="space-y-6">
@@ -202,14 +175,9 @@ export default function CustomerDetailPage() {
     );
   }
 
-  // ——————————————————————————————————————————————————
-  // RENDER
-  // ——————————————————————————————————————————————————
-
   return (
     <div className="space-y-6">
 
-      {/* ┌── BACK LINK ──┐ */}
       <Link
         href="/customers"
         className="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.12em] uppercase text-blue-primary/40 hover:text-blue-primary transition-colors"
@@ -218,7 +186,6 @@ export default function CustomerDetailPage() {
         Back to Customers
       </Link>
 
-      {/* ┌── PAGE HEADER ──┐ */}
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           {isLoading ? (
@@ -257,10 +224,8 @@ export default function CustomerDetailPage() {
         </motion.span>
       </div>
 
-      {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ┌── KPI STRIP ──┐ */}
       <motion.div
         className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
@@ -312,14 +277,12 @@ export default function CustomerDetailPage() {
         ))}
       </motion.div>
 
-      {/* ┌── TWO-COLUMN MIDDLE ROW ──┐ */}
       <motion.div
         className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.11, ease }}
       >
-        {/* Contact info — 1/3 */}
         <div className="bg-cream-light p-5 flex flex-col gap-4">
           <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/30">
             Account Info
@@ -343,7 +306,6 @@ export default function CustomerDetailPage() {
           ))}
         </div>
 
-        {/* Product breakdown — 2/3 */}
         <div className="lg:col-span-2 bg-cream-light p-5">
           <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/30 mb-5">
             Purchase Breakdown
@@ -351,8 +313,8 @@ export default function CustomerDetailPage() {
 
           {isLoading ? (
             <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-8 bg-blue-primary/5 animate-pulse" />
+              {Array.from({ length: 3 }).map((_, skeletonIndex) => (
+                <div key={skeletonIndex} className="h-8 bg-blue-primary/5 animate-pulse" />
               ))}
             </div>
           ) : productBreakdown.length === 0 ? (
@@ -361,20 +323,20 @@ export default function CustomerDetailPage() {
             </p>
           ) : (
             <div className="space-y-3">
-              {productBreakdown.map((p) => {
-                const pct = totalSpend > 0 ? (p.spend / totalSpend) * 100 : 0;
+              {productBreakdown.map((product) => {
+                const pct = totalSpend > 0 ? (product.spend / totalSpend) * 100 : 0;
                 return (
-                  <div key={p.name}>
+                  <div key={product.name}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-mono text-[9px] tracking-[0.06em] uppercase text-blue-primary/60 truncate max-w-[60%]">
-                        {p.name}
+                        {product.name}
                       </span>
                       <div className="flex items-center gap-3">
                         <span className="font-mono text-[8px] tracking-[0.08em] uppercase text-blue-primary/30">
-                          {p.count} unit{p.count !== 1 && "s"}
+                          {product.count} unit{product.count !== 1 && "s"}
                         </span>
                         <span className="font-mono text-[10px] tracking-[0.04em] font-semibold text-blue-primary">
-                          {formatCurrency(p.spend)}
+                          {formatCurrency(product.spend)}
                         </span>
                       </div>
                     </div>
@@ -390,7 +352,6 @@ export default function CustomerDetailPage() {
             </div>
           )}
 
-          {/* Claim status summary */}
           {!isLoading && totalClaims > 0 && (
             <div className="mt-6 pt-5 border-t border-blue-primary/8">
               <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/30 mb-3">
@@ -401,13 +362,13 @@ export default function CustomerDetailPage() {
                   { label: "Open",     value: claimStatusCounts.open },
                   { label: "Resolved", value: claimStatusCounts.resolved },
                   { label: "Rejected", value: claimStatusCounts.rejected },
-                ].map((s) => (
-                  <div key={s.label} className="bg-cream-light px-3 py-4 text-center">
+                ].map((status) => (
+                  <div key={status.label} className="bg-cream-light px-3 py-4 text-center">
                     <span className="font-mono text-[20px] font-semibold leading-none block text-blue-primary">
-                      {s.value}
+                      {status.value}
                     </span>
                     <span className="font-mono text-[7px] tracking-[0.1em] uppercase text-blue-primary/40 mt-1.5 block">
-                      {s.label}
+                      {status.label}
                     </span>
                   </div>
                 ))}
@@ -417,7 +378,6 @@ export default function CustomerDetailPage() {
         </div>
       </motion.div>
 
-      {/* ┌── PURCHASE HISTORY TABLE ──┐ */}
       <motion.div
         className="border border-blue-primary/10 bg-cream-light overflow-hidden"
         initial={{ y: 30 }}
@@ -429,7 +389,7 @@ export default function CustomerDetailPage() {
             Purchase History
           </p>
           <span className="font-mono text-[9px] tracking-[0.1em] text-blue-primary/20">
-            {sorted.length} unit{sorted.length !== 1 && "s"}
+            {sortedPurchases.length} unit{sortedPurchases.length !== 1 && "s"}
           </span>
         </div>
 
@@ -479,8 +439,8 @@ export default function CustomerDetailPage() {
             </thead>
             <tbody>
               {isLoading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i} className="border-b border-blue-primary/6 h-14">
+                Array.from({ length: 4 }).map((_, skeletonIndex) => (
+                  <tr key={skeletonIndex} className="border-b border-blue-primary/6 h-14">
                     <td className="px-5 align-middle"><div className="h-2.5 w-28 bg-blue-primary/8 animate-pulse" /></td>
                     <td className="px-3 align-middle"><div className="h-2.5 w-44 bg-blue-primary/8 animate-pulse" /></td>
                     <td className="px-3 align-middle"><div className="h-2.5 w-24 bg-blue-primary/8 animate-pulse" /></td>
@@ -489,7 +449,7 @@ export default function CustomerDetailPage() {
                     <td className="px-3 align-middle" />
                   </tr>
                 ))
-              ) : sorted.length === 0 ? (
+              ) : sortedPurchases.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-12">
                     <p className="font-mono text-[11px] tracking-[0.1em] uppercase text-blue-primary/25">
@@ -498,54 +458,49 @@ export default function CustomerDetailPage() {
                   </td>
                 </tr>
               ) : (
-                sorted.map((item) => {
+                sortedPurchases.map((purchase) => {
                   const hasClaim = WARRANTY_CLAIMS.some(
-                    (c) => c.serialNumber === item.serialNumber
+                    (claim) => claim.serialNumber === purchase.serialNumber
                   );
-                  const warrantyExpired = item.warrantyExpiry
-                    ? new Date(item.warrantyExpiry) < new Date()
+                  const warrantyExpired = purchase.warrantyExpiry
+                    ? new Date(purchase.warrantyExpiry) < new Date()
                     : false;
 
                   return (
                     <tr
-                      key={item.serialNumber}
+                      key={purchase.serialNumber}
                       className="border-b border-blue-primary/6 hover:bg-blue-primary/[0.02] transition-colors duration-150 h-14"
                     >
-                      {/* Serial */}
                       <td className="px-5 align-middle">
                         <Link
                           href={`/products/serial-inventory`}
                           className="font-mono text-[10px] tracking-[0.06em] uppercase text-blue-primary hover:underline underline-offset-2 decoration-blue-primary/30 transition-colors"
                         >
-                          {item.serialNumber}
+                          {purchase.serialNumber}
                         </Link>
                       </td>
-                      {/* Product */}
                       <td className="px-3 align-middle max-w-[220px]">
                         <p className="font-mono text-[9px] tracking-[0.04em] uppercase text-blue-primary/60 truncate">
-                          {item.productName}
+                          {purchase.productName}
                         </p>
-                        {item.productId && (
+                        {purchase.productId && (
                           <p className="font-mono text-[8px] tracking-[0.06em] uppercase text-blue-primary/25 mt-0.5 leading-none">
-                            {item.productId}
+                            {purchase.productId}
                           </p>
                         )}
                       </td>
-                      {/* Date */}
                       <td className="px-3 align-middle">
                         <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/50">
-                          {item.soldDate ? formatDate(item.soldDate) : "—"}
+                          {purchase.soldDate ? formatDate(purchase.soldDate) : "—"}
                         </span>
                       </td>
-                      {/* Price */}
                       <td className="px-3 align-middle text-right">
                         <span className="font-mono text-[12px] tracking-[0.03em] font-semibold text-blue-primary">
-                          {item.soldPrice ? formatCurrency(item.soldPrice) : "—"}
+                          {purchase.soldPrice ? formatCurrency(purchase.soldPrice) : "—"}
                         </span>
                       </td>
-                      {/* Warranty */}
                       <td className="px-3 align-middle text-center">
-                        {item.warrantyExpiry ? (
+                        {purchase.warrantyExpiry ? (
                           <span
                             className={`font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${
                               warrantyExpired
@@ -564,7 +519,6 @@ export default function CustomerDetailPage() {
                           </span>
                         )}
                       </td>
-                      {/* View */}
                       <td className="w-10 px-3 align-middle text-center">
                         <Link
                           href={`/products/serial-inventory`}
@@ -581,11 +535,10 @@ export default function CustomerDetailPage() {
           </table>
         </div>
 
-        {/* Table footer */}
-        {!isLoading && sorted.length > 0 && (
+        {!isLoading && sortedPurchases.length > 0 && (
           <div className="flex items-center justify-between px-5 py-3 border-t border-blue-primary/8">
             <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/30">
-              {sorted.length} unit{sorted.length !== 1 && "s"} &middot; {formatCurrency(totalSpend)} total
+              {sortedPurchases.length} unit{sortedPurchases.length !== 1 && "s"} &middot; {formatCurrency(totalSpend)} total
             </span>
             <Link
               href="/customers"
@@ -598,7 +551,6 @@ export default function CustomerDetailPage() {
         )}
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between pt-4">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">

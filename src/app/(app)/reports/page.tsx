@@ -1,4 +1,3 @@
-// src/app/(app)/reports/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -11,15 +10,7 @@ import { formatCurrency, formatCompact, formatNumber } from "@/lib/utils/format"
 import { Download, FileText, Calendar } from "lucide-react";
 import * as XLSX from "xlsx";
 
-// ──────────────────────────────────────────────────────────────────────────────
-// TYPES
-// ──────────────────────────────────────────────────────────────────────────────
-
 type Period = "7D" | "30D" | "90D" | "YTD" | "CUSTOM";
-
-// ──────────────────────────────────────────────────────────────────────────────
-// TREND DATA
-// ──────────────────────────────────────────────────────────────────────────────
 
 const TREND_7D = [
   { label: "Mon", revenue: 1180, cogs: 708  },
@@ -99,10 +90,6 @@ const TREND_MAP: Record<Period, typeof TREND_7D> = {
   "90D": TREND_90D, "YTD": TREND_YTD, "CUSTOM": TREND_30D,
 };
 
-// ──────────────────────────────────────────────────────────────────────────────
-// PERIOD KPI DATA
-// ──────────────────────────────────────────────────────────────────────────────
-
 interface PeriodKPI {
   revenue: number; transactions: number; units: number; aov: number;
   change: string; positive: boolean;
@@ -117,10 +104,6 @@ const PERIOD_DATA: Record<Period, PeriodKPI> = {
   "YTD":    { revenue: 287340, transactions: 10842, units: 18291, aov: 26.5, change: "+18.3%", positive: true, cogs: 172404, grossProfit: 114936, grossMargin: 40, opex: 78000, netProfit: 36936, netMargin: 12.9 },
   "CUSTOM": { revenue: 34280,  transactions: 1247,  units: 2089,  aov: 27.5, change: "+12.4%", positive: true, cogs: 20568,  grossProfit: 13712, grossMargin: 40, opex: 6500,  netProfit: 7212,  netMargin: 21.0 },
 };
-
-// ──────────────────────────────────────────────────────────────────────────────
-// STATIC MOCK DATA
-// ──────────────────────────────────────────────────────────────────────────────
 
 const TOP_PRODUCTS = [
   { rank: "01", name: "iPhone 15 Pro 256GB",    sku: "IP15P-256-BK", units: 142, revenue: 199540, margin: 18 },
@@ -165,16 +148,8 @@ const MONTHLY_NET = [
   { label: "Nov", net: 5840 }, { label: "Dec", net: 1406 },
 ];
 
-// ──────────────────────────────────────────────────────────────────────────────
-// CONSTANTS
-// ──────────────────────────────────────────────────────────────────────────────
-
 const ease = [0.16, 1, 0.3, 1] as const;
 const PERIODS: Period[] = ["7D", "30D", "90D", "YTD", "CUSTOM"];
-
-// ──────────────────────────────────────────────────────────────────────────────
-// EXPORT HELPERS
-// ──────────────────────────────────────────────────────────────────────────────
 
 function exportXLSX(period: Period) {
   const d   = PERIOD_DATA[period];

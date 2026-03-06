@@ -1,4 +1,3 @@
-// src/app/(app)/expenses/page.tsx
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -14,10 +13,6 @@ import {
 import { formatCurrency } from "@/lib/utils/format";
 import { EMPLOYEES } from "@/app/(app)/employees/page";
 
-// ——————————————————————————————————————————————————
-// TYPES
-// ——————————————————————————————————————————————————
-
 type ExpenseFrequency = "monthly" | "annual" | "one_time";
 type SortKey = "category" | "description" | "amount" | "frequency" | "date";
 type SortDir = "asc" | "desc";
@@ -26,14 +21,10 @@ interface Expense {
   id: string;
   category: string;
   description: string;
-  amount: number; // monthly equivalent
+  amount: number;
   frequency: ExpenseFrequency;
-  date: string; // last updated / billed
+  date: string;
 }
-
-// ——————————————————————————————————————————————————
-// CONSTANTS
-// ——————————————————————————————————————————————————
 
 const PAGE_SIZES = [10, 20, 50] as const;
 const ease = [0.16, 1, 0.3, 1] as const;
@@ -45,32 +36,23 @@ const FREQ_LABEL: Record<ExpenseFrequency, string> = {
 };
 
 const OPERATING_EXPENSES: Expense[] = [
-  // Rent & Utilities
   { id: "rent-main",      category: "Rent & Utilities",          description: "Main office lease — 2,400 sq ft",     amount: 8500,  frequency: "monthly",  date: "2025-03-01" },
   { id: "electric",       category: "Rent & Utilities",          description: "Electricity & HVAC",                  amount: 620,   frequency: "monthly",  date: "2025-03-01" },
   { id: "internet",       category: "Rent & Utilities",          description: "Fiber internet (2x lines)",            amount: 280,   frequency: "monthly",  date: "2025-03-01" },
-  // Software & Subscriptions
   { id: "erp",            category: "Software & Subscriptions",  description: "ERP platform license",                amount: 1200,  frequency: "monthly",  date: "2025-02-15" },
   { id: "gsuite",         category: "Software & Subscriptions",  description: "Google Workspace (10 seats)",         amount: 180,   frequency: "monthly",  date: "2025-03-01" },
   { id: "slack",          category: "Software & Subscriptions",  description: "Slack Pro",                           amount: 87,    frequency: "monthly",  date: "2025-03-01" },
   { id: "figma",          category: "Software & Subscriptions",  description: "Figma Organization",                  amount: 75,    frequency: "monthly",  date: "2025-02-01" },
   { id: "aws",            category: "Software & Subscriptions",  description: "AWS infrastructure",                  amount: 340,   frequency: "monthly",  date: "2025-03-03" },
-  // Marketing
   { id: "ads-google",     category: "Marketing",                 description: "Google Ads — search campaigns",       amount: 2400,  frequency: "monthly",  date: "2025-03-01" },
   { id: "ads-social",     category: "Marketing",                 description: "Meta / LinkedIn sponsored",           amount: 1100,  frequency: "monthly",  date: "2025-03-01" },
   { id: "seo",            category: "Marketing",                 description: "SEO retainer",                        amount: 800,   frequency: "monthly",  date: "2025-02-01" },
-  // Equipment & Maintenance
   { id: "hardware",       category: "Equipment & Maintenance",   description: "Hardware refresh fund",               amount: 500,   frequency: "monthly",  date: "2025-01-15" },
   { id: "cleaning",       category: "Equipment & Maintenance",   description: "Office cleaning service",             amount: 350,   frequency: "monthly",  date: "2025-03-01" },
   { id: "printer",        category: "Equipment & Maintenance",   description: "Printer lease & consumables",         amount: 145,   frequency: "monthly",  date: "2025-02-20" },
-  // Insurance
   { id: "biz-insurance",  category: "Insurance",                 description: "General business liability",          amount: 420,   frequency: "monthly",  date: "2025-01-01" },
   { id: "cyber-ins",      category: "Insurance",                 description: "Cyber / E&O insurance",               amount: 210,   frequency: "monthly",  date: "2025-01-01" },
 ];
-
-// ——————————————————————————————————————————————————
-// HELPERS
-// ——————————————————————————————————————————————————
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -80,20 +62,16 @@ function formatDate(iso: string): string {
   });
 }
 
-// ——————————————————————————————————————————————————
-// SORT ICON
-// ——————————————————————————————————————————————————
-
 function SortIcon({
-  col,
+  column,
   sortKey,
   sortDir,
 }: {
-  col: SortKey;
+  column: SortKey;
   sortKey: SortKey;
   sortDir: SortDir;
 }) {
-  if (sortKey !== col)
+  if (sortKey !== column)
     return <ChevronsUpDown size={12} strokeWidth={1.5} className="text-blue-primary/20" />;
   return sortDir === "asc" ? (
     <ChevronUp size={12} strokeWidth={2} className="text-blue-primary" />
@@ -101,10 +79,6 @@ function SortIcon({
     <ChevronDown size={12} strokeWidth={2} className="text-blue-primary" />
   );
 }
-
-// ——————————————————————————————————————————————————
-// PAGE
-// ——————————————————————————————————————————————————
 
 export default function ExpensesPage() {
   const [sortKey, setSortKey]   = useState<SortKey>("category");
@@ -114,46 +88,42 @@ export default function ExpensesPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 600);
-    return () => clearTimeout(t);
+    const loadingTimer = setTimeout(() => setIsLoading(false), 600);
+    return () => clearTimeout(loadingTimer);
   }, []);
 
-  // ——— Payroll derived from EMPLOYEES ———
   const monthlyPayroll = useMemo(() => {
-    const annual = EMPLOYEES.filter((e) => e.status !== "inactive").reduce(
-      (acc, e) => acc + e.salary,
+    const annual = EMPLOYEES.filter((employee) => employee.status !== "inactive").reduce(
+      (total, employee) => total + employee.salary,
       0
     );
     return annual / 12;
   }, []);
 
-  // ——— Operating totals ———
   const monthlyOperating = useMemo(
-    () => OPERATING_EXPENSES.reduce((acc, e) => acc + e.amount, 0),
+    () => OPERATING_EXPENSES.reduce((total, expense) => total + expense.amount, 0),
     []
   );
 
   const totalMonthly = monthlyPayroll + monthlyOperating;
 
-  // ——— Category breakdown ———
   const categoryTotals = useMemo(() => {
-    const map: Record<string, number> = { "Payroll": monthlyPayroll };
-    for (const e of OPERATING_EXPENSES) {
-      map[e.category] = (map[e.category] ?? 0) + e.amount;
+    const categoryMap: Record<string, number> = { "Payroll": monthlyPayroll };
+    for (const expense of OPERATING_EXPENSES) {
+      categoryMap[expense.category] = (categoryMap[expense.category] ?? 0) + expense.amount;
     }
-    return Object.entries(map)
+    return Object.entries(categoryMap)
       .map(([name, total]) => ({ name, total }))
-      .sort((a, b) => b.total - a.total);
+      .sort((left, right) => right.total - left.total);
   }, [monthlyPayroll]);
 
   const largestCategory = categoryTotals[0];
 
-  // ——— All rows (payroll as a single synthesised row + operating) ———
   const allRows: Expense[] = useMemo(() => [
     {
       id:          "payroll-total",
       category:    "Payroll",
-      description: `${EMPLOYEES.filter((e) => e.status !== "inactive").length} active / on-leave employees`,
+      description: `${EMPLOYEES.filter((employee) => employee.status !== "inactive").length} active / on-leave employees`,
       amount:      monthlyPayroll,
       frequency:   "monthly",
       date:        new Date().toISOString().slice(0, 10),
@@ -161,21 +131,20 @@ export default function ExpensesPage() {
     ...OPERATING_EXPENSES,
   ], [monthlyPayroll]);
 
-  // ——— Sort ———
   const sorted = useMemo(() => {
-    const data = [...allRows];
-    data.sort((a, b) => {
+    const expenseRows = [...allRows];
+    expenseRows.sort((left, right) => {
       let cmp = 0;
       switch (sortKey) {
-        case "category":    cmp = a.category.localeCompare(b.category); break;
-        case "description": cmp = a.description.localeCompare(b.description); break;
-        case "amount":      cmp = a.amount - b.amount; break;
-        case "frequency":   cmp = a.frequency.localeCompare(b.frequency); break;
-        case "date":        cmp = a.date.localeCompare(b.date); break;
+        case "category":    cmp = left.category.localeCompare(right.category); break;
+        case "description": cmp = left.description.localeCompare(right.description); break;
+        case "amount":      cmp = left.amount - right.amount; break;
+        case "frequency":   cmp = left.frequency.localeCompare(right.frequency); break;
+        case "date":        cmp = left.date.localeCompare(right.date); break;
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
-    return data;
+    return expenseRows;
   }, [allRows, sortKey, sortDir]);
 
   const totalPages  = Math.max(1, Math.ceil(sorted.length / pageSize));
@@ -183,18 +152,13 @@ export default function ExpensesPage() {
   const paginated   = sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   const handleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    if (sortKey === key) setSortDir((currentDir) => (currentDir === "asc" ? "desc" : "asc"));
     else { setSortKey(key); setSortDir("asc"); }
   };
-
-  // ——————————————————————————————————————————————————
-  // RENDER
-  // ——————————————————————————————————————————————————
 
   return (
     <div className="space-y-6">
 
-      {/* ┌── PAGE HEADER ──┐ */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <motion.h1
@@ -225,10 +189,8 @@ export default function ExpensesPage() {
         </motion.span>
       </div>
 
-      {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ┌── KPI CARDS ──┐ */}
       <motion.div
         className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
@@ -271,7 +233,6 @@ export default function ExpensesPage() {
         ))}
       </motion.div>
 
-      {/* ┌── CATEGORY BREAKDOWN ──┐ */}
       <motion.div
         className="border border-blue-primary/10 bg-cream-light"
         initial={{ y: 20 }}
@@ -312,7 +273,6 @@ export default function ExpensesPage() {
         </div>
       </motion.div>
 
-      {/* ┌── TABLE ──┐ */}
       <motion.div
         className="border border-blue-primary/10 bg-cream-light overflow-hidden"
         initial={{ y: 30 }}
@@ -335,7 +295,7 @@ export default function ExpensesPage() {
                     onClick={() => handleSort("category")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors"
                   >
-                    Category <SortIcon col="category" sortKey={sortKey} sortDir={sortDir} />
+                    Category <SortIcon column="category" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-left px-3 align-middle">
@@ -343,7 +303,7 @@ export default function ExpensesPage() {
                     onClick={() => handleSort("description")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors"
                   >
-                    Description <SortIcon col="description" sortKey={sortKey} sortDir={sortDir} />
+                    Description <SortIcon column="description" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-center px-3 align-middle">
@@ -351,7 +311,7 @@ export default function ExpensesPage() {
                     onClick={() => handleSort("frequency")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors mx-auto"
                   >
-                    Freq <SortIcon col="frequency" sortKey={sortKey} sortDir={sortDir} />
+                    Freq <SortIcon column="frequency" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-right px-3 align-middle">
@@ -359,7 +319,7 @@ export default function ExpensesPage() {
                     onClick={() => handleSort("amount")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors ml-auto"
                   >
-                    Amount / mo <SortIcon col="amount" sortKey={sortKey} sortDir={sortDir} />
+                    Amount / mo <SortIcon column="amount" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
                 <th className="text-right px-5 align-middle">
@@ -367,16 +327,15 @@ export default function ExpensesPage() {
                     onClick={() => handleSort("date")}
                     className="flex items-center gap-1.5 font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/50 hover:text-blue-primary transition-colors ml-auto"
                   >
-                    Last Billed <SortIcon col="date" sortKey={sortKey} sortDir={sortDir} />
+                    Last Billed <SortIcon column="date" sortKey={sortKey} sortDir={sortDir} />
                   </button>
                 </th>
               </tr>
             </thead>
             <tbody>
-              {/* ── LOADING SKELETON ── */}
               {isLoading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <tr key={i} className="border-b border-blue-primary/6 h-14">
+                Array.from({ length: 6 }).map((_, skeletonIndex) => (
+                  <tr key={skeletonIndex} className="border-b border-blue-primary/6 h-14">
                     <td className="px-5 align-middle">
                       <div className="h-2.5 w-32 bg-blue-primary/8 animate-pulse" />
                     </td>
@@ -395,7 +354,6 @@ export default function ExpensesPage() {
                   </tr>
                 ))
               ) : paginated.length === 0 ? (
-                /* ── EMPTY STATE ── */
                 <tr>
                   <td colSpan={5} className="text-center py-16">
                     <Receipt size={28} strokeWidth={1} className="text-blue-primary/15 mx-auto mb-3" />
@@ -405,25 +363,21 @@ export default function ExpensesPage() {
                   </td>
                 </tr>
               ) : (
-                /* ── DATA ROWS ── */
                 paginated.map((exp) => (
                   <tr
                     key={exp.id}
                     className="border-b border-blue-primary/6 hover:bg-blue-primary/[0.02] transition-colors duration-150 h-14"
                   >
-                    {/* Category */}
                     <td className="px-5 align-middle">
                       <span className="font-mono text-[10px] tracking-[0.06em] uppercase text-blue-primary font-medium leading-none">
                         {exp.category}
                       </span>
                     </td>
-                    {/* Description */}
                     <td className="px-3 align-middle">
                       <span className="font-mono text-[10px] tracking-[0.04em] text-blue-primary/55">
                         {exp.description}
                       </span>
                     </td>
-                    {/* Frequency */}
                     <td className="px-3 align-middle text-center">
                       <span
                         className={`font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${
@@ -437,7 +391,6 @@ export default function ExpensesPage() {
                         {FREQ_LABEL[exp.frequency]}
                       </span>
                     </td>
-                    {/* Amount */}
                     <td className="px-3 align-middle text-right">
                       <span className="font-mono text-[12px] tracking-[0.03em] font-semibold text-blue-primary leading-none block">
                         {formatCurrency(exp.amount)}
@@ -446,7 +399,6 @@ export default function ExpensesPage() {
                         {formatCurrency(exp.amount * 12)} / yr
                       </span>
                     </td>
-                    {/* Date */}
                     <td className="px-5 align-middle text-right">
                       <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/50">
                         {formatDate(exp.date)}
@@ -459,7 +411,6 @@ export default function ExpensesPage() {
           </table>
         </div>
 
-        {/* ┌── PAGINATION ──┐ */}
         <div className="flex items-center justify-between px-5 py-3 border-t border-blue-primary/8">
           <div className="flex items-center gap-3">
             <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/30">
@@ -469,55 +420,55 @@ export default function ExpensesPage() {
             <div className="w-px h-3 bg-blue-primary/10" />
             <select
               value={pageSize}
-              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+              onChange={(event) => { setPageSize(Number(event.target.value)); setPage(1); }}
               className="h-7 px-2 bg-transparent border border-blue-primary/10 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/50 focus:outline-none cursor-pointer appearance-none"
             >
-              {PAGE_SIZES.map((s) => (
-                <option key={s} value={s}>{s} rows</option>
+              {PAGE_SIZES.map((size) => (
+                <option key={size} value={size}>{size} rows</option>
               ))}
             </select>
           </div>
 
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
               disabled={safePage <= 1}
               className="w-7 h-7 flex items-center justify-center border border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 disabled:opacity-20 disabled:pointer-events-none transition-colors"
             >
               <ChevronLeft size={12} strokeWidth={2} />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((p) => {
+            {Array.from({ length: totalPages }, (_, pageIndex) => pageIndex + 1)
+              .filter((pageNumber) => {
                 if (totalPages <= 5) return true;
-                if (p === 1 || p === totalPages) return true;
-                if (Math.abs(p - safePage) <= 1) return true;
+                if (pageNumber === 1 || pageNumber === totalPages) return true;
+                if (Math.abs(pageNumber - safePage) <= 1) return true;
                 return false;
               })
-              .map((p, idx, arr) => {
-                const prev = arr[idx - 1];
-                const showEllipsis = prev != null && p - prev > 1;
+              .map((pageNumber, position, visiblePages) => {
+                const prev = visiblePages[position - 1];
+                const showEllipsis = prev != null && pageNumber - prev > 1;
                 return (
-                  <span key={p} className="flex items-center">
+                  <span key={pageNumber} className="flex items-center">
                     {showEllipsis && (
                       <span className="w-7 h-7 flex items-center justify-center font-mono text-[9px] text-blue-primary/20">
                         ...
                       </span>
                     )}
                     <button
-                      onClick={() => setPage(p)}
+                      onClick={() => setPage(pageNumber)}
                       className={`w-7 h-7 flex items-center justify-center font-mono text-[10px] tracking-[0.05em] border transition-colors ${
-                        p === safePage
+                        pageNumber === safePage
                           ? "bg-blue-primary text-cream-primary border-blue-primary"
                           : "border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30"
                       }`}
                     >
-                      {p}
+                      {pageNumber}
                     </button>
                   </span>
                 );
               })}
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
               disabled={safePage >= totalPages}
               className="w-7 h-7 flex items-center justify-center border border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 disabled:opacity-20 disabled:pointer-events-none transition-colors"
             >
@@ -527,7 +478,6 @@ export default function ExpensesPage() {
         </div>
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between pt-4">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">

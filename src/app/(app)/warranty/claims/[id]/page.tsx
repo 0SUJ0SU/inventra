@@ -1,4 +1,3 @@
-// src/app/(app)/warranty/claims/[id]/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -31,10 +30,6 @@ import {
   formatClaimDateShort as formatDateShort,
 } from "@/lib/warranty-utils";
 
-// ————————————————————————————————————————————————
-// CONSTANTS
-// ————————————————————————————————————————————————
-
 const WARRANTY_STATUS_CONFIG = {
   active:        { label: "Active",        color: "text-emerald-700",     bg: "bg-emerald-700/10" },
   expiring_soon: { label: "Expiring Soon", color: "text-warning",         bg: "bg-warning/10"     },
@@ -42,19 +37,11 @@ const WARRANTY_STATUS_CONFIG = {
   "n/a":         { label: "N/A",           color: "text-blue-primary/40", bg: "bg-blue-primary/5" },
 };
 
-// ————————————————————————————————————————————————
-// HELPERS
-// ————————————————————————————————————————————————
-
 function getDaysOpen(claimDate: string, updatedAt: string, status: ClaimStatus): number {
   const start = new Date(claimDate);
   const end = (status === "closed" || status === "rejected") ? new Date(updatedAt) : new Date();
   return Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000));
 }
-
-// ————————————————————————————————————————————————
-// SUB-COMPONENTS
-// ————————————————————————————————————————————————
 
 function CardHeader({ title, marker }: { title: string; marker?: string }) {
   return (
@@ -65,14 +52,14 @@ function CardHeader({ title, marker }: { title: string; marker?: string }) {
   );
 }
 
-function InfoRow({ label, value, mono = false }: { label: string; value: React.ReactNode; mono?: boolean }) {
+function InfoRow({ label, content, mono = false }: { label: string; content: React.ReactNode; mono?: boolean }) {
   return (
     <div className="flex items-start justify-between py-2.5 border-b border-blue-primary/6 last:border-b-0">
       <span className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 shrink-0 pr-4">
         {label}
       </span>
       <span className={`text-right font-mono text-[11px] text-blue-primary ${mono ? "tracking-[0.05em] uppercase" : "tracking-[0.03em]"}`}>
-        {value}
+        {content}
       </span>
     </div>
   );
@@ -92,16 +79,12 @@ function StatCard({ label, value, sub, color = "text-blue-primary" }: {
   );
 }
 
-// ————————————————————————————————————————————————
-// PAGE
-// ————————————————————————————————————————————————
-
 export default function WarrantyClaimDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
+  const id = String(params.id);
 
-  const initial = WARRANTY_CLAIMS.find((c) => c.id === id) ?? null;
+  const initial = WARRANTY_CLAIMS.find((claim) => claim.id === id) ?? null;
   const [claim, setClaim] = useState<WarrantyClaim | null>(initial);
   const [newNote, setNewNote] = useState("");
 
@@ -120,21 +103,19 @@ export default function WarrantyClaimDetailPage() {
     );
   }
 
-  // — Derived —
   const sCfg        = CLAIM_STATUS_CONFIG[claim.status];
   const nextStatuses = CLAIM_STATUS_TRANSITIONS[claim.status];
   const daysOpen    = getDaysOpen(claim.claimDate, claim.updatedAt, claim.status);
   const isTerminal  = claim.status === "closed" || claim.status === "rejected";
 
-  const serialItem     = SERIALIZED_ITEMS.find((s) => s.id === claim.serializedItemId) ?? null;
+  const serialItem     = SERIALIZED_ITEMS.find((serial) => serial.id === claim.serializedItemId) ?? null;
   const warrantyStatus = serialItem ? getWarrantyStatus(serialItem) : "n/a";
   const wCfg           = WARRANTY_STATUS_CONFIG[warrantyStatus];
 
   const relatedClaims = WARRANTY_CLAIMS.filter(
-    (c) => c.serializedItemId === claim.serializedItemId && c.id !== claim.id
+    (claim_) => claim_.serializedItemId === claim.serializedItemId && claim_.id !== claim.id
   );
 
-  // — Handlers —
   const handleStatusUpdate = (newStatus: ClaimStatus) => {
     const now = new Date().toISOString().split("T")[0];
     setClaim((prev) => !prev ? prev : {
@@ -161,10 +142,6 @@ export default function WarrantyClaimDetailPage() {
     setClaim((prev) => !prev ? prev : { ...prev, notes: [...prev.notes, noteObj], updatedAt: now });
     setNewNote("");
   };
-
-  // ————————————————————————————————————————————————
-  // RENDER
-  // ————————————————————————————————————————————————
 
   return (
     <div className="space-y-4">
@@ -279,20 +256,20 @@ export default function WarrantyClaimDetailPage() {
           <div className="border border-blue-primary/10 bg-cream-light">
             <CardHeader title="Serial Info" />
             <div className="px-5 py-2">
-              <InfoRow label="Serial #" value={claim.serialNumber} mono />
-              <InfoRow label="Product" value={claim.productName} />
-              {serialItem?.purchaseDate && <InfoRow label="Purchased" value={formatDate(serialItem.purchaseDate)} mono />}
-              {serialItem?.soldDate     && <InfoRow label="Sold"      value={formatDate(serialItem.soldDate)}     mono />}
-              {serialItem?.warrantyExpiry && <InfoRow label="Warranty Exp." value={formatDate(serialItem.warrantyExpiry)} mono />}
+              <InfoRow label="Serial #" content={claim.serialNumber} mono />
+              <InfoRow label="Product" content={claim.productName} />
+              {serialItem?.purchaseDate && <InfoRow label="Purchased" content={formatDate(serialItem.purchaseDate)} mono />}
+              {serialItem?.soldDate     && <InfoRow label="Sold"      content={formatDate(serialItem.soldDate)}     mono />}
+              {serialItem?.warrantyExpiry && <InfoRow label="Warranty Exp." content={formatDate(serialItem.warrantyExpiry)} mono />}
               <InfoRow
                 label="Warranty"
-                value={
+                content={
                   <span className={`font-mono text-[9px] tracking-[0.08em] uppercase px-1.5 py-0.5 ${wCfg.color} ${wCfg.bg}`}>
                     {wCfg.label}
                   </span>
                 }
               />
-              {claim.replacementSerialNumber && <InfoRow label="Replacement" value={claim.replacementSerialNumber} mono />}
+              {claim.replacementSerialNumber && <InfoRow label="Replacement" content={claim.replacementSerialNumber} mono />}
             </div>
           </div>
 
@@ -300,19 +277,19 @@ export default function WarrantyClaimDetailPage() {
           <div className="border border-blue-primary/10 bg-cream-light flex-1 flex flex-col">
             <CardHeader title={claim.claimType === "customer_to_store" ? "Customer" : "Supplier"} />
             <div className="px-5 py-2">
-              {claim.customerName && <InfoRow label="Name"     value={claim.customerName} />}
-              {claim.supplierName && <InfoRow label="Supplier" value={claim.supplierName} />}
+              {claim.customerName && <InfoRow label="Name"     content={claim.customerName} />}
+              {claim.supplierName && <InfoRow label="Supplier" content={claim.supplierName} />}
               <InfoRow
                 label="Claim Type"
-                value={
+                content={
                   <span className="font-mono text-[9px] tracking-[0.06em] uppercase px-1.5 py-0.5 bg-blue-primary/5 text-blue-primary/60">
                     {CLAIM_TYPE_SHORT[claim.claimType]}
                   </span>
                 }
               />
-              <InfoRow label="Filed"        value={formatDate(claim.claimDate)}  mono />
-              <InfoRow label="Last Updated" value={formatDate(claim.updatedAt)}  mono />
-              {claim.repairCost !== null && <InfoRow label="Repair Cost" value={formatCurrency(claim.repairCost)} mono />}
+              <InfoRow label="Filed"        content={formatDate(claim.claimDate)}  mono />
+              <InfoRow label="Last Updated" content={formatDate(claim.updatedAt)}  mono />
+              {claim.repairCost !== null && <InfoRow label="Repair Cost" content={formatCurrency(claim.repairCost)} mono />}
             </div>
           </div>
 
@@ -409,12 +386,12 @@ export default function WarrantyClaimDetailPage() {
           <div className="border border-blue-primary/10 bg-cream-light flex-1 flex flex-col">
             <CardHeader title="Status History" />
             <div className="p-4">
-              {claim.statusHistory.map((entry, i) => {
-                const Icon  = STATUS_WORKFLOW_ICONS[entry.to] ?? CircleDot;
-                const isLast = i === claim.statusHistory.length - 1;
-                const cfg   = CLAIM_STATUS_CONFIG[entry.to];
+              {claim.statusHistory.map((historyEntry, historyIndex) => {
+                const Icon  = STATUS_WORKFLOW_ICONS[historyEntry.to] ?? CircleDot;
+                const isLast = historyIndex === claim.statusHistory.length - 1;
+                const cfg   = CLAIM_STATUS_CONFIG[historyEntry.to];
                 return (
-                  <div key={i} className="flex gap-3">
+                  <div key={historyIndex} className="flex gap-3">
                     <div className="flex flex-col items-center shrink-0">
                       <div className={`w-6 h-6 flex items-center justify-center border ${
                         isLast ? "border-blue-primary/30 bg-blue-primary/5" : "border-blue-primary/10 bg-cream-light"
@@ -429,11 +406,11 @@ export default function WarrantyClaimDetailPage() {
                           {cfg.label}
                         </span>
                         <span className="font-mono text-[8px] tracking-[0.06em] text-blue-primary/25 leading-none">
-                          {formatDateShort(entry.date)}
+                          {formatDateShort(historyEntry.date)}
                         </span>
                       </div>
                       <p className="font-mono text-[9px] tracking-[0.02em] text-blue-primary/40 mt-1 leading-relaxed">
-                        {entry.note}
+                        {historyEntry.note}
                       </p>
                     </div>
                   </div>
@@ -481,8 +458,8 @@ export default function WarrantyClaimDetailPage() {
                 <input
                   type="text"
                   value={newNote}
-                  onChange={(e) => setNewNote(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleAddNote(); }}
+                  onChange={(event) => setNewNote(event.target.value)}
+                  onKeyDown={(event) => { if (event.key === "Enter") handleAddNote(); }}
                   placeholder="ADD A NOTE..."
                   className="flex-1 h-9 px-3 bg-cream-primary border border-blue-primary/10 font-mono text-[10px] tracking-[0.06em] uppercase text-blue-primary placeholder:text-blue-primary/20 focus:outline-none focus:border-blue-primary/30 transition-colors"
                 />

@@ -1,4 +1,3 @@
-// src/app/(app)/customers/page.tsx
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -18,10 +17,6 @@ import { SERIALIZED_ITEMS, WARRANTY_CLAIMS } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils/format";
 import Link from "next/link";
 
-// ——————————————————————————————————————————————————
-// TYPES
-// ——————————————————————————————————————————————————
-
 interface CustomerSummary {
   id: string;
   name: string;
@@ -36,10 +31,6 @@ interface CustomerSummary {
 type SortKey = "name" | "totalItems" | "totalSpend" | "lastPurchaseDate" | "warrantyClaims";
 type SortDir = "asc" | "desc";
 
-// ——————————————————————————————————————————————————
-// CONSTANTS
-// ——————————————————————————————————————————————————
-
 const PAGE_SIZES = [10, 20, 50] as const;
 const ease = [0.16, 1, 0.3, 1] as const;
 
@@ -50,10 +41,6 @@ const CUSTOMER_CONTACTS: Record<string, { email: string; phone: string }> = {
   "gadget-zone":  { email: "stock@gadgetzone.net",   phone: "+1 (646) 338-7721" },
   "nex-mobile":   { email: "supply@nexmobile.com",   phone: "+1 (512) 991-2267" },
 };
-
-// ——————————————————————————————————————————————————
-// HELPERS
-// ——————————————————————————————————————————————————
 
 export function slugify(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -92,7 +79,6 @@ function deriveCustomers(): CustomerSummary[] {
     if (item.soldDate > c.lastPurchaseDate) c.lastPurchaseDate = item.soldDate;
   }
 
-  // Enrich with warranty claim counts
   for (const claim of WARRANTY_CLAIMS) {
     if (!claim.customerName) continue;
     const id = slugify(claim.customerName);
@@ -103,10 +89,6 @@ function deriveCustomers(): CustomerSummary[] {
 
   return Array.from(map.values());
 }
-
-// ——————————————————————————————————————————————————
-// SORT ICON
-// ——————————————————————————————————————————————————
 
 function SortIcon({
   col,
@@ -126,10 +108,6 @@ function SortIcon({
   );
 }
 
-// ——————————————————————————————————————————————————
-// PAGE
-// ——————————————————————————————————————————————————
-
 export default function CustomersPage() {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("totalSpend");
@@ -145,14 +123,12 @@ export default function CustomersPage() {
 
   const allCustomers = useMemo(() => deriveCustomers(), []);
 
-  // ——— Page-level KPIs ———
   const totalCustomers = allCustomers.length;
   const totalRevenue = allCustomers.reduce((acc, c) => acc + c.totalSpend, 0);
   const totalClaims = allCustomers.reduce((acc, c) => acc + c.warrantyClaims, 0);
   const avgSpend =
     totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
 
-  // ——— Filter ———
   const filtered = useMemo(() => {
     if (!search.trim()) return allCustomers;
     const q = search.toLowerCase().trim();
@@ -164,7 +140,6 @@ export default function CustomersPage() {
     );
   }, [allCustomers, search]);
 
-  // ——— Sort ———
   const sorted = useMemo(() => {
     const data = [...filtered];
     data.sort((a, b) => {
@@ -190,14 +165,9 @@ export default function CustomersPage() {
     else { setSortKey(key); setSortDir("asc"); }
   };
 
-  // ——————————————————————————————————————————————————
-  // RENDER
-  // ——————————————————————————————————————————————————
-
   return (
     <div className="space-y-6">
 
-      {/* ┌── PAGE HEADER ──┐ */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <motion.h1
@@ -228,10 +198,8 @@ export default function CustomersPage() {
         </motion.span>
       </div>
 
-      {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ┌── KPI CARDS ──┐ */}
       <motion.div
         className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
@@ -274,7 +242,6 @@ export default function CustomersPage() {
         ))}
       </motion.div>
 
-      {/* ┌── SEARCH ──┐ */}
       <motion.div
         initial={{ y: 20 }}
         animate={{ y: 0 }}

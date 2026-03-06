@@ -8,9 +8,6 @@ import { ArrowUp, ArrowDown } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* ────────────────────────────────────────────────────────────
-   Testimonial data
-──────────────────────────────────────────────────────────── */
 const testimonials = [
   {
     company: "Nexgen\nElectronics",
@@ -38,9 +35,6 @@ const testimonials = [
   },
 ];
 
-/* ────────────────────────────────────────────────────────────
-   Testimonials Section
-──────────────────────────────────────────────────────────── */
 export function Testimonials() {
   const sectionRef = useRef<HTMLElement>(null);
   const labelsRef = useRef<HTMLDivElement>(null);
@@ -64,18 +58,15 @@ export function Testimonials() {
       const slideDir = direction === "next" ? -1 : 1;
       const targets = [companyRef.current, quoteRef.current, metaRef.current];
 
-      // Phase 1: Slide out
       const tlOut = gsap.timeline({
         onComplete: () => {
-          // Immediately position elements off-screen in entrance direction
           targets.forEach((el) => {
             if (el) gsap.set(el, { yPercent: slideDir * 100 });
           });
 
-          // Update React state
           setActiveIndex(newIndex);
 
-          // Phase 2: Slide in (next frame so React has rendered new content)
+          // requestAnimationFrame ensures React has rendered the new content before animating
           requestAnimationFrame(() => {
             const tlIn = gsap.timeline({
               onComplete: () => {
@@ -123,12 +114,10 @@ export function Testimonials() {
     [activeIndex]
   );
 
-  /* Entrance animations */
   useGSAP(
     () => {
       if (!sectionRef.current) return;
 
-      // Section labels
       if (labelsRef.current) {
         gsap.fromTo(
           labelsRef.current.querySelector(".label-left"),
@@ -154,7 +143,6 @@ export function Testimonials() {
         );
       }
 
-      // Content area slides up
       if (contentRef.current) {
         gsap.fromTo(
           contentRef.current,
@@ -183,7 +171,6 @@ export function Testimonials() {
     >
 
       <div className="relative z-10 px-6">
-        {/* Section labels */}
         <div
           ref={labelsRef}
           className="flex items-baseline justify-between pt-6 pb-4"
@@ -203,11 +190,8 @@ export function Testimonials() {
           </span>
         </div>
 
-        {/* ── Main content area ── */}
         <div ref={contentRef} className="pt-10 md:pt-20 pb-10 md:pb-16">
-          {/* Split layout: company left | vertical line | quote right */}
           <div className="flex flex-col md:flex-row md:items-start gap-8 md:gap-0 md:min-h-[280px]">
-            {/* Company name — left 1/3 */}
             <div className="md:w-[33.333%] md:pr-10 overflow-hidden">
               <div ref={companyRef}>
                 <h3
@@ -222,13 +206,11 @@ export function Testimonials() {
               </div>
             </div>
 
-            {/* Vertical divider — hidden on mobile */}
             <div
               className="hidden md:block self-stretch w-px flex-shrink-0"
               style={{ backgroundColor: "rgba(25, 37, 170, 0.12)" }}
             />
 
-            {/* Quote — right 2/3 */}
             <div className="md:flex-1 md:pl-10 lg:pl-16 overflow-hidden">
               <div ref={quoteRef}>
                 <p
@@ -244,13 +226,10 @@ export function Testimonials() {
             </div>
           </div>
 
-          {/* ── Navigation + meta ── */}
           <div
             className="flex flex-col md:flex-row md:items-end gap-8 md:gap-0 mt-12 md:mt-20"
           >
-            {/* Left column: arrows + counter — aligns under company */}
             <div className="md:w-[33.333%] flex items-center gap-6">
-              {/* Up arrow */}
               <button
                 onClick={() => navigateTo("prev")}
                 className="flex items-center justify-center w-12 h-12 rounded-full border transition-colors duration-200"
@@ -273,7 +252,6 @@ export function Testimonials() {
                 <ArrowUp size={18} />
               </button>
 
-              {/* Down arrow */}
               <button
                 onClick={() => navigateTo("next")}
                 className="flex items-center justify-center w-12 h-12 rounded-full border transition-colors duration-200"
@@ -296,7 +274,6 @@ export function Testimonials() {
                 <ArrowDown size={18} />
               </button>
 
-              {/* Counter */}
               <div className="flex items-baseline gap-3 ml-2">
                 <span
                   className="font-mono text-[13px] tracking-[0.1em]"
@@ -319,7 +296,6 @@ export function Testimonials() {
               </div>
             </div>
 
-            {/* Right column: person name + title — aligns under quote */}
             <div className="md:flex-1 md:pl-10 lg:pl-16 overflow-hidden" style={{ marginLeft: "1px" }}>
               <div ref={metaRef}>
                 <div

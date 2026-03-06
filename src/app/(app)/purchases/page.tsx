@@ -1,4 +1,3 @@
-// src/app/(app)/purchases/page.tsx
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
@@ -27,10 +26,6 @@ import {
 import { formatCurrency } from "@/lib/utils/format";
 import Link from "next/link";
 
-// ————————————————————————————————————————————————
-// TYPES
-// ————————————————————————————————————————————————
-
 type SortKey =
   | "poNumber"
   | "date"
@@ -41,16 +36,22 @@ type SortKey =
   | "status";
 type SortDir = "asc" | "desc";
 
-// ————————————————————————————————————————————————
-// CONSTANTS
-// ————————————————————————————————————————————————
-
 const PAGE_SIZES = [10, 20, 50] as const;
 const ease = [0.16, 1, 0.3, 1] as const;
 
-// ————————————————————————————————————————————————
-// HELPERS
-// ————————————————————————————————————————————————
+const VALID_PURCHASE_STATUSES: ReadonlySet<string> = new Set<PurchaseStatus>([
+  "draft",
+  "sent",
+  "partial",
+  "received",
+  "cancelled",
+]);
+
+function isValidPurchaseStatusOrAll(
+  candidate: string
+): candidate is PurchaseStatus | "all" {
+  return candidate === "all" || VALID_PURCHASE_STATUSES.has(candidate);
+}
 
 function formatPoDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -60,14 +61,12 @@ function formatPoDate(iso: string): string {
   });
 }
 
-function getUniqueSuppliers(orders: PurchaseOrder[]): string[] {
-  const set = new Set(orders.map((o) => o.supplierName));
-  return Array.from(set).sort();
+function getUniqueSuppliers(purchaseOrders: PurchaseOrder[]): string[] {
+  const supplierNames = new Set(
+    purchaseOrders.map((order) => order.supplierName)
+  );
+  return Array.from(supplierNames).sort();
 }
-
-// ————————————————————————————————————————————————
-// SORT ICON
-// ————————————————————————————————————————————————
 
 function SortIcon({
   col,
@@ -89,93 +88,80 @@ function SortIcon({
   );
 }
 
-// ————————————————————————————————————————————————
-// PAGE
-// ————————————————————————————————————————————————
-
 export default function PurchaseOrdersPage() {
-  // — Filter state —
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<PurchaseStatus | "all">("all");
   const [supplierFilter, setSupplierFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  // — Sort state —
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  // — Pagination —
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number>(10);
 
-  // — Selection —
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // — Action menu —
   const [actionMenuId, setActionMenuId] = useState<string | null>(null);
 
-  // — Local mutable state —
   const [orders, setOrders] = useState<PurchaseOrder[]>(() => [...PURCHASE_ORDERS]);
 
-  // — Loading skeleton on mount —
   const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 600);
-    return () => clearTimeout(t);
+    const loadingTimer = setTimeout(() => setIsLoading(false), 600);
+    return () => clearTimeout(loadingTimer);
   }, []);
 
   const uniqueSuppliers = useMemo(() => getUniqueSuppliers(orders), [orders]);
 
-  // ——— DERIVED DATA ———
-
   const filtered = useMemo(() => {
-    let data = [...orders];
+    let matchingOrders = [...orders];
 
     if (search.trim()) {
-      const q = search.toLowerCase().trim();
-      data = data.filter(
-        (o) =>
-          o.poNumber.toLowerCase().includes(q) ||
-          o.supplierName.toLowerCase().includes(q) ||
-          o.items.some(
-            (i) =>
-              i.productName.toLowerCase().includes(q) ||
-              i.sku.toLowerCase().includes(q)
+      const searchTerm = search.toLowerCase().trim();
+      matchingOrders = matchingOrders.filter(
+        (order) =>
+          order.poNumber.toLowerCase().includes(searchTerm) ||
+          order.supplierName.toLowerCase().includes(searchTerm) ||
+          order.items.some(
+            (lineItem) =>
+              lineItem.productName.toLowerCase().includes(searchTerm) ||
+              lineItem.sku.toLowerCase().includes(searchTerm)
           )
       );
     }
 
-    if (statusFilter !== "all") data = data.filter((o) => o.status === statusFilter);
-    if (supplierFilter !== "all") data = data.filter((o) => o.supplierName === supplierFilter);
-    if (dateFrom) data = data.filter((o) => o.date >= dateFrom);
-    if (dateTo) data = data.filter((o) => o.date <= dateTo);
+    if (statusFilter !== "all") matchingOrders = matchingOrders.filter((order) => order.status === statusFilter);
+    if (supplierFilter !== "all") matchingOrders = matchingOrders.filter((order) => order.supplierName === supplierFilter);
+    if (dateFrom) matchingOrders = matchingOrders.filter((order) => order.date >= dateFrom);
+    if (dateTo) matchingOrders = matchingOrders.filter((order) => order.date <= dateTo);
 
-    return data;
+    return matchingOrders;
   }, [search, statusFilter, supplierFilter, dateFrom, dateTo, orders]);
 
   const sorted = useMemo(() => {
-    const data = [...filtered];
-    data.sort((a, b) => {
-      let cmp = 0;
+    const sortableOrders = [...filtered];
+    sortableOrders.sort((orderA, orderB) => {
+      let comparison = 0;
       switch (sortKey) {
-        case "poNumber":     cmp = a.poNumber.localeCompare(b.poNumber); break;
-        case "date":         cmp = a.date.localeCompare(b.date); break;
-        case "expectedDate": cmp = a.expectedDate.localeCompare(b.expectedDate); break;
-        case "supplierName": cmp = a.supplierName.localeCompare(b.supplierName); break;
-        case "itemCount":    cmp = a.items.length - b.items.length; break;
-        case "total":        cmp = a.total - b.total; break;
+        case "poNumber":     comparison = orderA.poNumber.localeCompare(orderB.poNumber); break;
+        case "date":         comparison = orderA.date.localeCompare(orderB.date); break;
+        case "expectedDate": comparison = orderA.expectedDate.localeCompare(orderB.expectedDate); break;
+        case "supplierName": comparison = orderA.supplierName.localeCompare(orderB.supplierName); break;
+        case "itemCount":    comparison = orderA.items.length - orderB.items.length; break;
+        case "total":        comparison = orderA.total - orderB.total; break;
         case "status": {
-          const order: Record<PurchaseStatus, number> = {
+          const statusRank: Record<PurchaseStatus, number> = {
             draft: 0, sent: 1, partial: 2, received: 3, cancelled: 4,
           };
-          cmp = order[a.status] - order[b.status];
+          comparison = statusRank[orderA.status] - statusRank[orderB.status];
           break;
         }
       }
-      return sortDir === "asc" ? cmp : -cmp;
+      return sortDir === "asc" ? comparison : -comparison;
     });
-    return data;
+    return sortableOrders;
   }, [filtered, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
@@ -184,13 +170,11 @@ export default function PurchaseOrdersPage() {
 
   const resetPage = useCallback(() => setPage(1), []);
 
-  // ——— HANDLERS ———
-
-  const handleSort = (key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+  const handleSort = (column: SortKey) => {
+    if (sortKey === column) {
+      setSortDir((currentDir) => (currentDir === "asc" ? "desc" : "asc"));
     } else {
-      setSortKey(key);
+      setSortKey(column);
       setSortDir("asc");
     }
   };
@@ -210,69 +194,69 @@ export default function PurchaseOrdersPage() {
     resetPage();
   };
 
-  // — Cancel single order —
   const handleCancel = (id: string) => {
     if (!confirm("Cancel this purchase order? This cannot be undone.")) return;
     setOrders((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, status: "cancelled" as PurchaseStatus } : o))
+      prev.map((order) => {
+        if (order.id !== id) return order;
+        const cancelledStatus: PurchaseStatus = "cancelled";
+        return { ...order, status: cancelledStatus };
+      })
     );
     setActionMenuId(null);
   };
 
-  // — Selection handlers —
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+      const updated = new Set(prev);
+      if (updated.has(id)) updated.delete(id);
+      else updated.add(id);
+      return updated;
     });
   };
 
   const toggleSelectAll = () => {
     setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (paginated.length > 0 && paginated.every((o) => next.has(o.id))) {
-        paginated.forEach((o) => next.delete(o.id));
+      const updated = new Set(prev);
+      if (paginated.length > 0 && paginated.every((order) => updated.has(order.id))) {
+        paginated.forEach((order) => updated.delete(order.id));
       } else {
-        paginated.forEach((o) => next.add(o.id));
+        paginated.forEach((order) => updated.add(order.id));
       }
-      return next;
+      return updated;
     });
   };
 
   const clearSelection = () => setSelectedIds(new Set());
   const allOnPageSelected =
-    paginated.length > 0 && paginated.every((o) => selectedIds.has(o.id));
+    paginated.length > 0 && paginated.every((order) => selectedIds.has(order.id));
 
-  // — Bulk cancel —
   const handleBulkCancel = () => {
     if (!confirm(`Cancel ${selectedIds.size} selected order(s)?`)) return;
     setOrders((prev) =>
-      prev.map((o) =>
-        selectedIds.has(o.id) && o.status !== "cancelled"
-          ? { ...o, status: "cancelled" as PurchaseStatus }
-          : o
-      )
+      prev.map((order) => {
+        if (!selectedIds.has(order.id) || order.status === "cancelled") return order;
+        const cancelledStatus: PurchaseStatus = "cancelled";
+        return { ...order, status: cancelledStatus };
+      })
     );
     clearSelection();
   };
 
-  // — Export helpers —
   const buildExportRows = (rows: PurchaseOrder[]) =>
-    rows.map((o) => ({
-      "PO #": o.poNumber,
-      "Date": o.date,
-      "Expected": o.expectedDate,
-      "Supplier": o.supplierName,
-      "Contact": o.supplierContact,
-      "Items": o.items.map((i) => `${i.productName} x${i.qty}`).join("; "),
-      "Subtotal": o.subtotal,
-      "Shipping": o.shippingCost,
-      "Total": o.total,
-      "Status": PURCHASE_STATUS_CONFIG[o.status].label,
-      "Handled By": o.handledBy,
-      "Notes": o.notes ?? "",
+    rows.map((order) => ({
+      "PO #": order.poNumber,
+      "Date": order.date,
+      "Expected": order.expectedDate,
+      "Supplier": order.supplierName,
+      "Contact": order.supplierContact,
+      "Items": order.items.map((lineItem) => `${lineItem.productName} x${lineItem.qty}`).join("; "),
+      "Subtotal": order.subtotal,
+      "Shipping": order.shippingCost,
+      "Total": order.total,
+      "Status": PURCHASE_STATUS_CONFIG[order.status].label,
+      "Handled By": order.handledBy,
+      "Notes": order.notes ?? "",
     }));
 
   const handleExport = async () => {
@@ -285,8 +269,8 @@ export default function PurchaseOrdersPage() {
 
   const handleExportSelected = async () => {
     const XLSX = await import("xlsx");
-    const rows = sorted.filter((o) => selectedIds.has(o.id));
-    const ws = XLSX.utils.json_to_sheet(buildExportRows(rows));
+    const selectedOrders = sorted.filter((order) => selectedIds.has(order.id));
+    const ws = XLSX.utils.json_to_sheet(buildExportRows(selectedOrders));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Purchase Orders");
     XLSX.writeFile(
@@ -296,29 +280,24 @@ export default function PurchaseOrdersPage() {
     clearSelection();
   };
 
-  // ——— STATUS SUMMARY ———
-
   const statusSummary = useMemo(() => {
     const counts: Record<PurchaseStatus, number> = {
       draft: 0, sent: 0, partial: 0, received: 0, cancelled: 0,
     };
-    orders.forEach((o) => { counts[o.status]++; });
+    orders.forEach((order) => { counts[order.status]++; });
     return counts;
   }, [orders]);
 
   const totalSpend = useMemo(
     () =>
       orders
-        .filter((o) => o.status === "received" || o.status === "partial")
-        .reduce((acc, o) => acc + o.total, 0),
+        .filter((order) => order.status === "received" || order.status === "partial")
+        .reduce((acc, order) => acc + order.total, 0),
     [orders]
   );
 
-  // ——— RENDER ———
-
   return (
     <div className="space-y-6">
-      {/* ┌── PAGE HEADER ──┐ */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <motion.h1
@@ -365,10 +344,8 @@ export default function PurchaseOrdersPage() {
         </motion.div>
       </div>
 
-      {/* Blueprint divider */}
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ┌── STATUS SUMMARY CARDS ──┐ */}
       <motion.div
         className="grid grid-cols-2 sm:grid-cols-5 gap-px bg-blue-primary/10 border border-blue-primary/10"
         initial={{ y: 20 }}
@@ -380,37 +357,35 @@ export default function PurchaseOrdersPage() {
             PurchaseStatus,
             (typeof PURCHASE_STATUS_CONFIG)[PurchaseStatus]
           ][]
-        ).map(([key, cfg]) => (
+        ).map(([statusKey, statusCfg]) => (
           <button
-            key={key}
+            key={statusKey}
             onClick={() => {
-              setStatusFilter(statusFilter === key ? "all" : key);
+              setStatusFilter(statusFilter === statusKey ? "all" : statusKey);
               resetPage();
             }}
             className={`bg-cream-light px-2 py-4 text-center transition-colors hover:bg-blue-primary/[0.03] ${
-              statusFilter === key ? "ring-1 ring-inset ring-blue-primary/30" : ""
+              statusFilter === statusKey ? "ring-1 ring-inset ring-blue-primary/30" : ""
             }`}
           >
             <span
-              className={`font-mono text-[22px] font-semibold leading-none block ${cfg.color}`}
+              className={`font-mono text-[22px] font-semibold leading-none block ${statusCfg.color}`}
             >
-              {statusSummary[key]}
+              {statusSummary[statusKey]}
             </span>
             <span className="font-mono text-[8px] tracking-[0.12em] uppercase text-blue-primary/40 mt-1.5 block">
-              {cfg.label}
+              {statusCfg.label}
             </span>
           </button>
         ))}
       </motion.div>
 
-      {/* ┌── FILTERS ──┐ */}
       <motion.div
         className="space-y-2"
         initial={{ y: 20 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.12, ease }}
       >
-        {/* Row 1: Search + dropdowns */}
         <div className="flex flex-col lg:flex-row gap-3">
           <div className="relative flex-1 max-w-md">
             <Search
@@ -422,8 +397,8 @@ export default function PurchaseOrdersPage() {
               type="text"
               placeholder="SEARCH PO #, SUPPLIER, PRODUCT, SKU..."
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
+              onChange={(event) => {
+                setSearch(event.target.value);
                 resetPage();
               }}
               className="w-full h-9 pl-9 pr-3 bg-cream-light border border-blue-primary/10 font-mono text-[11px] tracking-[0.08em] uppercase text-blue-primary placeholder:text-blue-primary/25 focus:outline-none focus:border-blue-primary/30 transition-colors"
@@ -442,11 +417,13 @@ export default function PurchaseOrdersPage() {
           </div>
 
           <div className="grid grid-cols-2 lg:flex lg:flex-wrap gap-2">
-            {/* Status */}
             <select
               value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value as PurchaseStatus | "all");
+              onChange={(event) => {
+                const selectedValue = event.target.value;
+                if (isValidPurchaseStatusOrAll(selectedValue)) {
+                  setStatusFilter(selectedValue);
+                }
                 resetPage();
               }}
               className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[120px]"
@@ -457,18 +434,17 @@ export default function PurchaseOrdersPage() {
                   PurchaseStatus,
                   (typeof PURCHASE_STATUS_CONFIG)[PurchaseStatus]
                 ][]
-              ).map(([key, cfg]) => (
-                <option key={key} value={key}>
-                  {cfg.label}
+              ).map(([statusKey, statusCfg]) => (
+                <option key={statusKey} value={statusKey}>
+                  {statusCfg.label}
                 </option>
               ))}
             </select>
 
-            {/* Supplier */}
             <select
               value={supplierFilter}
-              onChange={(e) => {
-                setSupplierFilter(e.target.value);
+              onChange={(event) => {
+                setSupplierFilter(event.target.value);
                 resetPage();
               }}
               className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer appearance-none min-w-[160px]"
@@ -492,7 +468,6 @@ export default function PurchaseOrdersPage() {
           </div>
         </div>
 
-        {/* Row 2: Date range */}
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/30 shrink-0">
             Order date
@@ -500,8 +475,8 @@ export default function PurchaseOrdersPage() {
           <input
             type="date"
             value={dateFrom}
-            onChange={(e) => {
-              setDateFrom(e.target.value);
+            onChange={(event) => {
+              setDateFrom(event.target.value);
               resetPage();
             }}
             className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.05em] text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer w-36"
@@ -510,8 +485,8 @@ export default function PurchaseOrdersPage() {
           <input
             type="date"
             value={dateTo}
-            onChange={(e) => {
-              setDateTo(e.target.value);
+            onChange={(event) => {
+              setDateTo(event.target.value);
               resetPage();
             }}
             className="h-9 px-3 bg-cream-light border border-blue-primary/10 font-mono text-[10px] tracking-[0.05em] text-blue-primary focus:outline-none focus:border-blue-primary/30 transition-colors cursor-pointer w-36"
@@ -535,7 +510,6 @@ export default function PurchaseOrdersPage() {
           )}
         </div>
 
-        {/* Row 3: Bulk actions */}
         {selectedIds.size > 0 && (
           <motion.div
             className="bg-blue-primary text-cream-primary"
@@ -575,7 +549,6 @@ export default function PurchaseOrdersPage() {
         )}
       </motion.div>
 
-      {/* ┌── TABLE ──┐ */}
       <motion.div
         className="border border-blue-primary/10 bg-cream-light overflow-hidden"
         initial={{ y: 30 }}
@@ -664,10 +637,9 @@ export default function PurchaseOrdersPage() {
               </tr>
             </thead>
             <tbody>
-              {/* —— LOADING SKELETON —— */}
               {isLoading ? (
-                Array.from({ length: 8 }).map((_, i) => (
-                  <tr key={i} className="border-b border-blue-primary/6 h-14">
+                Array.from({ length: 8 }).map((_, skeletonIndex) => (
+                  <tr key={skeletonIndex} className="border-b border-blue-primary/6 h-14">
                     <td className="w-12 px-4 align-middle">
                       <div className="w-3.5 h-3.5 bg-blue-primary/8 animate-pulse" />
                     </td>
@@ -696,7 +668,6 @@ export default function PurchaseOrdersPage() {
                   </tr>
                 ))
               ) : paginated.length === 0 ? (
-                /* —— EMPTY STATE —— */
                 <tr>
                   <td colSpan={9} className="text-center py-16">
                     <Truck
@@ -725,12 +696,11 @@ export default function PurchaseOrdersPage() {
                   </td>
                 </tr>
               ) : (
-                /* —— DATA ROWS —— */
                 paginated.map((order) => {
                   const isSelected = selectedIds.has(order.id);
-                  const sCfg = PURCHASE_STATUS_CONFIG[order.status];
-                  const totalQty = order.items.reduce((acc, i) => acc + i.qty, 0);
-                  const totalReceived = order.items.reduce((acc, i) => acc + i.qtyReceived, 0);
+                  const orderStatusCfg = PURCHASE_STATUS_CONFIG[order.status];
+                  const totalQty = order.items.reduce((acc, lineItem) => acc + lineItem.qty, 0);
+                  const totalReceived = order.items.reduce((acc, lineItem) => acc + lineItem.qtyReceived, 0);
                   const hasShipping = order.shippingCost > 0;
 
                   return (
@@ -742,7 +712,6 @@ export default function PurchaseOrdersPage() {
                           : "hover:bg-blue-primary/[0.02]"
                       }`}
                     >
-                      {/* Checkbox */}
                       <td className="w-12 px-4 align-middle">
                         <input
                           type="checkbox"
@@ -751,7 +720,6 @@ export default function PurchaseOrdersPage() {
                           className="w-3.5 h-3.5 accent-blue-primary cursor-pointer block"
                         />
                       </td>
-                      {/* PO # */}
                       <td className="px-3 align-middle">
                         <Link
                           href={`/purchases/${order.id}`}
@@ -760,19 +728,16 @@ export default function PurchaseOrdersPage() {
                           {order.poNumber}
                         </Link>
                       </td>
-                      {/* Order Date */}
                       <td className="px-3 align-middle">
                         <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/50">
                           {formatPoDate(order.date)}
                         </span>
                       </td>
-                      {/* Expected */}
                       <td className="px-3 align-middle">
                         <span className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary/50">
                           {formatPoDate(order.expectedDate)}
                         </span>
                       </td>
-                      {/* Supplier */}
                       <td className="px-3 align-middle">
                         <p className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary truncate max-w-[180px] leading-none">
                           {order.supplierName}
@@ -781,7 +746,6 @@ export default function PurchaseOrdersPage() {
                           {order.supplierContact}
                         </p>
                       </td>
-                      {/* Lines */}
                       <td className="px-3 align-middle text-center">
                         <span className="font-mono text-[11px] tracking-[0.04em] font-semibold text-blue-primary/60">
                           {order.items.length}
@@ -790,7 +754,6 @@ export default function PurchaseOrdersPage() {
                           {totalQty} units
                         </span>
                       </td>
-                      {/* Total */}
                       <td className="px-3 align-middle text-right">
                         <span className="font-mono text-[12px] tracking-[0.03em] font-semibold text-blue-primary leading-none block">
                           {formatCurrency(order.total)}
@@ -801,13 +764,12 @@ export default function PurchaseOrdersPage() {
                           </span>
                         )}
                       </td>
-                      {/* Status */}
                       <td className="px-3 align-middle">
                         <div className="flex flex-col items-center gap-1">
                           <span
-                            className={`font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${sCfg.color} ${sCfg.bg}`}
+                            className={`font-mono text-[8px] tracking-[0.12em] uppercase px-2 py-1 leading-none ${orderStatusCfg.color} ${orderStatusCfg.bg}`}
                           >
-                            {sCfg.label}
+                            {orderStatusCfg.label}
                           </span>
                           {(order.status === "partial" || order.status === "received") && (
                             <span className="font-mono text-[7px] tracking-[0.08em] uppercase text-blue-primary/30 leading-none">
@@ -816,7 +778,6 @@ export default function PurchaseOrdersPage() {
                           )}
                         </div>
                       </td>
-                      {/* Actions */}
                       <td className="w-12 px-3 align-middle text-center relative">
                         <button
                           onClick={() =>
@@ -868,7 +829,6 @@ export default function PurchaseOrdersPage() {
           </table>
         </div>
 
-        {/* ┌── PAGINATION ──┐ */}
         <div className="flex items-center justify-between px-5 py-3 border-t border-blue-primary/8">
           <div className="flex items-center gap-3">
             <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/30">
@@ -879,15 +839,15 @@ export default function PurchaseOrdersPage() {
             <div className="w-px h-3 bg-blue-primary/10" />
             <select
               value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value));
+              onChange={(event) => {
+                setPageSize(Number(event.target.value));
                 setPage(1);
               }}
               className="h-7 px-2 bg-transparent border border-blue-primary/10 font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/50 focus:outline-none cursor-pointer appearance-none"
             >
-              {PAGE_SIZES.map((s) => (
-                <option key={s} value={s}>
-                  {s} rows
+              {PAGE_SIZES.map((rowCount) => (
+                <option key={rowCount} value={rowCount}>
+                  {rowCount} rows
                 </option>
               ))}
             </select>
@@ -895,44 +855,44 @@ export default function PurchaseOrdersPage() {
 
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => setPage((currentPage) => Math.max(1, currentPage - 1))}
               disabled={safePage <= 1}
               className="w-7 h-7 flex items-center justify-center border border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 disabled:opacity-20 disabled:pointer-events-none transition-colors"
             >
               <ChevronLeft size={12} strokeWidth={2} />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((p) => {
+            {Array.from({ length: totalPages }, (_, pageIndex) => pageIndex + 1)
+              .filter((pageNum) => {
                 if (totalPages <= 5) return true;
-                if (p === 1 || p === totalPages) return true;
-                if (Math.abs(p - safePage) <= 1) return true;
+                if (pageNum === 1 || pageNum === totalPages) return true;
+                if (Math.abs(pageNum - safePage) <= 1) return true;
                 return false;
               })
-              .map((p, idx, arr) => {
-                const prev = arr[idx - 1];
-                const showEllipsis = prev != null && p - prev > 1;
+              .map((pageNum, visibleIndex, visiblePages) => {
+                const previousPage = visiblePages[visibleIndex - 1];
+                const showEllipsis = previousPage != null && pageNum - previousPage > 1;
                 return (
-                  <span key={p} className="flex items-center">
+                  <span key={pageNum} className="flex items-center">
                     {showEllipsis && (
                       <span className="w-7 h-7 flex items-center justify-center font-mono text-[9px] text-blue-primary/20">
                         ...
                       </span>
                     )}
                     <button
-                      onClick={() => setPage(p)}
+                      onClick={() => setPage(pageNum)}
                       className={`w-7 h-7 flex items-center justify-center font-mono text-[10px] tracking-[0.05em] border transition-colors ${
-                        p === safePage
+                        pageNum === safePage
                           ? "bg-blue-primary text-cream-primary border-blue-primary"
                           : "border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30"
                       }`}
                     >
-                      {p}
+                      {pageNum}
                     </button>
                   </span>
                 );
               })}
             <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => setPage((currentPage) => Math.min(totalPages, currentPage + 1))}
               disabled={safePage >= totalPages}
               className="w-7 h-7 flex items-center justify-center border border-blue-primary/10 text-blue-primary/40 hover:text-blue-primary hover:border-blue-primary/30 disabled:opacity-20 disabled:pointer-events-none transition-colors"
             >
@@ -942,7 +902,6 @@ export default function PurchaseOrdersPage() {
         </div>
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between pt-4">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">

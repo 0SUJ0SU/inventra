@@ -1,4 +1,3 @@
-// src/app/(app)/sales/history/[id]/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -16,20 +15,11 @@ import {
   SALE_STATUS_CONFIG,
   PAYMENT_METHOD_CONFIG,
   type SaleRecord,
-  type SaleStatus,
 } from "@/lib/demo-data";
 import { formatCurrency } from "@/lib/utils/format";
 import Link from "next/link";
 
-// ————————————————————————————————————————————————
-// CONSTANTS
-// ————————————————————————————————————————————————
-
 const ease = [0.16, 1, 0.3, 1] as const;
-
-// ————————————————————————————————————————————————
-// HELPERS
-// ————————————————————————————————————————————————
 
 function formatSaleDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -48,15 +38,15 @@ function formatSaleDateShort(iso: string): string {
   });
 }
 
-interface TimelineEntry {
+interface TimelineStep {
   label: string;
   sub: string;
   date: string;
   isLatest: boolean;
 }
 
-function buildTimeline(sale: SaleRecord): TimelineEntry[] {
-  const entries: TimelineEntry[] = [
+function buildTimeline(sale: SaleRecord): TimelineStep[] {
+  const steps: TimelineStep[] = [
     {
       label: "Sale Created",
       sub: `${sale.saleNumber} processed`,
@@ -72,21 +62,17 @@ function buildTimeline(sale: SaleRecord): TimelineEntry[] {
   ];
 
   if (sale.status === "refunded") {
-    entries.push({ label: "Refunded", sub: "Full refund processed", date: sale.date, isLatest: true });
+    steps.push({ label: "Refunded", sub: "Full refund processed", date: sale.date, isLatest: true });
   } else if (sale.status === "partial_refund") {
-    entries.push({ label: "Partial Refund", sub: "Partial refund processed", date: sale.date, isLatest: true });
+    steps.push({ label: "Partial Refund", sub: "Partial refund processed", date: sale.date, isLatest: true });
   } else if (sale.status === "voided") {
-    entries.push({ label: "Voided", sub: sale.notes ?? "Transaction voided", date: sale.date, isLatest: true });
+    steps.push({ label: "Voided", sub: sale.notes ?? "Transaction voided", date: sale.date, isLatest: true });
   } else {
-    entries[entries.length - 1] = { ...entries[entries.length - 1], isLatest: true };
+    steps[steps.length - 1] = { ...steps[steps.length - 1], isLatest: true };
   }
 
-  return entries;
+  return steps;
 }
-
-// ————————————————————————————————————————————————
-// SUB-COMPONENTS
-// ————————————————————————————————————————————————
 
 function CardHeader({ title, marker }: { title: string; marker?: string }) {
   return (
@@ -97,44 +83,40 @@ function CardHeader({ title, marker }: { title: string; marker?: string }) {
   );
 }
 
-function InfoRow({ label, value, mono = false }: { label: string; value: React.ReactNode; mono?: boolean }) {
+function InfoRow({ label, content, mono = false }: { label: string; content: React.ReactNode; mono?: boolean }) {
   return (
     <div className="flex items-start justify-between py-2.5 border-b border-blue-primary/6 last:border-b-0">
       <span className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40 shrink-0 pr-4">
         {label}
       </span>
       <span className={`text-right font-mono text-[11px] text-blue-primary ${mono ? "tracking-[0.05em] uppercase" : "tracking-[0.03em]"}`}>
-        {value}
+        {content}
       </span>
     </div>
   );
 }
 
-function StatCard({ label, value, sub, color = "text-blue-primary" }: {
-  label: string; value: string | number; sub?: string; color?: string;
+function StatCard({ label, display, sub, color = "text-blue-primary" }: {
+  label: string; display: string | number; sub?: string; color?: string;
 }) {
   return (
     <div className="border border-blue-primary/10 bg-cream-light p-4">
       <div className="border-t-2 border-blue-primary pt-2.5">
         <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-blue-primary/40">{label}</p>
-        <p className={`font-mono text-2xl font-bold tracking-tight mt-1 leading-none ${color}`}>{value}</p>
+        <p className={`font-mono text-2xl font-bold tracking-tight mt-1 leading-none ${color}`}>{display}</p>
         {sub && <p className="font-mono text-[8px] tracking-[0.1em] uppercase text-blue-primary/30 mt-1.5">{sub}</p>}
       </div>
     </div>
   );
 }
 
-// ————————————————————————————————————————————————
-// PAGE
-// ————————————————————————————————————————————————
-
 export default function SaleDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
+  const saleId = String(params.id);
 
-  const initial = SALE_RECORDS.find((s) => s.id === id) ?? null;
-  const [sale, setSale] = useState<SaleRecord | null>(initial);
+  const initialSale = SALE_RECORDS.find((record) => record.id === saleId) ?? null;
+  const [sale, setSale] = useState<SaleRecord | null>(initialSale);
 
   if (!sale) {
     return (
@@ -151,26 +133,20 @@ export default function SaleDetailPage() {
     );
   }
 
-  // — Derived —
-  const sCfg = SALE_STATUS_CONFIG[sale.status];
+  const statusConfig = SALE_STATUS_CONFIG[sale.status];
   const isTerminal = sale.status === "voided" || sale.status === "refunded";
-  const totalItems = sale.items.reduce((acc, i) => acc + i.qty, 0);
+  const totalItems = sale.items.reduce((acc, lineItem) => acc + lineItem.qty, 0);
   const timeline = buildTimeline(sale);
-  const serializedLines = sale.items.filter((i) => i.serialNumber);
+  const serializedLines = sale.items.filter((lineItem) => lineItem.serialNumber);
 
   const handleVoid = () => {
     if (!confirm("Void this sale? This cannot be undone.")) return;
-    setSale((prev) => prev ? { ...prev, status: "voided" as SaleStatus } : prev);
+    setSale((prev) => prev ? { ...prev, status: "voided" } : prev);
   };
-
-  // ————————————————————————————————————————————————
-  // RENDER
-  // ————————————————————————————————————————————————
 
   return (
     <div className="space-y-4">
 
-      {/* ━━━ HEADER ━━━ */}
       <div className="flex flex-col gap-3">
         <motion.button
           onClick={() => router.push("/sales/history")}
@@ -187,7 +163,7 @@ export default function SaleDetailPage() {
               initial={{ x: -20 }} animate={{ x: 0 }} transition={{ duration: 0.5, ease }}
             >
               <span className="font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary/40">{sale.saleNumber}</span>
-              <span className={`font-mono text-[8px] tracking-[0.15em] uppercase px-2 py-0.5 ${sCfg.color} ${sCfg.bg}`}>{sCfg.label}</span>
+              <span className={`font-mono text-[8px] tracking-[0.15em] uppercase px-2 py-0.5 ${statusConfig.color} ${statusConfig.bg}`}>{statusConfig.label}</span>
               <span className="font-mono text-[8px] tracking-[0.1em] uppercase px-2 py-0.5 bg-blue-primary/5 text-blue-primary/50">
                 {PAYMENT_METHOD_CONFIG[sale.paymentMethod].label}
               </span>
@@ -232,50 +208,47 @@ export default function SaleDetailPage() {
 
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ━━━ ROW 1: 4 STAT CARDS ━━━ */}
       <motion.div
         className="grid grid-cols-2 lg:grid-cols-4 gap-3"
         initial={{ y: 20 }} animate={{ y: 0 }} transition={{ duration: 0.5, delay: 0.1, ease }}
       >
         <StatCard
           label="Sale Total"
-          value={formatCurrency(sale.total)}
+          display={formatCurrency(sale.total)}
           sub={sale.discount > 0 ? `${formatCurrency(sale.discount)} discount applied` : `Subtotal ${formatCurrency(sale.subtotal)}`}
         />
         <StatCard
           label="Items Sold"
-          value={totalItems}
+          display={totalItems}
           sub={`${sale.items.length} line item${sale.items.length !== 1 ? "s" : ""}`}
         />
         <StatCard
           label="Payment"
-          value={PAYMENT_METHOD_CONFIG[sale.paymentMethod].label}
+          display={PAYMENT_METHOD_CONFIG[sale.paymentMethod].label}
           sub="Method of payment"
         />
         <StatCard
           label="Status"
-          value={sCfg.label}
+          display={statusConfig.label}
           sub={formatSaleDateShort(sale.date)}
-          color={sCfg.color}
+          color={statusConfig.color}
         />
       </motion.div>
 
-      {/* ━━━ ROW 2: 1/3 + 2/3 — Sale Info + Line Items ━━━ */}
       <motion.div
         className="grid grid-cols-1 lg:grid-cols-3 gap-4"
         initial={{ y: 25 }} animate={{ y: 0 }} transition={{ duration: 0.5, delay: 0.12, ease }}
       >
-        {/* ── LEFT 1/3: Sale Info ── */}
         <div className="border border-blue-primary/10 bg-cream-light flex flex-col">
           <CardHeader title="Sale Info" />
           <div className="px-5 py-2 flex-1">
-            <InfoRow label="Sale #"     value={sale.saleNumber}            mono />
-            <InfoRow label="Date"       value={formatSaleDateShort(sale.date)} mono />
-            <InfoRow label="Customer"   value={sale.customerName}          />
-            <InfoRow label="Handled By" value={sale.handledBy}             />
+            <InfoRow label="Sale #"     content={sale.saleNumber}            mono />
+            <InfoRow label="Date"       content={formatSaleDateShort(sale.date)} mono />
+            <InfoRow label="Customer"   content={sale.customerName}          />
+            <InfoRow label="Handled By" content={sale.handledBy}             />
             <InfoRow
               label="Payment"
-              value={
+              content={
                 <span className="font-mono text-[9px] tracking-[0.08em] uppercase px-1.5 py-0.5 bg-blue-primary/5 text-blue-primary/60">
                   {PAYMENT_METHOD_CONFIG[sale.paymentMethod].label}
                 </span>
@@ -283,16 +256,15 @@ export default function SaleDetailPage() {
             />
             <InfoRow
               label="Status"
-              value={
-                <span className={`font-mono text-[9px] tracking-[0.08em] uppercase px-1.5 py-0.5 ${sCfg.color} ${sCfg.bg}`}>
-                  {sCfg.label}
+              content={
+                <span className={`font-mono text-[9px] tracking-[0.08em] uppercase px-1.5 py-0.5 ${statusConfig.color} ${statusConfig.bg}`}>
+                  {statusConfig.label}
                 </span>
               }
             />
           </div>
         </div>
 
-        {/* ── RIGHT 2/3: Line Items ── */}
         <div className="lg:col-span-2 border border-blue-primary/10 bg-cream-light flex flex-col">
           <CardHeader title="Line Items" marker="/001" />
           <div className="flex-1">
@@ -314,35 +286,35 @@ export default function SaleDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {sale.items.map((item) => (
+                {sale.items.map((lineItem) => (
                   <tr
-                    key={item.id}
+                    key={lineItem.id}
                     className="border-b border-blue-primary/6 last:border-b-0 h-14 hover:bg-blue-primary/[0.02] transition-colors"
                   >
                     <td className="px-5 align-middle">
                       <p className="font-mono text-[11px] tracking-[0.04em] uppercase text-blue-primary leading-none">
-                        {item.productName}
+                        {lineItem.productName}
                       </p>
                       <p className="font-mono text-[9px] tracking-[0.1em] uppercase text-blue-primary/30 mt-1 leading-none">
-                        {item.sku}
-                        {item.serialNumber && (
-                          <span className="ml-2 text-blue-primary/40">· {item.serialNumber}</span>
+                        {lineItem.sku}
+                        {lineItem.serialNumber && (
+                          <span className="ml-2 text-blue-primary/40">· {lineItem.serialNumber}</span>
                         )}
                       </p>
                     </td>
                     <td className="px-4 align-middle text-center w-20">
                       <span className="font-mono text-[11px] tracking-[0.04em] font-semibold text-blue-primary/60">
-                        {item.qty}
+                        {lineItem.qty}
                       </span>
                     </td>
                     <td className="px-4 align-middle text-right w-28">
                       <span className="font-mono text-[11px] tracking-[0.03em] text-blue-primary/50">
-                        {formatCurrency(item.unitPrice)}
+                        {formatCurrency(lineItem.unitPrice)}
                       </span>
                     </td>
                     <td className="px-5 align-middle text-right w-28">
                       <span className="font-mono text-[11px] tracking-[0.03em] font-semibold text-blue-primary">
-                        {formatCurrency(item.lineTotal)}
+                        {formatCurrency(lineItem.lineTotal)}
                       </span>
                     </td>
                   </tr>
@@ -350,7 +322,6 @@ export default function SaleDetailPage() {
               </tbody>
             </table>
           </div>
-          {/* Totals — pinned to bottom, columns mirror table exactly */}
           <div className="border-t border-blue-primary/10 mt-auto">
             {sale.discount > 0 && (
               <div className="flex items-center h-10 border-b border-blue-primary/6">
@@ -386,20 +357,18 @@ export default function SaleDetailPage() {
         </div>
       </motion.div>
 
-      {/* ━━━ ROW 3: 3 EQUAL COLUMNS ━━━ */}
       <motion.div
         className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch"
         initial={{ y: 25 }} animate={{ y: 0 }} transition={{ duration: 0.5, delay: 0.14, ease }}
       >
 
-        {/* ── Col 1: Pricing ── */}
         <div className="border border-blue-primary/10 bg-cream-light flex flex-col">
           <CardHeader title="Pricing" marker="/002" />
           <div className="px-5 py-2 flex-1">
-            <InfoRow label="Subtotal" value={formatCurrency(sale.subtotal)} mono />
+            <InfoRow label="Subtotal" content={formatCurrency(sale.subtotal)} mono />
             <InfoRow
               label="Discount"
-              value={
+              content={
                 sale.discount > 0 ? (
                   <span className="text-warning">-{formatCurrency(sale.discount)}</span>
                 ) : "—"
@@ -407,13 +376,13 @@ export default function SaleDetailPage() {
             />
             <InfoRow
               label="Total"
-              value={
+              content={
                 <span className="font-semibold">{formatCurrency(sale.total)}</span>
               }
             />
             <InfoRow
               label="Payment"
-              value={PAYMENT_METHOD_CONFIG[sale.paymentMethod].label}
+              content={PAYMENT_METHOD_CONFIG[sale.paymentMethod].label}
               mono
             />
           </div>
@@ -427,7 +396,6 @@ export default function SaleDetailPage() {
           )}
         </div>
 
-        {/* ── Col 2: Serialized Lines ── */}
         <div className="border border-blue-primary/10 bg-cream-light flex flex-col">
           <CardHeader
             title={serializedLines.length > 0 ? `Serialized Lines (${serializedLines.length})` : "Serialized Lines"}
@@ -444,24 +412,24 @@ export default function SaleDetailPage() {
             </div>
           ) : (
             <div className="divide-y divide-blue-primary/6 flex-1">
-              {serializedLines.map((item) => (
-                <div key={item.id} className="flex items-center justify-between px-5 py-3.5">
+              {serializedLines.map((serialLine) => (
+                <div key={serialLine.id} className="flex items-center justify-between px-5 py-3.5">
                   <div className="min-w-0 flex-1">
                     <p className="font-mono text-[8px] tracking-[0.1em] uppercase text-blue-primary/30 leading-none mb-1">
-                      {item.sku}
-                      {item.qty > 1 && (
-                        <span className="ml-1.5 text-blue-primary/20">×{item.qty}</span>
+                      {serialLine.sku}
+                      {serialLine.qty > 1 && (
+                        <span className="ml-1.5 text-blue-primary/20">x{serialLine.qty}</span>
                       )}
                     </p>
                     <p className="font-mono text-[10px] tracking-[0.04em] uppercase text-blue-primary truncate leading-none">
-                      {item.productName}
+                      {serialLine.productName}
                     </p>
                   </div>
                   <Link
                     href="/products/serial-inventory"
                     className="font-mono text-[9px] tracking-[0.06em] uppercase text-blue-primary/50 hover:text-blue-primary hover:underline underline-offset-2 decoration-blue-primary/30 transition-colors shrink-0 ml-3"
                   >
-                    {item.serialNumber}
+                    {serialLine.serialNumber}
                   </Link>
                 </div>
               ))}
@@ -469,24 +437,23 @@ export default function SaleDetailPage() {
           )}
         </div>
 
-        {/* ── Col 3: Timeline ── */}
         <div className="border border-blue-primary/10 bg-cream-light flex flex-col">
           <CardHeader title="Transaction Timeline" marker="/004" />
           <div className="flex-1 p-4">
-            {timeline.map((entry, i) => {
-              const isLast = i === timeline.length - 1;
+            {timeline.map((step, stepIndex) => {
+              const isLast = stepIndex === timeline.length - 1;
               return (
-                <div key={i} className="flex gap-3">
+                <div key={stepIndex} className="flex gap-3">
                   <div className="flex flex-col items-center shrink-0">
                     <div className={`w-6 h-6 flex items-center justify-center border ${
-                      entry.isLatest
+                      step.isLatest
                         ? "border-blue-primary/30 bg-blue-primary/5"
                         : "border-blue-primary/10 bg-cream-light"
                     }`}>
                       <CircleDot
                         size={11}
                         strokeWidth={1.5}
-                        className={entry.isLatest ? "text-blue-primary/60" : "text-blue-primary/25"}
+                        className={step.isLatest ? "text-blue-primary/60" : "text-blue-primary/25"}
                       />
                     </div>
                     {!isLast && (
@@ -496,16 +463,16 @@ export default function SaleDetailPage() {
                   <div className="pb-4 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className={`font-mono text-[10px] tracking-[0.06em] uppercase leading-none ${
-                        entry.isLatest ? "text-blue-primary" : "text-blue-primary/50"
+                        step.isLatest ? "text-blue-primary" : "text-blue-primary/50"
                       }`}>
-                        {entry.label}
+                        {step.label}
                       </span>
                       <span className="font-mono text-[8px] tracking-[0.06em] text-blue-primary/25 leading-none">
-                        {formatSaleDateShort(entry.date)}
+                        {formatSaleDateShort(step.date)}
                       </span>
                     </div>
                     <p className="font-mono text-[9px] tracking-[0.02em] text-blue-primary/40 mt-1 leading-relaxed">
-                      {entry.sub}
+                      {step.sub}
                     </p>
                   </div>
                 </div>
@@ -513,12 +480,11 @@ export default function SaleDetailPage() {
             })}
           </div>
 
-          {/* Footer */}
           <div className="shrink-0 border-t border-blue-primary/8 p-4">
             {isTerminal ? (
               <div className="flex items-center gap-2 justify-center">
-                <span className={`font-mono text-[9px] tracking-[0.1em] uppercase px-2 py-1 ${sCfg.color} ${sCfg.bg}`}>
-                  {sCfg.label}
+                <span className={`font-mono text-[9px] tracking-[0.1em] uppercase px-2 py-1 ${statusConfig.color} ${statusConfig.bg}`}>
+                  {statusConfig.label}
                 </span>
                 <span className="font-mono text-[8px] tracking-[0.06em] uppercase text-blue-primary/25">
                   No further actions
@@ -538,7 +504,6 @@ export default function SaleDetailPage() {
 
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">

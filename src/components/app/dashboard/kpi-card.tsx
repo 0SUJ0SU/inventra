@@ -1,4 +1,3 @@
-// src/components/app/dashboard/kpi-card.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -19,9 +18,8 @@ interface KpiCardProps {
 function formatValue(value: number, format: "compact" | "number"): string {
   if (format === "compact") {
     if (value >= 1000) {
-      const k = value / 1000;
-      // Show one decimal if not a round number
-      return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`;
+      const thousands = value / 1000;
+      return thousands % 1 === 0 ? `${thousands}K` : `${thousands.toFixed(1)}K`;
     }
     return formatNumber(value);
   }
@@ -55,20 +53,16 @@ export function KpiCard({
         ease: [0.16, 1, 0.3, 1],
       }}
     >
-      {/* Top line accent */}
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-blue-primary" />
 
-      {/* Label */}
       <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">
         {label}
       </p>
 
-      {/* Animated value */}
       <p className="font-sans text-3xl font-bold tracking-tight text-blue-primary mt-2">
         {prefix}{formatValue(animatedValue, format)}{suffix}
       </p>
 
-      {/* Change indicator */}
       <p
         className={`font-mono text-[10px] tracking-[0.1em] mt-1.5 ${
           positive ? "text-success" : "text-error"
@@ -77,7 +71,6 @@ export function KpiCard({
         {change}
       </p>
 
-      {/* Card number marker */}
       <span className="absolute top-4 right-4 font-mono text-[8px] tracking-[0.1em] text-blue-primary/12">
         /{String(index + 1).padStart(3, "0")}
       </span>

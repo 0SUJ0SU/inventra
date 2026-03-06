@@ -1,4 +1,3 @@
-// src/components/app/app-content-client.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,7 +5,6 @@ import { useState, useEffect } from "react";
 const COLLAPSED_KEY = "inventra_sidebar_collapsed";
 const SIDEBAR_EVENT = "inventra:sidebar-toggled";
 
-// Call this from sidebar when toggling
 export function notifySidebarToggle() {
   setTimeout(() => window.dispatchEvent(new Event(SIDEBAR_EVENT)), 0);
 }
@@ -15,7 +13,6 @@ export function AppContentClient({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
-    // Read initial state
     try {
       const stored = localStorage.getItem(COLLAPSED_KEY);
       if (stored === "true") setCollapsed(true);
@@ -23,13 +20,12 @@ export function AppContentClient({ children }: { children: React.ReactNode }) {
       // localStorage may be unavailable (e.g. SSR, privacy mode)
     }
 
-    // Listen for sidebar toggle events (same tab)
     const handleToggle = () => {
       try {
         const current = localStorage.getItem(COLLAPSED_KEY);
         setCollapsed(current === "true");
       } catch {
-        // localStorage may be unavailable
+        // localStorage may be unavailable (e.g. SSR, privacy mode)
       }
     };
 

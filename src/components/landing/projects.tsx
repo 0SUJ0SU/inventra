@@ -8,9 +8,6 @@ import { ArrowUp, ArrowDown } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* ────────────────────────────────────────────────────────
-   Module definitions
-──────────────────────────────────────────────────────── */
 const modules = [
   { id: "dashboard", label: "/001", title: "DASHBOARD", name: "System Overview" },
   { id: "serial", label: "/002", title: "SERIAL INVENTORY", name: "Unit Tracking" },
@@ -18,13 +15,9 @@ const modules = [
   { id: "analytics", label: "/004", title: "ANALYTICS", name: "Reporting" },
 ];
 
-/* ────────────────────────────────────────────────────────
-   CSS Mockup: Dashboard
-──────────────────────────────────────────────────────── */
 function DashboardMockup() {
   return (
     <div className="h-full w-full p-5 md:p-8 flex flex-col gap-4">
-      {/* KPI row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
         {["REVENUE", "ORDERS", "UNITS", "ALERTS"].map((label, i) => (
           <div
@@ -54,7 +47,6 @@ function DashboardMockup() {
         ))}
       </div>
 
-      {/* Chart area */}
       <div
         className="flex-1 border relative overflow-hidden min-h-[100px]"
         style={{ borderColor: "rgba(25, 37, 170, 0.12)" }}
@@ -86,7 +78,6 @@ function DashboardMockup() {
         </svg>
       </div>
 
-      {/* Activity rows */}
       <div className="flex flex-col">
         {[1, 2, 3].map((_, i) => (
           <div
@@ -119,9 +110,6 @@ function DashboardMockup() {
   );
 }
 
-/* ────────────────────────────────────────────────────────
-   CSS Mockup: Serial Inventory
-──────────────────────────────────────────────────────── */
 function SerialMockup() {
   const rows = [
     { serial: "SN-2024-00847", product: "IPHONE 15 PRO", status: "IN STOCK", condition: "NEW" },
@@ -159,13 +147,13 @@ function SerialMockup() {
           borderBottom: "1px solid rgba(25, 37, 170, 0.1)",
         }}
       >
-        {["SERIAL", "PRODUCT", "STATUS", "CONDITION"].map((h) => (
+        {["SERIAL", "PRODUCT", "STATUS", "CONDITION"].map((columnHeader) => (
           <span
-            key={h}
+            key={columnHeader}
             className="font-mono text-[8px] uppercase tracking-[0.15em]"
             style={{ color: "rgba(25, 37, 170, 0.35)" }}
           >
-            {h}
+            {columnHeader}
           </span>
         ))}
       </div>
@@ -213,9 +201,6 @@ function SerialMockup() {
   );
 }
 
-/* ────────────────────────────────────────────────────────
-   CSS Mockup: Point of Sale
-──────────────────────────────────────────────────────── */
 function POSMockup() {
   return (
     <div className="h-full w-full flex">
@@ -320,9 +305,6 @@ function POSMockup() {
   );
 }
 
-/* ────────────────────────────────────────────────────────
-   CSS Mockup: Analytics
-──────────────────────────────────────────────────────── */
 function AnalyticsMockup() {
   return (
     <div className="h-full w-full p-5 md:p-8 flex flex-col gap-4">
@@ -343,19 +325,19 @@ function AnalyticsMockup() {
           { label: "REVENUE", value: "$48.2K", sub: "+18.4%" },
           { label: "EXPENSES", value: "$31.7K", sub: "+5.2%" },
           { label: "NET PROFIT", value: "$16.5K", sub: "+42.1%" },
-        ].map((m) => (
-          <div key={m.label}>
+        ].map((metric) => (
+          <div key={metric.label}>
             <div
               className="font-mono text-[8px] uppercase tracking-[0.15em] mb-1"
               style={{ color: "rgba(25, 37, 170, 0.35)" }}
             >
-              {m.label}
+              {metric.label}
             </div>
             <div className="font-sans font-bold text-xl leading-none" style={{ color: "#1925AA" }}>
-              {m.value}
+              {metric.value}
             </div>
             <div className="font-mono text-[8px] mt-1" style={{ color: "rgba(25, 37, 170, 0.4)" }}>
-              {m.sub}
+              {metric.sub}
             </div>
           </div>
         ))}
@@ -385,16 +367,16 @@ function AnalyticsMockup() {
           { label: "LAPTOPS", pct: "28%" },
           { label: "TABLETS", pct: "18%" },
           { label: "ACCESSORIES", pct: "12%" },
-        ].map((c) => (
-          <div key={c.label}>
+        ].map((categoryBreakdown) => (
+          <div key={categoryBreakdown.label}>
             <div
               className="font-mono text-[7px] uppercase tracking-[0.1em]"
               style={{ color: "rgba(25, 37, 170, 0.35)" }}
             >
-              {c.label}
+              {categoryBreakdown.label}
             </div>
             <div className="font-mono text-[10px] font-bold" style={{ color: "#1925AA" }}>
-              {c.pct}
+              {categoryBreakdown.pct}
             </div>
           </div>
         ))}
@@ -403,9 +385,6 @@ function AnalyticsMockup() {
   );
 }
 
-/* ────────────────────────────────────────────────────────
-   Blueprint Frame
-──────────────────────────────────────────────────────── */
 function BlueprintFrame({
   children,
   label,
@@ -422,7 +401,6 @@ function BlueprintFrame({
 
   return (
     <div className="relative w-full h-full">
-      {/* Corner brackets */}
       <div
         className="absolute top-0 left-0"
         style={{ width: bSize, height: bSize, borderTopWidth: 1, borderTopStyle: "solid", borderTopColor: bColor, borderLeftWidth: 1, borderLeftStyle: "solid", borderLeftColor: bColor }}
@@ -440,7 +418,6 @@ function BlueprintFrame({
         style={{ width: bSize, height: bSize, borderBottomWidth: 1, borderBottomStyle: "solid", borderBottomColor: bColor, borderRightWidth: 1, borderRightStyle: "solid", borderRightColor: bColor }}
       />
 
-      {/* Labels */}
       {active && (
         <>
           <div
@@ -458,7 +435,6 @@ function BlueprintFrame({
         </>
       )}
 
-      {/* Content */}
       <div
         className="w-full h-full overflow-hidden"
         style={{
@@ -469,7 +445,6 @@ function BlueprintFrame({
         {children}
       </div>
 
-      {/* Blue wash overlay on inactive cards */}
       {!active && (
         <div
           className="absolute inset-0 pointer-events-none"
@@ -480,9 +455,6 @@ function BlueprintFrame({
   );
 }
 
-/* ────────────────────────────────────────────────────────
-   Carousel position calculator
-──────────────────────────────────────────────────────── */
 type CarouselSlot = "center" | "right" | "back" | "left";
 
 function getSlot(index: number, activeIndex: number, total: number): CarouselSlot {
@@ -510,9 +482,6 @@ function getSlotStyles(mobile: boolean) {
   };
 }
 
-/* ────────────────────────────────────────────────────────
-   Projects Section
-──────────────────────────────────────────────────────── */
 const mockupComponents = [DashboardMockup, SerialMockup, POSMockup, AnalyticsMockup];
 
 export function Projects() {
@@ -547,7 +516,6 @@ export function Projects() {
           ? (activeIndex + 1) % modules.length
           : (activeIndex - 1 + modules.length) % modules.length;
 
-      // Animate all cards to their new positions
       const styles = getSlotStyles(isMobile);
       cardRefs.current.forEach((card, i) => {
         if (!card) return;
@@ -574,12 +542,10 @@ export function Projects() {
     [activeIndex, isMobile]
   );
 
-  /* Entrance animations */
   useGSAP(
     () => {
       if (!sectionRef.current) return;
 
-      // Section labels
       if (labelsRef.current) {
         gsap.fromTo(
           labelsRef.current.querySelector(".label-left"),
@@ -605,7 +571,6 @@ export function Projects() {
         );
       }
 
-      // Headline slides up
       if (headlineRef.current) {
         gsap.fromTo(
           headlineRef.current,
@@ -620,7 +585,6 @@ export function Projects() {
         );
       }
 
-      // Cards: set initial positions, then stagger in from below
       const styles = getSlotStyles(isMobileRef.current);
       cardRefs.current.forEach((card, i) => {
         if (!card) return;
@@ -636,7 +600,6 @@ export function Projects() {
           zIndex: style.zIndex,
         });
 
-        // Entrance: slide up from below
         gsap.fromTo(
           card,
           { y: 120 + i * 30 },
@@ -662,7 +625,6 @@ export function Projects() {
     >
 
       <div className="relative z-10 px-6">
-        {/* Section labels */}
         <div
           ref={labelsRef}
           className="flex items-baseline justify-between pt-6 pb-4"
@@ -682,7 +644,6 @@ export function Projects() {
           </span>
         </div>
 
-        {/* Headline */}
         <div className="overflow-hidden pt-4 md:pt-10 pb-4 md:pb-6">
           <h2
             ref={headlineRef}
@@ -701,7 +662,6 @@ export function Projects() {
           THE COMPLETE PLATFORM. INSPECT EACH LAYER.
         </p>
 
-        {/* ── 3D Carousel ── */}
         <div
           ref={carouselRef}
           className="relative mx-auto overflow-hidden"
@@ -742,9 +702,7 @@ export function Projects() {
           </div>
         </div>
 
-        {/* ── Navigation controls ── */}
         <div className="flex items-center justify-center gap-8 pt-8 md:pt-12">
-          {/* Left arrow */}
           <button
             onClick={() => navigateTo("prev")}
             className="group flex items-center justify-center w-12 h-12 rounded-full border transition-colors duration-200"
@@ -767,7 +725,6 @@ export function Projects() {
             <ArrowUp size={18} style={{ transform: "rotate(-90deg)" }} />
           </button>
 
-          {/* Counter */}
           <div className="flex items-baseline gap-3">
             <span
               className="font-mono text-[13px] tracking-[0.1em]"
@@ -789,7 +746,6 @@ export function Projects() {
             </span>
           </div>
 
-          {/* Right arrow */}
           <button
             onClick={() => navigateTo("next")}
             className="group flex items-center justify-center w-12 h-12 rounded-full border transition-colors duration-200"

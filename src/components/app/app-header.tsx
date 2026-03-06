@@ -1,4 +1,3 @@
-// src/components/app/app-header.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -16,7 +15,6 @@ import {
 } from "lucide-react";
 import { toggleMobileSidebar } from "./sidebar";
 
-// ─── BREADCRUMB MAPPING ──────────────────────────────────
 const ROUTE_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
   products: "Products",
@@ -48,20 +46,18 @@ function useBreadcrumbs() {
   });
 }
 
-// ─── HEADER COMPONENT ────────────────────────────────────
 export function AppHeader() {
   const breadcrumbs = useBreadcrumbs();
   const [searchOpen, setSearchOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  // ⌘K shortcut to open search
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        event.preventDefault();
         setSearchOpen((prev) => !prev);
       }
-      if (e.key === "Escape") {
+      if (event.key === "Escape") {
         setSearchOpen(false);
         setProfileOpen(false);
       }
@@ -70,11 +66,11 @@ export function AppHeader() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Close profile dropdown on outside click
   useEffect(() => {
     if (!profileOpen) return;
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
+    const handler = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
       if (!target.closest("[data-profile-dropdown]")) {
         setProfileOpen(false);
       }
@@ -87,9 +83,7 @@ export function AppHeader() {
     <>
       <header className="sticky top-0 z-30 bg-cream-primary border-b border-blue-primary/10">
         <div className="flex items-center justify-between h-16 px-4 lg:px-6">
-          {/* LEFT — Mobile hamburger + Breadcrumbs */}
           <div className="flex items-center gap-3">
-            {/* Mobile hamburger */}
             <button
               onClick={() => toggleMobileSidebar()}
               className="lg:hidden flex items-center justify-center w-9 h-9 text-blue-primary/60 hover:text-blue-primary hover:bg-blue-primary/5 transition-colors"
@@ -97,7 +91,6 @@ export function AppHeader() {
               <Menu size={20} strokeWidth={1.5} />
             </button>
 
-            {/* Breadcrumbs */}
             <nav className="hidden sm:flex items-center gap-1.5">
               {breadcrumbs.map((crumb, i) => (
                 <div key={crumb.href} className="flex items-center gap-1.5">
@@ -124,15 +117,12 @@ export function AppHeader() {
               ))}
             </nav>
 
-            {/* Mobile — page title only */}
             <span className="sm:hidden font-mono text-[11px] tracking-[0.12em] uppercase text-blue-primary">
               {breadcrumbs[breadcrumbs.length - 1]?.label || "Dashboard"}
             </span>
           </div>
 
-          {/* RIGHT — Actions */}
           <div className="flex items-center gap-1">
-            {/* Search trigger */}
             <button
               onClick={() => setSearchOpen(true)}
               className="flex items-center gap-2 h-9 px-3 text-blue-primary/40 hover:text-blue-primary hover:bg-blue-primary/5 transition-colors"
@@ -147,23 +137,18 @@ export function AppHeader() {
               </kbd>
             </button>
 
-            {/* Blueprint divider */}
             <div className="w-px h-5 bg-blue-primary/10 mx-1" />
 
-            {/* Notifications */}
             <button
               className="relative flex items-center justify-center w-9 h-9 text-blue-primary/40 hover:text-blue-primary hover:bg-blue-primary/5 transition-colors"
               title="Notifications"
             >
               <Bell size={16} strokeWidth={1.5} />
-              {/* Notification dot */}
               <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-primary rounded-full" />
             </button>
 
-            {/* Blueprint divider */}
             <div className="w-px h-5 bg-blue-primary/10 mx-1" />
 
-            {/* Profile */}
             <div className="relative" data-profile-dropdown>
               <button
                 onClick={() => setProfileOpen((prev) => !prev)}
@@ -179,7 +164,6 @@ export function AppHeader() {
                 </span>
               </button>
 
-              {/* Profile dropdown */}
               <AnimatePresence>
                 {profileOpen && (
                   <motion.div
@@ -189,7 +173,6 @@ export function AppHeader() {
                     transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
                     className="absolute right-0 top-full mt-2 w-48 bg-cream-light border border-blue-primary/10 shadow-sm"
                   >
-                    {/* User info */}
                     <div className="px-3 py-3 border-b border-blue-primary/10">
                       <p className="font-mono text-[10px] tracking-[0.1em] uppercase text-blue-primary">
                         Admin User
@@ -198,7 +181,6 @@ export function AppHeader() {
                         admin@inventra.com
                       </p>
                     </div>
-                    {/* Actions */}
                     <div className="py-1">
                       <Link
                         href="/settings"
@@ -222,7 +204,6 @@ export function AppHeader() {
                         </span>
                       </button>
                     </div>
-                    {/* Marker */}
                     <div className="px-3 py-1.5 border-t border-blue-primary/10">
                       <span className="font-mono text-[8px] tracking-[0.15em] text-blue-primary/15">
                         V0.1.0
@@ -235,10 +216,8 @@ export function AppHeader() {
           </div>
         </div>
 
-        {/* Bottom blueprint line */}
       </header>
 
-      {/* ─── SEARCH MODAL (⌘K) ─────────────────────── */}
       <AnimatePresence>
         {searchOpen && (
           <>
@@ -258,7 +237,6 @@ export function AppHeader() {
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="mx-4 bg-cream-light border border-blue-primary/15 shadow-lg">
-                {/* Search input */}
                 <div className="flex items-center gap-3 px-4 h-14 border-b border-blue-primary/10">
                   <Search size={18} strokeWidth={1.5} className="text-blue-primary/40 shrink-0" />
                   <input
@@ -271,13 +249,11 @@ export function AppHeader() {
                     ESC
                   </kbd>
                 </div>
-                {/* Placeholder results */}
                 <div className="px-4 py-6 text-center">
                   <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/25">
                     Start typing to search products, orders, customers...
                   </p>
                 </div>
-                {/* Bottom marker */}
                 <div className="flex items-center justify-between px-4 py-2 border-t border-blue-primary/10">
                   <span className="font-mono text-[8px] tracking-[0.15em] text-blue-primary/15">
                     [INV.SEARCH]

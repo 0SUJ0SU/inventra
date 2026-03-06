@@ -1,4 +1,3 @@
-// src/components/app/dashboard/top-products-chart.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -12,7 +11,7 @@ interface TopProductsChartProps {
 
 export function TopProductsChart({ period }: TopProductsChartProps) {
   const data = getTopProducts(period);
-  const maxUnits = data.length === 0 ? 0 : Math.max(...data.map((p) => p.units));
+  const maxUnits = data.length === 0 ? 0 : Math.max(...data.map((product) => product.units));
 
   return (
     <motion.div
@@ -21,7 +20,6 @@ export function TopProductsChart({ period }: TopProductsChartProps) {
       animate={{ y: 0 }}
       transition={{ duration: 0.5, delay: 0.48, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-4 shrink-0">
         <div className="flex items-center gap-3">
           <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">
@@ -36,7 +34,6 @@ export function TopProductsChart({ period }: TopProductsChartProps) {
         </span>
       </div>
 
-      {/* Horizontal bars */}
       <div className="space-y-3.5">
         {data.map((product, i) => (
           <div key={product.name}>
@@ -69,7 +66,6 @@ export function TopProductsChart({ period }: TopProductsChartProps) {
         ))}
       </div>
 
-      {/* Footer */}
       <div className="mt-auto pt-3 shrink-0">
         <Link
           href="/products"

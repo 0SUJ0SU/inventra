@@ -1,4 +1,3 @@
-// src/components/app/dashboard/warranty-alerts.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -13,7 +12,6 @@ export function WarrantyAlerts() {
       animate={{ y: 0 }}
       transition={{ duration: 0.5, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">
           Warranty Alerts
@@ -23,7 +21,6 @@ export function WarrantyAlerts() {
         </span>
       </div>
 
-      {/* Summary stats row */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         <div className="border border-blue-primary/8 p-3">
           <p className="font-sans text-xl font-bold tracking-tight text-warning leading-none">
@@ -51,7 +48,6 @@ export function WarrantyAlerts() {
         </div>
       </div>
 
-      {/* Items expiring */}
       <p className="font-mono text-[8px] tracking-[0.15em] uppercase text-blue-primary/25 mb-2">
         Expiring Warranties
       </p>
@@ -93,7 +89,6 @@ export function WarrantyAlerts() {
         })}
       </div>
 
-      {/* Footer action */}
       <div className="mt-auto pt-3 shrink-0">
         <Link
           href="/warranty"

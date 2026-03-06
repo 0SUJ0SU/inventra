@@ -1,4 +1,3 @@
-// src/components/app/dashboard/stock-levels-chart.tsx
 "use client";
 
 import { motion } from "framer-motion";
@@ -29,14 +28,14 @@ function CustomTooltip({
       <p className="font-mono text-[9px] tracking-[0.15em] uppercase text-cream-primary/60 mb-1">
         {label}
       </p>
-      {payload.map((entry) => (
-        <div key={entry.name} className="flex items-center gap-2">
+      {payload.map((dataPoint) => (
+        <div key={dataPoint.name} className="flex items-center gap-2">
           <div
             className="w-1.5 h-1.5 shrink-0"
-            style={{ backgroundColor: entry.color }}
+            style={{ backgroundColor: dataPoint.color }}
           />
           <span className="font-mono text-[9px] tracking-[0.05em] text-cream-primary/80">
-            {entry.name}: {entry.value}
+            {dataPoint.name}: {dataPoint.value}
           </span>
         </div>
       ))}
@@ -52,14 +51,14 @@ function CustomLegend({
   if (!payload) return null;
   return (
     <div className="flex items-center justify-center gap-5 mt-2">
-      {payload.map((entry) => (
-        <div key={entry.value} className="flex items-center gap-1.5">
+      {payload.map((legendItem) => (
+        <div key={legendItem.value} className="flex items-center gap-1.5">
           <div
             className="w-2.5 h-2.5 shrink-0 border border-blue-primary/10"
-            style={{ backgroundColor: entry.color }}
+            style={{ backgroundColor: legendItem.color }}
           />
           <span className="font-mono text-[9px] tracking-[0.08em] uppercase text-blue-primary/40">
-            {entry.value}
+            {legendItem.value}
           </span>
         </div>
       ))}
@@ -75,7 +74,6 @@ export function StockLevelsChart() {
       animate={{ y: 0 }}
       transition={{ duration: 0.5, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between mb-3 shrink-0">
         <p className="font-mono text-[10px] tracking-[0.15em] uppercase text-blue-primary/40">
           Stock Levels by Category
@@ -85,7 +83,6 @@ export function StockLevelsChart() {
         </span>
       </div>
 
-      {/* Chart */}
       <div className="flex-1 min-h-0">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart

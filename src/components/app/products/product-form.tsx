@@ -1,4 +1,3 @@
-// src/components/app/products/product-form.tsx
 "use client";
 
 import { useState, useCallback } from "react";
@@ -15,10 +14,6 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { CATEGORIES, type Product } from "@/lib/demo-data";
-
-// ————————————————————————————————————————————
-// TYPES
-// ————————————————————————————————————————————
 
 export interface ProductFormData {
   sku: string;
@@ -44,10 +39,6 @@ interface ProductFormProps {
 interface FormErrors {
   [key: string]: string;
 }
-
-// ————————————————————————————————————————————
-// VALIDATION
-// ————————————————————————————————————————————
 
 function validateForm(data: ProductFormData): FormErrors {
   const errors: FormErrors = {};
@@ -100,12 +91,8 @@ function validateForm(data: ProductFormData): FormErrors {
   return errors;
 }
 
-// ————————————————————————————————————————————
-// SKU GENERATOR
-// ————————————————————————————————————————————
-
 function generateSku(name: string, categoryId: string): string {
-  const cat = CATEGORIES.find((c) => c.id === categoryId);
+  const cat = CATEGORIES.find((category) => category.id === categoryId);
   const catCode = cat ? cat.name.slice(0, 3).toUpperCase() : "GEN";
   const nameWords = name
     .toUpperCase()
@@ -120,15 +107,7 @@ function generateSku(name: string, categoryId: string): string {
   return `${catCode}-${nameCode}-${rand}`.toUpperCase();
 }
 
-// ————————————————————————————————————————————
-// CONSTANTS
-// ————————————————————————————————————————————
-
 const ease = [0.16, 1, 0.3, 1] as const;
-
-// ————————————————————————————————————————————
-// FIELD COMPONENTS
-// ————————————————————————————————————————————
 
 function FieldLabel({
   label,
@@ -163,7 +142,7 @@ function TextInput({
   type = "text",
 }: {
   value: string;
-  onChange: (v: string) => void;
+  onChange: (fieldValue: string) => void;
   placeholder?: string;
   error?: boolean;
   disabled?: boolean;
@@ -173,7 +152,7 @@ function TextInput({
     <input
       type={type}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={(event) => onChange(event.target.value)}
       placeholder={placeholder}
       disabled={disabled}
       className={`w-full h-9 px-3 bg-cream-light border font-mono text-[11px] tracking-[0.05em] uppercase text-blue-primary placeholder:text-blue-primary/20 focus:outline-none transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
@@ -184,10 +163,6 @@ function TextInput({
     />
   );
 }
-
-// ————————————————————————————————————————————
-// CARD WRAPPER
-// ————————————————————————————————————————————
 
 function FormCard({
   title,
@@ -216,10 +191,6 @@ function FormCard({
     </div>
   );
 }
-
-// ————————————————————————————————————————————
-// FORM COMPONENT
-// ————————————————————————————————————————————
 
 export function ProductForm({
   mode,
@@ -263,10 +234,9 @@ export function ProductForm({
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-
   const update = useCallback(
-    (key: keyof ProductFormData, value: string | boolean) => {
-      setForm((prev) => ({ ...prev, [key]: value }));
+    (key: keyof ProductFormData, fieldValue: string | boolean) => {
+      setForm((prev) => ({ ...prev, [key]: fieldValue }));
       setErrors((prev) => {
         const next = { ...prev };
         delete next[key];
@@ -315,7 +285,6 @@ export function ProductForm({
 
   return (
     <div className="space-y-4">
-      {/* ━━━ BACK + HEADER ━━━ */}
       <div className="flex flex-col gap-3">
         <motion.button
           onClick={() => router.push("/products")}
@@ -350,16 +319,13 @@ export function ProductForm({
 
       <div className="h-px bg-blue-primary/10" />
 
-      {/* ━━━ FORM CONTENT ━━━ */}
       <motion.div
         className="space-y-4"
         initial={{ y: 25 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.5, delay: 0.1, ease }}
       >
-        {/* Row 1: Image + Status + Serial (horizontal strip) */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {/* Image */}
           <FormCard title="Product Image">
             <div className="h-28 border border-dashed border-blue-primary/15 flex items-center justify-center gap-3 cursor-pointer hover:border-blue-primary/30 transition-colors">
               <ImageIcon size={20} strokeWidth={1} className="text-blue-primary/20" />
@@ -374,7 +340,6 @@ export function ProductForm({
             </div>
           </FormCard>
 
-          {/* Status */}
           <FormCard title="Status">
             <button
               type="button"
@@ -397,7 +362,6 @@ export function ProductForm({
             </button>
           </FormCard>
 
-          {/* Serial Tracking */}
           <FormCard title="Serial Tracking">
             <button
               type="button"
@@ -417,7 +381,6 @@ export function ProductForm({
           </FormCard>
         </div>
 
-        {/* Serial warning */}
         {mode === "edit" && form.isSerialTracked && !(initialData?.isSerialTracked) && initialData?.stock && initialData.stock > 0 && (
           <div className="p-3 border border-warning/20 bg-warning/5 flex items-start gap-2">
             <AlertTriangle
@@ -432,31 +395,27 @@ export function ProductForm({
           </div>
         )}
 
-        {/* Row 2: Main form grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
-          {/* Left: Basic Info (2 cols) */}
           <div className="lg:col-span-2 flex flex-col">
             <FormCard title="Basic Information" marker="/001" className="flex-1 flex flex-col">
               <div className="space-y-4 flex flex-col flex-1">
-                {/* Product Name */}
                 <div>
                   <FieldLabel label="Product Name" required error={errors.name} />
                   <TextInput
                     value={form.name}
-                    onChange={(v) => update("name", v)}
+                    onChange={(fieldValue) => update("name", fieldValue)}
                     placeholder="e.g. iPhone 15 Pro 256GB"
                     error={!!errors.name}
                   />
                 </div>
 
-                {/* SKU + Auto */}
                 <div>
                   <FieldLabel label="SKU" required error={errors.sku} />
                   <div className="flex gap-2">
                     <div className="flex-1">
                       <TextInput
                         value={form.sku}
-                        onChange={(v) => update("sku", v)}
+                        onChange={(fieldValue) => update("sku", fieldValue)}
                         placeholder="e.g. IP15P-256-BK"
                         error={!!errors.sku}
                       />
@@ -472,12 +431,11 @@ export function ProductForm({
                   </div>
                 </div>
 
-                {/* Category */}
                 <div>
                   <FieldLabel label="Category" required error={errors.categoryId} />
                   <select
                     value={form.categoryId}
-                    onChange={(e) => update("categoryId", e.target.value)}
+                    onChange={(event) => update("categoryId", event.target.value)}
                     className={`w-full h-9 px-3 bg-cream-light border font-mono text-[11px] tracking-[0.05em] uppercase text-blue-primary focus:outline-none transition-colors cursor-pointer appearance-none ${
                       errors.categoryId
                         ? "border-error/40 focus:border-error/60"
@@ -493,12 +451,11 @@ export function ProductForm({
                   </select>
                 </div>
 
-                {/* Description */}
                 <div className="flex flex-col flex-1">
                   <FieldLabel label="Description" />
                   <textarea
                     value={form.description}
-                    onChange={(e) => update("description", e.target.value)}
+                    onChange={(event) => update("description", event.target.value)}
                     placeholder="Product description..."
                     className="w-full flex-1 px-3 py-2 bg-cream-light border border-blue-primary/10 font-mono text-[11px] tracking-[0.03em] text-blue-primary placeholder:text-blue-primary/20 focus:outline-none focus:border-blue-primary/30 transition-colors resize-none"
                   />
@@ -507,7 +464,6 @@ export function ProductForm({
             </FormCard>
           </div>
 
-          {/* Right: Pricing & Stock (1 col) */}
           <div className="flex flex-col">
             <FormCard title="Pricing & Stock" marker="/002" className="flex-1">
               <div className="space-y-4">
@@ -515,7 +471,7 @@ export function ProductForm({
                   <FieldLabel label="Cost Price ($)" required error={errors.costPrice} />
                   <TextInput
                     value={form.costPrice}
-                    onChange={(v) => update("costPrice", v)}
+                    onChange={(fieldValue) => update("costPrice", fieldValue)}
                     placeholder="0.00"
                     type="number"
                     error={!!errors.costPrice}
@@ -525,7 +481,7 @@ export function ProductForm({
                   <FieldLabel label="Selling Price ($)" required error={errors.sellingPrice} />
                   <TextInput
                     value={form.sellingPrice}
-                    onChange={(v) => update("sellingPrice", v)}
+                    onChange={(fieldValue) => update("sellingPrice", fieldValue)}
                     placeholder="0.00"
                     type="number"
                     error={!!errors.sellingPrice}
@@ -540,7 +496,7 @@ export function ProductForm({
                   />
                   <TextInput
                     value={form.stock}
-                    onChange={(v) => update("stock", v)}
+                    onChange={(fieldValue) => update("stock", fieldValue)}
                     placeholder="0"
                     type="number"
                     disabled={form.isSerialTracked}
@@ -556,13 +512,12 @@ export function ProductForm({
                   <FieldLabel label="Min Stock" required error={errors.minStock} />
                   <TextInput
                     value={form.minStock}
-                    onChange={(v) => update("minStock", v)}
+                    onChange={(fieldValue) => update("minStock", fieldValue)}
                     placeholder="5"
                     type="number"
                     error={!!errors.minStock}
                   />
                 </div>
-                {/* Warranty inside pricing card */}
                 <div className="h-px bg-blue-primary/6" />
                 <div>
                   <FieldLabel
@@ -577,7 +532,7 @@ export function ProductForm({
                     />
                     <TextInput
                       value={form.warrantyMonths}
-                      onChange={(v) => update("warrantyMonths", v)}
+                      onChange={(fieldValue) => update("warrantyMonths", fieldValue)}
                       placeholder={form.isSerialTracked ? "12" : "0"}
                       type="number"
                       error={!!errors.warrantyMonths}
@@ -595,7 +550,6 @@ export function ProductForm({
         </div>
       </motion.div>
 
-      {/* ━━━ ACTIONS BAR ━━━ */}
       <motion.div
         className="border-t border-blue-primary/10 pt-4 pb-0 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
         initial={{ y: 15 }}
@@ -637,7 +591,6 @@ export function ProductForm({
         </div>
       </motion.div>
 
-      {/* Bottom marker */}
       <div className="flex items-center justify-between">
         <div className="h-px flex-1 bg-blue-primary/8" />
         <span className="font-mono text-[8px] tracking-[0.2em] text-blue-primary/15 px-4">
