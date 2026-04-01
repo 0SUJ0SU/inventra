@@ -1,9 +1,6 @@
 import type { Metadata } from "next"
-import { Space_Grotesk, JetBrains_Mono, Geist } from "next/font/google"
+import { Space_Grotesk, JetBrains_Mono } from "next/font/google"
 import "./globals.css"
-import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -33,7 +30,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn(spaceGrotesk.variable, jetbrainsMono.variable, "font-sans", geist.variable)}
+      className={`${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
     >
       <body className="antialiased">{children}</body>
     </html>
