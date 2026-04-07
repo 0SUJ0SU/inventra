@@ -1,6 +1,6 @@
-import { auth } from "@/lib/auth"
+export { auth as middleware } from "@/lib/auth"
 
-export const proxy = auth
+export const runtime = "nodejs"
 
 export const config = {
   matcher: [
